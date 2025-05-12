@@ -1,19 +1,19 @@
-// PEOPLE UI
+// PEOPLE UI elements
 const personForm = document.getElementById("personForm");
 const personList = document.getElementById("peopleList");
 
-// TASK UI
+// TASK UI elements
 const taskForm = document.getElementById("taskForm");
 const taskList = document.getElementById("taskList");
 
-// Fetch & render people
+// Fetch and render people
 async function fetchPeople() {
   const res = await fetch("/api/people");
   const people = await res.json();
   renderPeople(people);
 }
 
-// Render people list
+// Render list of people
 function renderPeople(people) {
   personList.innerHTML = "";
   people.forEach(p => {
@@ -31,7 +31,7 @@ function renderPeople(people) {
   });
 }
 
-// Add person
+// Add a person
 personForm.addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -43,17 +43,17 @@ personForm.addEventListener("submit", async e => {
   });
   personForm.reset();
   await fetchPeople();
-  await fetchTasks(); // refresh assignments dropdown
+  await fetchTasks(); // refresh assignment dropdown
 });
 
-// Delete person
+// Delete a person
 async function deletePerson(id) {
   await fetch(`/api/people/${id}`, { method: "DELETE" });
   await fetchPeople();
   await fetchTasks();
 }
 
-// Fetch & render tasks
+// Fetch and render tasks (with current people for assignment)
 async function fetchTasks() {
   const [resT, resP] = await Promise.all([
     fetch("/api/tasks"),
@@ -64,9 +64,10 @@ async function fetchTasks() {
   renderTasks(tasks, people);
 }
 
-// Render tasks list with assign dropdown
+// Render task list with checkbox, assignment dropdown, delete button
 function renderTasks(tasks, people) {
   taskList.innerHTML = "";
+
   if (tasks.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
@@ -77,9 +78,9 @@ function renderTasks(tasks, people) {
 
   tasks.forEach(t => {
     const li = document.createElement("li");
-    li.className = `list-group-item d-flex justify-content-between align-items-center ${t.done ? "task-done" : ""}`;
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
 
-    // Left: checkbox + name & date
+    // Left: checkbox + text span
     const left = document.createElement("div");
     left.className = "d-flex align-items-center";
 
@@ -91,21 +92,29 @@ function renderTasks(tasks, people) {
 
     const span = document.createElement("span");
     span.innerHTML = `<strong>${t.name}</strong> <small class="text-muted">(${t.date})</small>`;
+    if (t.done) {
+      span.classList.add("task-done");
+    }
 
     left.appendChild(chk);
     left.appendChild(span);
 
-    // Middle: person assignment
+    // Middle: assignment dropdown
     const select = document.createElement("select");
     select.className = "form-select mx-3";
+    // Unassigned option
     const noneOption = new Option("Unassigned", "");
     select.add(noneOption);
+    // Add person options
     people.forEach(p => {
       const opt = new Option(p.name, p.id);
       if (t.assignedTo === p.id) opt.selected = true;
       select.add(opt);
     });
-    select.addEventListener("change", () => updateTask(t.id, { assignedTo: select.value ? parseInt(select.value, 10) : null }));
+    select.addEventListener("change", () => {
+      const val = select.value ? parseInt(select.value, 10) : null;
+      updateTask(t.id, { assignedTo: val });
+    });
 
     // Right: delete button
     const del = document.createElement("button");
@@ -113,6 +122,7 @@ function renderTasks(tasks, people) {
     del.textContent = "Delete";
     del.addEventListener("click", () => deleteTask(t.id));
 
+    // Assemble list item
     li.appendChild(left);
     li.appendChild(select);
     li.appendChild(del);
@@ -120,7 +130,7 @@ function renderTasks(tasks, people) {
   });
 }
 
-// Add new task
+// Add a new task
 taskForm.addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("taskName").value.trim();
@@ -135,7 +145,7 @@ taskForm.addEventListener("submit", async e => {
   await fetchTasks();
 });
 
-// Update a task
+// Update a task (done status or assignment)
 async function updateTask(id, changes) {
   await fetch(`/api/tasks/${id}`, {
     method: "PUT",
