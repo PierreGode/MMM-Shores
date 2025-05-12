@@ -20,12 +20,17 @@ module.exports = NodeHelper.create({
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
 
-    // Hämta tasks
+    // Root-route som serverar admin.html
+    app.get("/", (req, res) => {
+      res.sendFile(path.join(__dirname, "public", "admin.html"));
+    });
+
+    // Hämta alla tasks
     app.get("/api/tasks", (req, res) => {
       res.json(tasks);
     });
 
-    // Lägg till task
+    // Lägg till en ny task
     app.post("/api/tasks", (req, res) => {
       const { name, date } = req.body;
       tasks.push({ name, date, done: false });
@@ -33,9 +38,9 @@ module.exports = NodeHelper.create({
       res.status(201).json(tasks);
     });
 
-    // Starta server
-    app.listen(port, () => {
-      console.log(`MMM-Chores admin running at http://localhost:${port}`);
+    // Starta server på alla nätverksgränssnitt
+    app.listen(port, "0.0.0.0", () => {
+      console.log(`MMM-Chores admin running at http://0.0.0.0:${port}`);
     });
   }
 });
