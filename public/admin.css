@@ -8,7 +8,7 @@
   --shadow:       0 6px 18px rgba(0,0,0,.05);
   --list-hover:   rgba(0,0,0,.03);
 }
-[data-theme="dark"]{
+[data-theme="dark"] {
   --bg:           #121212;
   --text:         #e9ecef;
   --hero-start:   #343a40;
@@ -19,60 +19,76 @@
 }
 
 /* =========  GLOBAL  ========= */
-body{
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
-h1,h2{ font-weight:600; }
+h1, h2 {
+  font-weight: 600;
+}
 
 /* =========  HERO  ========= */
-.hero{
-  background:linear-gradient(135deg,var(--hero-start) 0%,var(--hero-end) 100%);
-  color:#fff;
-  border-radius:.7rem;
-  padding:1.5rem 2rem;
-  box-shadow:0 8px 24px rgba(0,0,0,.12);
-  margin-bottom:2rem;
+.hero {
+  background: linear-gradient(135deg, var(--hero-start) 0%, var(--hero-end) 100%);
+  color: #fff;
+  border-radius: .7rem;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  margin-bottom: 2rem;
 }
 
 /* theme toggle placement */
-.theme-switch{
-  position:absolute;
-  top:30px;
-  right:22px;
+.theme-switch {
+  position: absolute;
+  top: 30px;
+  right: 22px;
 }
 
 /* =========  CARDS  ========= */
-.card-shadow{
-  background:var(--card-bg);
-  border:none;
-  border-radius:.7rem;
-  box-shadow:var(--shadow);
+.card-shadow {
+  background: var(--card-bg);
+  border: none;
+  border-radius: .7rem;
+  box-shadow: var(--shadow);
 }
-.card-shadow .card-header{
-  background:var(--card-bg);
-  border-bottom:none;
-  font-weight:600;
+.card-shadow .card-header {
+  background: var(--card-bg);
+  border-bottom: none;
+  font-weight: 600;
 }
 
 /* =========  LIST & BUTTONS  ========= */
-.list-group-item{
-  background:var(--card-bg);
-  color:var(--text);
-  transition:background .15s ease;
+.list-group-item {
+  background: var(--card-bg);
+  color: var(--text);
+  transition: background .15s ease;
 }
-.list-group-item:hover{
-  background:var(--list-hover);
+.list-group-item:hover {
+  background: var(--list-hover);
 }
-.btn-icon{
-  width:34px;height:34px;
-  display:flex;justify-content:center;align-items:center;
-  padding:0;
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
 }
-.task-done{
-  text-decoration:line-through;
-  opacity:.6;
+.task-done {
+  text-decoration: line-through;
+  opacity: .6;
+}
+
+/* =========  OVERSIZED, SLIGHTLY ROUNDED CHECKBOXES ========= */
+.form-check-input {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  -moz-appearance: checkbox;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 0.25rem !important;
+  border: 1px solid var(--text);
 }
