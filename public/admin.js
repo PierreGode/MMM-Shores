@@ -1,4 +1,35 @@
 // ==========================
+// admin.js — Theme Toggle + Existing Logic
+// ==========================
+
+// ---------- THEME TOGGLE SETUP ----------
+const root        = document.documentElement;
+const themeTgl    = document.getElementById("themeToggle");
+const themeIcon   = document.getElementById("themeIcon");
+const STORAGE_KEY = "mmm-chores-theme";
+
+// Read saved theme (or default to light)
+const savedTheme  = localStorage.getItem(STORAGE_KEY) || "light";
+root.setAttribute("data-theme", savedTheme);
+themeTgl.checked = (savedTheme === "dark");
+setIcon(savedTheme);
+
+// When user flips the switch
+themeTgl.addEventListener("change", () => {
+  const theme = themeTgl.checked ? "dark" : "light";
+  root.setAttribute("data-theme", theme);
+  localStorage.setItem(STORAGE_KEY, theme);
+  setIcon(theme);
+});
+
+function setIcon(theme) {
+  themeIcon.className = theme === "dark"
+    ? "bi bi-moon-stars-fill"
+    : "bi bi-brightness-high-fill";
+}
+// ---------------------------------------
+
+// ==========================
 // admin.js — Dashboard + Analytics
 // ==========================
 
@@ -27,36 +58,27 @@ function getTodayDate() {
   ].join("-");
 }
 
-/**
- * Fetch people from API and render
- */
+// ==========================
+// Data Fetch & Render
+// ==========================
+
 async function fetchPeople() {
-  try {
-    const res = await fetch("/api/people");
-    peopleCache = await res.json();
-    renderPeople(peopleCache);
-  } catch (e) {
-    console.error("Could not fetch people:", e);
-  }
+  const res = await fetch("/api/people");
+  peopleCache = await res.json();
+  renderPeople(peopleCache);
 }
 
-/**
- * Fetch tasks from API, render tasks and analytics
- */
 async function fetchTasks() {
-  try {
-    const res = await fetch("/api/tasks");
-    tasksCache = await res.json();
-    renderTasks(tasksCache, peopleCache);
-    renderAnalytics(tasksCache, peopleCache);
-  } catch (e) {
-    console.error("Could not fetch tasks:", e);
-  }
+  const res = await fetch("/api/tasks");
+  tasksCache = await res.json();
+  renderTasks(tasksCache, peopleCache);
+  renderAnalytics(tasksCache, peopleCache);
 }
 
-/**
- * Render the list of people
- */
+// ==========================
+// Render Functions
+// ==========================
+
 function renderPeople(people) {
   personList.innerHTML = "";
   people.forEach(p => {
@@ -81,9 +103,6 @@ function renderPeople(people) {
   }
 }
 
-/**
- * Render the list of tasks with checkboxes, assign dropdown, delete
- */
 function renderTasks(tasks, people) {
   taskList.innerHTML = "";
 
@@ -143,57 +162,57 @@ function renderTasks(tasks, people) {
   });
 }
 
-/**
- * Render analytics charts
- */
+// ==========================
+// Analytics Rendering
+// ==========================
+
 function renderAnalytics(tasks, people) {
-  // 1. Tasks Completed Per Week (last 4 weeks)
+  // Tasks Completed Per Week (last 4 weeks)
   const today = new Date();
   const weeklyCounts = [];
   const weekLabels = [];
   for (let i = 3; i >= 0; i--) {
-    const end = new Date(today);
-    end.setDate(today.getDate() - i * 7);
-    const label = `${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}`;
+    const day = new Date(today);
+    day.setDate(today.getDate() - i * 7);
+    const label = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
     weekLabels.push(label);
 
     const count = tasks.filter(t => {
       if (!t.done) return false;
       const d = new Date(t.date);
-      const diff = (today - d) / (1000*60*60*24);
-      return diff >= i*7 && diff < (i+1)*7;
+      const diffDays = Math.floor((today - d)/(1000*60*60*24));
+      return diffDays >= i*7 && diffDays < (i+1)*7;
     }).length;
     weeklyCounts.push(count);
   }
   updateChart(chartWeekly, weekLabels, weeklyCounts);
 
-  // 2. Busiest Weekdays
+  // Busiest Weekdays
   const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const dayCounts = [0,0,0,0,0,0,0];
-  tasks.forEach(t => {
+  tasksCache.forEach(t => {
     const d = new Date(t.date);
     dayCounts[d.getDay()]++;
   });
   updateChart(chartWeekdays, dayLabels, dayCounts);
 
-  // 3. Chores Per Person
+  // Chores Per Person
   const personLabels = people.map(p => p.name);
-  const personCounts = people.map(p => tasks.filter(t => t.assignedTo === p.id).length);
+  const personCounts = people.map(p => tasksCache.filter(t => t.assignedTo === p.id).length);
   updateChart(chartPerPerson, personLabels, personCounts);
 }
 
-/**
- * Update or redraw a Chart.js instance
- */
+// Utility to update a Chart.js chart
 function updateChart(chart, labels, data) {
   chart.data.labels = labels;
   chart.data.datasets[0].data = data;
   chart.update();
 }
 
-/**
- * CRUD handlers
- */
+// ==========================
+// CRUD Handlers
+// ==========================
+
 personForm.addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -243,11 +262,11 @@ async function deleteTask(id) {
   await fetchTasks();
 }
 
-/**
- * Initialize charts and load data on DOM ready
- */
+// ==========================
+// Chart Initialization & Initial Load
+// ==========================
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Weekly bar chart
   const ctxW = document.getElementById("chartWeekly").getContext("2d");
   chartWeekly = new Chart(ctxW, {
     type: "bar",
@@ -264,7 +283,6 @@ document.addEventListener("DOMContentLoaded", () => {
     options: { scales: { y: { beginAtZero: true } } }
   });
 
-  // Weekday pie chart
   const ctxD = document.getElementById("chartWeekdays").getContext("2d");
   chartWeekdays = new Chart(ctxD, {
     type: "pie",
@@ -280,7 +298,6 @@ document.addEventListener("DOMContentLoaded", () => {
     options: {}
   });
 
-  // Per-person bar chart
   const ctxP = document.getElementById("chartPerPerson").getContext("2d");
   chartPerPerson = new Chart(ctxP, {
     type: "bar",
@@ -297,6 +314,9 @@ document.addEventListener("DOMContentLoaded", () => {
     options: { scales: { y: { beginAtZero: true } } }
   });
 
-  // Load initial data
+  // Load data
   fetchPeople().then(fetchTasks);
 });
+
+// Auto-refresh every 30 sec
+setInterval(fetchTasks, 30 * 1000);
