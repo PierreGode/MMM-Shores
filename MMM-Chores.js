@@ -2,7 +2,7 @@
 Module.register("MMM-Chores", {
   defaults: {
     updateInterval: 60 * 1000,    // uppdatera varje minut
-    adminPort: 8080
+    adminPort: 5003               // ändrat från 8080 till 5003
   },
 
   start() {
@@ -37,6 +37,15 @@ Module.register("MMM-Chores", {
     dateEl.innerHTML = now.toLocaleDateString();
     dateEl.className = "bright medium";
     wrapper.appendChild(dateEl);
+
+    // Om inga uppgifter
+    if (this.tasks.length === 0) {
+      const emptyEl = document.createElement("div");
+      emptyEl.className = "small dimmed";
+      emptyEl.innerHTML = "Inga ärenden för idag 🎉";
+      wrapper.appendChild(emptyEl);
+      return wrapper;
+    }
 
     // Lista tasks
     const ul = document.createElement("ul");
