@@ -29,6 +29,6 @@ npm install
 ```
 
 
-Go to http://yourmirrorIP:5003/ #page will be reachable within same network. ( NOT recomended to expose outside network )
+Go to http://yourmirrorIP:5003/ #page will be reachable within same network. ( NOT recommended to expose application with portforward )
 
 Data is stored in data.json to make the data persistent between restarts.
