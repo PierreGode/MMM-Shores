@@ -1,49 +1,63 @@
-const form = document.getElementById("shoreForm");
+const form = document.getElementById("taskForm");
 const list = document.getElementById("taskList");
 
-// Hämta och rendera alla ärenden
+// Fetch and render all tasks
 async function fetchTasks() {
   try {
     const res = await fetch("/api/tasks");
     const tasks = await res.json();
     renderTasks(tasks);
   } catch (e) {
-    console.error("Kunde inte hämta ärenden:", e);
+    console.error("Could not fetch tasks:", e);
   }
 }
 
-// Rendera listan med klickbara checkboxar
+// Render task list with clickable checkboxes and delete buttons
 function renderTasks(tasks) {
   list.innerHTML = "";
 
   if (tasks.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
-    li.textContent = "Inga ärenden för idag 🎉";
+    li.textContent = "No tasks for today 🎉";
     list.appendChild(li);
     return;
   }
 
   tasks.forEach((t, i) => {
     const li = document.createElement("li");
-    li.className = `list-group-item d-flex align-items-center ${t.done ? "task-done" : ""}`;
+    li.className = `list-group-item d-flex justify-content-between align-items-center ${t.done ? "task-done" : ""}`;
 
+    // Checkbox
     const chk = document.createElement("input");
     chk.type = "checkbox";
     chk.checked = t.done;
     chk.className = "form-check-input me-3";
     chk.addEventListener("change", () => toggleDone(i, chk.checked, li));
 
+    // Task text
     const span = document.createElement("span");
     span.innerHTML = `<strong>${t.name}</strong> <small class="text-muted">(${t.date})</small>`;
 
-    li.appendChild(chk);
-    li.appendChild(span);
+    // Delete button
+    const del = document.createElement("button");
+    del.className = "btn btn-sm btn-outline-danger";
+    del.innerHTML = "Delete";
+    del.addEventListener("click", () => deleteTask(i));
+
+    // Assemble
+    const left = document.createElement("div");
+    left.className = "d-flex align-items-center";
+    left.appendChild(chk);
+    left.appendChild(span);
+
+    li.appendChild(left);
+    li.appendChild(del);
     list.appendChild(li);
   });
 }
 
-// Lägg till nytt ärende via formuläret
+// Add new task via the form
 form.addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("name").value.trim();
@@ -59,11 +73,11 @@ form.addEventListener("submit", async e => {
     form.reset();
     fetchTasks();
   } catch (e) {
-    console.error("Kunde inte lägga till ärende:", e);
+    console.error("Could not add task:", e);
   }
 });
 
-// Uppdatera ‘done’-status på servern
+// Toggle the 'done' status on the server
 async function toggleDone(idx, done, li) {
   try {
     await fetch(`/api/tasks/${idx}`, {
@@ -73,12 +87,22 @@ async function toggleDone(idx, done, li) {
     });
     li.classList.toggle("task-done", done);
   } catch (e) {
-    console.error("Kunde inte uppdatera status:", e);
+    console.error("Could not update status:", e);
   }
 }
 
-// Auto-uppdatera listan var 30:e sekund
+// Delete a task on the server
+async function deleteTask(idx) {
+  try {
+    await fetch(`/api/tasks/${idx}`, { method: "DELETE" });
+    fetchTasks();
+  } catch (e) {
+    console.error("Could not delete task:", e);
+  }
+}
+
+// Auto-refresh the list every 30 seconds
 setInterval(fetchTasks, 30 * 1000);
 
-// Initial laddning
+// Initial load
 fetchTasks();
