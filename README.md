@@ -15,9 +15,10 @@ Manage and keep track of your household Chores
     config: {
       updateInterval: 60 * 1000,
       adminPort: 5003,
-      showDays: 3   // show tasks dated today, tomorrow, and the day after
+      showDays: 3,  // show tasks dated today, tomorrow, and the day after
+      showPast: true   // also show unfinished tasks from past days
     }
-  }
+  },
 ```
 
 ```
