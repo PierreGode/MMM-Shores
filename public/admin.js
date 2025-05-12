@@ -1,5 +1,36 @@
 // ==========================
-// ADMIN.JS with Browser Notifications
+// admin.js — Theme Toggle + Browser Notifications + CRUD
+// ==========================
+
+// ---------- THEME TOGGLE SETUP ----------
+const root        = document.documentElement;
+const themeTgl    = document.getElementById("themeToggle");
+const themeIcon   = document.getElementById("themeIcon");
+const STORAGE_KEY = "mmm-chores-theme";
+
+// Read saved theme (or default to light)
+const savedTheme  = localStorage.getItem(STORAGE_KEY) || "light";
+root.setAttribute("data-theme", savedTheme);
+themeTgl.checked = (savedTheme === "dark");
+setIcon(savedTheme);
+
+// When user flips the switch
+themeTgl.addEventListener("change", () => {
+  const theme = themeTgl.checked ? "dark" : "light";
+  root.setAttribute("data-theme", theme);
+  localStorage.setItem(STORAGE_KEY, theme);
+  setIcon(theme);
+});
+
+function setIcon(theme) {
+  themeIcon.className = theme === "dark"
+    ? "bi bi-moon-stars-fill"
+    : "bi bi-brightness-high-fill";
+}
+// ---------------------------------------
+
+// ==========================
+// Browser Notifications Setup
 // ==========================
 
 // UI elements
@@ -22,10 +53,8 @@ function getTodayDate() {
 }
 
 // Ask for notification permission up front
-if ("Notification" in window) {
-  if (Notification.permission === "default") {
-    Notification.requestPermission();
-  }
+if ("Notification" in window && Notification.permission === "default") {
+  Notification.requestPermission();
 }
 
 // Show a browser notification
@@ -40,37 +69,27 @@ function notify(task) {
   }
 }
 
-// Fetch & render people
+// ==========================
+// Data Fetch & Render
+// ==========================
+
 async function fetchPeople() {
   const res = await fetch("/api/people");
   const people = await res.json();
   renderPeople(people);
 }
 
-// Render people list
-function renderPeople(people) {
-  personList.innerHTML = "";
-  people.forEach(p => {
-    const li = document.createElement("li");
-    li.className = "list-group-item d-flex justify-content-between align-items-center";
-    li.textContent = p.name;
-    const del = document.createElement("button");
-    del.className = "btn btn-sm btn-outline-danger";
-    del.textContent = "Delete";
-    del.addEventListener("click", () => deletePerson(p.id));
-    li.appendChild(del);
-    personList.appendChild(li);
-  });
-}
-
-// Fetch & render tasks, plus notify
 async function fetchTasks() {
-  const [resT, resP] = await Promise.all([fetch("/api/tasks"), fetch("/api/people")]);
+  const [resT, resP] = await Promise.all([
+    fetch("/api/tasks"),
+    fetch("/api/people")
+  ]);
   const tasks  = await resT.json();
   const people = await resP.json();
+
   renderTasks(tasks, people);
 
-  // Check for notifications: tasks due today, not done, not yet notified
+  // Notify for due-today tasks
   const today = getTodayDate();
   tasks.forEach(task => {
     if (
@@ -83,9 +102,37 @@ async function fetchTasks() {
   });
 }
 
-// Render the task list with checkboxes, assign dropdown, delete
+// ==========================
+// Render Functions
+// ==========================
+
+function renderPeople(people) {
+  personList.innerHTML = "";
+  people.forEach(p => {
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.textContent = p.name;
+
+    const del = document.createElement("button");
+    del.className = "btn btn-sm btn-outline-danger";
+    del.innerHTML = '<i class="bi bi-trash"></i>';
+    del.addEventListener("click", () => deletePerson(p.id));
+
+    li.appendChild(del);
+    personList.appendChild(li);
+  });
+
+  if (people.length === 0) {
+    const li = document.createElement("li");
+    li.className = "list-group-item text-center text-muted";
+    li.textContent = "No people added";
+    personList.appendChild(li);
+  }
+}
+
 function renderTasks(tasks, people) {
   taskList.innerHTML = "";
+
   if (tasks.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
@@ -98,7 +145,7 @@ function renderTasks(tasks, people) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
 
-    // Checkbox + text
+    // Left: checkbox + text
     const left = document.createElement("div");
     left.className = "d-flex align-items-center";
     const chk = document.createElement("input");
@@ -109,10 +156,9 @@ function renderTasks(tasks, people) {
     const span = document.createElement("span");
     span.innerHTML = `<strong>${t.name}</strong> <small class="text-muted">(${t.date})</small>`;
     if (t.done) span.classList.add("task-done");
-    left.appendChild(chk);
-    left.appendChild(span);
+    left.append(chk, span);
 
-    // Assignment dropdown
+    // Middle: assignment dropdown
     const select = document.createElement("select");
     select.className = "form-select mx-3";
     select.add(new Option("Unassigned", ""));
@@ -126,20 +172,21 @@ function renderTasks(tasks, people) {
       updateTask(t.id, { assignedTo: val });
     });
 
-    // Delete button
+    // Right: delete button
     const del = document.createElement("button");
     del.className = "btn btn-sm btn-outline-danger";
-    del.textContent = "Delete";
+    del.innerHTML = '<i class="bi bi-trash"></i>';
     del.addEventListener("click", () => deleteTask(t.id));
 
-    li.appendChild(left);
-    li.appendChild(select);
-    li.appendChild(del);
+    li.append(left, select, del);
     taskList.appendChild(li);
   });
 }
 
-// Add person, task, update, delete… (same as before)
+// ==========================
+// CRUD Handlers
+// ==========================
+
 personForm.addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -189,7 +236,10 @@ async function deleteTask(id) {
   await fetchTasks();
 }
 
-// Auto-refresh & initial load
+// ==========================
+// Auto-refresh & Initial Load
+// ==========================
+
 setInterval(fetchTasks, 30 * 1000);
 fetchPeople();
 fetchTasks();
