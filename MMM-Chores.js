@@ -1,5 +1,5 @@
-/* Magic Mirror² Module: MMM-Shores */
-Module.register("MMM-Shores", {
+/* Magic Mirror² Module: MMM-Chores */
+Module.register("MMM-Chores", {
   defaults: {
     updateInterval: 60 * 1000,    // uppdatera varje minut
     adminPort: 8080
@@ -12,7 +12,7 @@ Module.register("MMM-Shores", {
   },
 
   getStyles() {
-    return ["MMM-Shores.css"];  // om du vill lägga till egen styling
+    return ["MMM-Chores.css"];  // om du vill lägga till egen styling
   },
 
   scheduleUpdate() {
