@@ -4,6 +4,7 @@ Manage and keep track of your household Chores
   
 <img src="https://github.com/user-attachments/assets/88849ed9-0961-4aeb-a2f3-66e0d91f16a8" width="350" />
 
+![image](https://github.com/user-attachments/assets/3170e312-f368-4df3-ac6c-dd2ffd95834f)
 
 
 
