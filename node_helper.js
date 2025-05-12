@@ -13,19 +13,18 @@ let people = [];
  * Load saved data from disk, if available.
  */
 function loadData() {
-  console.log("MMM-Chores: Attempting to load data from", DATA_FILE);
   if (fs.existsSync(DATA_FILE)) {
     try {
       const raw = fs.readFileSync(DATA_FILE, "utf8");
       const j = JSON.parse(raw);
       tasks = j.tasks || [];
       people = j.people || [];
-      console.log(`MMM-Chores: Loaded ${tasks.length} tasks and ${people.length} people`);
+      console.log(`MMM-Chores: Loaded ${tasks.length} tasks and ${people.length} people from data.json`);
     } catch (e) {
-      console.error("MMM-Chores: Error reading/parsing data.json:", e);
+      console.error("MMM-Chores: Error reading data.json:", e);
     }
   } else {
-    console.log("MMM-Chores: No data.json found, will create on first save");
+    console.log("MMM-Chores: No data.json found, starting with empty lists");
   }
 }
 
@@ -35,7 +34,7 @@ function loadData() {
 function saveData() {
   const j = { tasks, people };
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(j, null, 2), { flag: "w" });
+    fs.writeFileSync(DATA_FILE, JSON.stringify(j, null, 2), "utf8");
     console.log(`MMM-Chores: Saved ${tasks.length} tasks and ${people.length} people to data.json`);
   } catch (e) {
     console.error("MMM-Chores: Error writing data.json:", e);
@@ -55,7 +54,10 @@ module.exports = NodeHelper.create({
   },
 
   initServer(port) {
+    const self = this;
     const app = express();
+
+    // JSON parser & static files
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
 
@@ -64,38 +66,49 @@ module.exports = NodeHelper.create({
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
+    //
     // PEOPLE endpoints
+    //
     app.get("/api/people", (req, res) => res.json(people));
+
     app.post("/api/people", (req, res) => {
       const { name } = req.body;
-      if (!name) return res.status(400).json({ error: "Name required" });
+      if (!name) return res.status(400).json({ error: "Name is required" });
       const newPerson = { id: Date.now(), name };
       people.push(newPerson);
       saveData();
-      this.sendSocketNotification("PEOPLE_UPDATE", people);
+      self.sendSocketNotification("PEOPLE_UPDATE", people);
       res.status(201).json(newPerson);
     });
+
     app.delete("/api/people/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
-      tasks = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
+      // Unassign tasks for deleted person
+      tasks = tasks.map(t =>
+        t.assignedTo === id ? { ...t, assignedTo: null } : t
+      );
       saveData();
-      this.sendSocketNotification("PEOPLE_UPDATE", people);
-      this.sendSocketNotification("TASKS_UPDATE", tasks);
+      self.sendSocketNotification("PEOPLE_UPDATE", people);
+      self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json({ success: true });
     });
 
+    //
     // TASKS endpoints
+    //
     app.get("/api/tasks", (req, res) => res.json(tasks));
+
     app.post("/api/tasks", (req, res) => {
       const { name, date } = req.body;
-      if (!name || !date) return res.status(400).json({ error: "Name & date required" });
+      if (!name || !date) return res.status(400).json({ error: "Name and date are required" });
       const newTask = { id: Date.now(), name, date, done: false, assignedTo: null };
       tasks.push(newTask);
       saveData();
-      this.sendSocketNotification("TASKS_UPDATE", tasks);
+      self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.status(201).json(newTask);
     });
+
     app.put("/api/tasks/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
@@ -105,20 +118,25 @@ module.exports = NodeHelper.create({
         task.assignedTo = req.body.assignedTo;
       }
       saveData();
-      this.sendSocketNotification("TASKS_UPDATE", tasks);
+      self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json(task);
     });
+
     app.delete("/api/tasks/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       tasks = tasks.filter(t => t.id !== id);
       saveData();
-      this.sendSocketNotification("TASKS_UPDATE", tasks);
+      self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json({ success: true });
     });
 
-    // Start server
+    // Start server on all interfaces
     app.listen(port, "0.0.0.0", () => {
       console.log(`MMM-Chores admin running at http://0.0.0.0:${port}`);
+
+      // ** Send initial data down to mirror **  
+      self.sendSocketNotification("TASKS_UPDATE", tasks);
+      self.sendSocketNotification("PEOPLE_UPDATE", people);
     });
   }
 });
