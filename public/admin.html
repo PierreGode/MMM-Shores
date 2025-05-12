@@ -9,28 +9,42 @@
   <style>
     body { padding-top: 2rem; }
     .task-done { text-decoration: line-through; opacity: 0.6; }
-    .btn-delete { cursor: pointer; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1 class="mb-4">Tasks & Chores</h1>
 
-    <!-- Form to add new task -->
-    <form id="taskForm" class="row g-3 mb-4">
-      <div class="col-sm-6">
-        <input type="text" id="name" class="form-control" placeholder="Task name" required />
-      </div>
-      <div class="col-sm-4">
-        <input type="date" id="date" class="form-control" required />
-      </div>
-      <div class="col-sm-2">
-        <button type="submit" class="btn btn-primary w-100">Add Task</button>
-      </div>
-    </form>
+    <!-- PEOPLE MANAGEMENT -->
+    <section class="mb-5">
+      <h2 class="h5">People</h2>
+      <form id="personForm" class="row g-3 mb-3">
+        <div class="col-sm-8">
+          <input type="text" id="personName" class="form-control" placeholder="Person name" required />
+        </div>
+        <div class="col-sm-4">
+          <button type="submit" class="btn btn-secondary w-100">Add Person</button>
+        </div>
+      </form>
+      <ul id="peopleList" class="list-group mb-3"></ul>
+    </section>
 
-    <!-- Task list -->
-    <ul id="taskList" class="list-group"></ul>
+    <!-- TASK MANAGEMENT -->
+    <section>
+      <h2 class="h5">Tasks</h2>
+      <form id="taskForm" class="row g-3 mb-3">
+        <div class="col-sm-5">
+          <input type="text" id="taskName" class="form-control" placeholder="Task name" required />
+        </div>
+        <div class="col-sm-3">
+          <input type="date" id="taskDate" class="form-control" required />
+        </div>
+        <div class="col-sm-2">
+          <button type="submit" class="btn btn-primary w-100">Add Task</button>
+        </div>
+      </form>
+      <ul id="taskList" class="list-group"></ul>
+    </section>
   </div>
 
   <script src="admin.js"></script>
