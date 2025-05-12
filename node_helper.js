@@ -19,21 +19,21 @@ module.exports = NodeHelper.create({
   initServer(port) {
     const app = express();
 
-    // Middleware
+    // Middleware to parse JSON and serve static files
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
 
-    // Root-route: serverar admin.html
+    // Serve admin.html on the root route
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
-    // Hämta alla ärenden
+    // Get all tasks
     app.get("/api/tasks", (req, res) => {
       res.json(tasks);
     });
 
-    // Lägg till nytt ärende
+    // Add a new task
     app.post("/api/tasks", (req, res) => {
       const { name, date } = req.body;
       if (!name || !date) {
@@ -44,19 +44,29 @@ module.exports = NodeHelper.create({
       res.status(201).json(tasks);
     });
 
-    // Uppdatera done-status för ett ärende
+    // Update the 'done' status of a task
     app.put("/api/tasks/:idx", (req, res) => {
       const idx = parseInt(req.params.idx, 10);
       if (isNaN(idx) || idx < 0 || idx >= tasks.length) {
         return res.status(404).json({ error: "Invalid task index" });
       }
-      const { done } = req.body;
-      tasks[idx].done = Boolean(done);
+      tasks[idx].done = Boolean(req.body.done);
       this.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json(tasks[idx]);
     });
 
-    // Starta server på alla nätverksgränssnitt
+    // Delete a task
+    app.delete("/api/tasks/:idx", (req, res) => {
+      const idx = parseInt(req.params.idx, 10);
+      if (isNaN(idx) || idx < 0 || idx >= tasks.length) {
+        return res.status(404).json({ error: "Invalid task index" });
+      }
+      const removed = tasks.splice(idx, 1)[0];
+      this.sendSocketNotification("TASKS_UPDATE", tasks);
+      res.json({ removed });
+    });
+
+    // Start server listening on all network interfaces
     app.listen(port, "0.0.0.0", () => {
       console.log(`MMM-Chores admin running at http://0.0.0.0:${port}`);
     });
