@@ -1,12 +1,13 @@
 /* Magic Mirror² Module: MMM-Chores */
 Module.register("MMM-Chores", {
   defaults: {
-    updateInterval: 60 * 1000,    // update every minute
-    adminPort: 5003               // admin page port
+    updateInterval: 60 * 1000,  // update every minute
+    adminPort: 5003
   },
 
   start() {
     this.tasks = [];
+    this.people = [];
     this.sendSocketNotification("INIT_SERVER", this.config);
     this.scheduleUpdate();
   },
@@ -16,28 +17,33 @@ Module.register("MMM-Chores", {
   },
 
   scheduleUpdate() {
-    setInterval(() => {
-      this.updateDom();
-    }, this.config.updateInterval);
+    setInterval(() => this.updateDom(), this.config.updateInterval);
   },
 
   socketNotificationReceived(notification, payload) {
     if (notification === "TASKS_UPDATE") {
       this.tasks = payload;
-      this.updateDom();
     }
+    if (notification === "PEOPLE_UPDATE") {
+      this.people = payload;
+    }
+    this.updateDom();
+  },
+
+  getPersonName(id) {
+    const p = this.people.find(p => p.id === id);
+    return p ? p.name : "";
   },
 
   getDom() {
     const wrapper = document.createElement("div");
 
-    // Module header
+    // Header
     const header = document.createElement("div");
     header.innerHTML = "MMM-Chores";
     header.className = "bright large";
     wrapper.appendChild(header);
 
-    // If no tasks
     if (this.tasks.length === 0) {
       const emptyEl = document.createElement("div");
       emptyEl.className = "small dimmed";
@@ -48,28 +54,35 @@ Module.register("MMM-Chores", {
 
     // Task list
     const ul = document.createElement("ul");
+    ul.className = "normal";
+
     this.tasks.forEach(task => {
       const li = document.createElement("li");
       li.className = "small";
+      // checkbox indicator
+      const cb = document.createElement("span");
+      cb.innerHTML = task.done ? "✅" : "⬜";
+      cb.style.marginRight = "8px";
+      li.appendChild(cb);
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = task.done;
-      checkbox.disabled = true; // only admin page can toggle
-      li.appendChild(checkbox);
-
-      const text = document.createTextNode(` ${task.name} (${task.date})`);
+      // task text
+      const text = document.createTextNode(`${task.name} (${task.date})`);
       li.appendChild(text);
 
-      if (task.done) {
-        li.style.textDecoration = "line-through";
-        li.style.opacity = "0.6";
+      // assigned person
+      if (task.assignedTo) {
+        const person = this.getPersonName(task.assignedTo);
+        const assignedEl = document.createElement("span");
+        assignedEl.className = "xsmall dimmed";
+        assignedEl.innerHTML = ` — ${person}`;
+        assignedEl.style.marginLeft = "6px";
+        li.appendChild(assignedEl);
       }
 
       ul.appendChild(li);
     });
-    wrapper.appendChild(ul);
 
+    wrapper.appendChild(ul);
     return wrapper;
   }
 });
