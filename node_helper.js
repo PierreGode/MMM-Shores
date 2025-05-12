@@ -6,7 +6,7 @@ let tasks = [];
 
 module.exports = NodeHelper.create({
   start() {
-    console.log("MMM-Shores helper started...");
+    console.log("MMM-Chores helper started...");
   },
 
   socketNotificationReceived(notification, payload) {
@@ -35,7 +35,7 @@ module.exports = NodeHelper.create({
 
     // Starta server
     app.listen(port, () => {
-      console.log(`MMM-Shores admin running at http://localhost:${port}`);
+      console.log(`MMM-Chores admin running at http://localhost:${port}`);
     });
   }
 });
