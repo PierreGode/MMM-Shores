@@ -69,7 +69,7 @@ Module.register("MMM-Chores", {
 
     // Header
     const header = document.createElement("div");
-    header.innerHTML = "MMM-Chores";
+    header.innerHTML = "";
     header.className = "bright large";
     wrapper.appendChild(header);
 
