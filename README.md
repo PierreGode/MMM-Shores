@@ -9,6 +9,7 @@ Manage and keep track of your household Chores
 <img src="https://github.com/user-attachments/assets/258844d6-6457-4b48-ac64-af637ec059a4" width="800" />
 
 
+______________________________________________________________________________________________
 
 
 
@@ -41,4 +42,37 @@ Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
 > DO NOT expose application with portforward
 
 
+______________________________________________________________________________________________
+______________________________________________________________________________________________
+
+
+If you wish to use push notifications follow guide below. 
+
+
+![image](https://github.com/user-attachments/assets/aa99d0b8-c31e-41f9-b7b9-e4a8d93cd9d1)
+
+# 1. in MagicMirror/modules/MMM-Chores create a folder certs
+```
+mkdir MagicMirror/modules/MMM-Chores/certs
+```
+
+# 2. Generate a private key
+```
+openssl genrsa -out server.key 2048
+```
+# 3. Create a certificate signing request (CSR)
+```
+openssl req -new -key server.key -out server.csr -subj "/C=SE/ST=Stockholm/L=Stockholm/O=Home/CN=192.168.1.192" <--- YOUR IP
+```
+
+# 4. Generate a self-signed cert valid for 1 year
+```
+openssl x509 -req -in server.csr -signkey server.key -out server.crt -days 365
+```
+
+copy /certs/server.crt and install on your devices.
+
+browse to https://yourmirrorIP:5004/ and allow push notifications
+> [!NOTE]
+> And yes everything will yell unsafe, warning warning, Not Secure, that is what happens when you do a selfsigned certificate and not a micrsoft signed cert for loads of money ;P
 
