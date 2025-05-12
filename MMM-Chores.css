@@ -1,0 +1,47 @@
+/* MMM-Chores Module Stylesheet */
+
+/* Container padding */
+.MMM-Chores {
+  padding: 10px;
+}
+
+/* Header styling */
+.MMM-Chores .large {
+  text-align: center;
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
+/* Task list reset */
+.MMM-Chores ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Individual task item */
+.MMM-Chores li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+}
+
+/* Checkbox spacing */
+.MMM-Chores li input[type="checkbox"] {
+  margin-right: 10px;
+  transform: scale(1.2);
+}
+
+/* Strikethrough for completed tasks */
+.MMM-Chores li.task-done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* Empty-state message */
+.MMM-Chores .small.dimmed {
+  text-align: center;
+  font-style: italic;
+  margin-top: 10px;
+}
