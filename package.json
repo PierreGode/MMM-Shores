@@ -1,7 +1,7 @@
 {
   "name": "MMM-Chores",
   "version": "1.0.0",
-  "description": "A MagicMirror² module to manage shore‐cleaning tasks",
+  "description": "A MagicMirror² module to manage Chores and cleaning tasks",
   "main": "MMM-Chores.js",
   "scripts": {},
   "author": "Pierre Gode",
