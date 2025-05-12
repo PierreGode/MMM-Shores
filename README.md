@@ -3,8 +3,15 @@ Manage and keep track of your household Chores
 <p>
   
 <img src="https://github.com/user-attachments/assets/88849ed9-0961-4aeb-a2f3-66e0d91f16a8" width="350" />
+<p></p>
 
-![image](https://github.com/user-attachments/assets/3170e312-f368-4df3-ac6c-dd2ffd95834f)
+
+<img src="https://github.com/user-attachments/assets/258844d6-6457-4b48-ac64-af637ec059a4" width="800" />
+
+
+
+
+
 
 
 
