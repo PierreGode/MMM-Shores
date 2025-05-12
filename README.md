@@ -12,7 +12,7 @@ Manage and keep track of your household Chores
 
 
 
-
+Data is stored in data.json to make the data persistent between restarts.
 
 
 ```
@@ -36,6 +36,9 @@ npm install
 ```
 
 
-Go to http://yourmirrorIP:5003/ #page will be reachable within same network. ( NOT recommended to expose application with portforward )
+Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
+> [!CAUTION]
+> DO NOT expose application with portforward
 
-Data is stored in data.json to make the data persistent between restarts.
+
+
