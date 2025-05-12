@@ -21,7 +21,6 @@
 /* Individual task item */
 .MMM-Chores li {
   display: flex;
-  align-items: center;
   margin-bottom: 8px;
   font-size: 0.9em;
 }
@@ -40,7 +39,6 @@
 
 /* Empty-state message */
 .MMM-Chores .small.dimmed {
-  text-align: center;
   font-style: italic;
   margin-top: 10px;
 }
