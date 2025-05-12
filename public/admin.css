@@ -1,0 +1,78 @@
+/* =========  THEME VARIABLES  ========= */
+:root{
+  --bg:           #f5f7fa;
+  --text:         #212529;
+  --hero-start:   #4e74ff;
+  --hero-end:     #6f99ff;
+  --card-bg:      #ffffff;
+  --shadow:       0 6px 18px rgba(0,0,0,.05);
+  --list-hover:   rgba(0,0,0,.03);
+}
+[data-theme="dark"]{
+  --bg:           #121212;
+  --text:         #e9ecef;
+  --hero-start:   #343a40;
+  --hero-end:     #495057;
+  --card-bg:      #1e1e1e;
+  --shadow:       0 6px 18px rgba(0,0,0,.4);
+  --list-hover:   rgba(255,255,255,.03);
+}
+
+/* =========  GLOBAL  ========= */
+body{
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+h1,h2{ font-weight:600; }
+
+/* =========  HERO  ========= */
+.hero{
+  background:linear-gradient(135deg,var(--hero-start) 0%,var(--hero-end) 100%);
+  color:#fff;
+  border-radius:.7rem;
+  padding:1.5rem 2rem;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+  margin-bottom:2rem;
+}
+
+/* theme toggle placement */
+.theme-switch{
+  position:absolute;
+  top:18px;
+  right:22px;
+}
+
+/* =========  CARDS  ========= */
+.card-shadow{
+  background:var(--card-bg);
+  border:none;
+  border-radius:.7rem;
+  box-shadow:var(--shadow);
+}
+.card-shadow .card-header{
+  background:var(--card-bg);
+  border-bottom:none;
+  font-weight:600;
+}
+
+/* =========  LIST & BUTTONS  ========= */
+.list-group-item{
+  background:var(--card-bg);
+  color:var(--text);
+  transition:background .15s ease;
+}
+.list-group-item:hover{
+  background:var(--list-hover);
+}
+.btn-icon{
+  width:34px;height:34px;
+  display:flex;justify-content:center;align-items:center;
+  padding:0;
+}
+.task-done{
+  text-decoration:line-through;
+  opacity:.6;
+}
