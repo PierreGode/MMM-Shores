@@ -41,7 +41,7 @@ h1,h2{ font-weight:600; }
 /* theme toggle placement */
 .theme-switch{
   position:absolute;
-  top:18px;
+  top:30px;
   right:22px;
 }
 
