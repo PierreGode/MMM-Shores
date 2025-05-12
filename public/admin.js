@@ -1,36 +1,5 @@
 // ==========================
-// admin.js — Theme Toggle + Browser Notifications + CRUD
-// ==========================
-
-// ---------- THEME TOGGLE SETUP ----------
-const root        = document.documentElement;
-const themeTgl    = document.getElementById("themeToggle");
-const themeIcon   = document.getElementById("themeIcon");
-const STORAGE_KEY = "mmm-chores-theme";
-
-// Read saved theme (or default to light)
-const savedTheme  = localStorage.getItem(STORAGE_KEY) || "light";
-root.setAttribute("data-theme", savedTheme);
-themeTgl.checked = (savedTheme === "dark");
-setIcon(savedTheme);
-
-// When user flips the switch
-themeTgl.addEventListener("change", () => {
-  const theme = themeTgl.checked ? "dark" : "light";
-  root.setAttribute("data-theme", theme);
-  localStorage.setItem(STORAGE_KEY, theme);
-  setIcon(theme);
-});
-
-function setIcon(theme) {
-  themeIcon.className = theme === "dark"
-    ? "bi bi-moon-stars-fill"
-    : "bi bi-brightness-high-fill";
-}
-// ---------------------------------------
-
-// ==========================
-// Browser Notifications Setup
+// admin.js — Dashboard + Analytics
 // ==========================
 
 // UI elements
@@ -39,10 +8,16 @@ const personList = document.getElementById("peopleList");
 const taskForm   = document.getElementById("taskForm");
 const taskList   = document.getElementById("taskList");
 
-// Keep track of which tasks we've already notified
-let notified = JSON.parse(localStorage.getItem("notifiedTasks") || "[]");
+// Chart.js instances
+let chartWeekly, chartWeekdays, chartPerPerson;
 
-// Helper: today in YYYY-MM-DD
+// Caches
+let peopleCache = [];
+let tasksCache  = [];
+
+/**
+ * Helper: today’s date in YYYY-MM-DD
+ */
 function getTodayDate() {
   const d = new Date();
   return [
@@ -52,60 +27,36 @@ function getTodayDate() {
   ].join("-");
 }
 
-// Ask for notification permission up front
-if ("Notification" in window && Notification.permission === "default") {
-  Notification.requestPermission();
-}
-
-// Show a browser notification
-function notify(task) {
-  if (Notification.permission === "granted") {
-    new Notification("Task Due Today", {
-      body: `${task.name} is due today (${task.date})`,
-      icon: "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/icons/exclamation-circle-fill.svg"
-    });
-    notified.push(task.id);
-    localStorage.setItem("notifiedTasks", JSON.stringify(notified));
+/**
+ * Fetch people from API and render
+ */
+async function fetchPeople() {
+  try {
+    const res = await fetch("/api/people");
+    peopleCache = await res.json();
+    renderPeople(peopleCache);
+  } catch (e) {
+    console.error("Could not fetch people:", e);
   }
 }
 
-// ==========================
-// Data Fetch & Render
-// ==========================
-
-async function fetchPeople() {
-  const res = await fetch("/api/people");
-  const people = await res.json();
-  renderPeople(people);
-}
-
+/**
+ * Fetch tasks from API, render tasks and analytics
+ */
 async function fetchTasks() {
-  const [resT, resP] = await Promise.all([
-    fetch("/api/tasks"),
-    fetch("/api/people")
-  ]);
-  const tasks  = await resT.json();
-  const people = await resP.json();
-
-  renderTasks(tasks, people);
-
-  // Notify for due-today tasks
-  const today = getTodayDate();
-  tasks.forEach(task => {
-    if (
-      task.date === today &&
-      !task.done &&
-      !notified.includes(task.id)
-    ) {
-      notify(task);
-    }
-  });
+  try {
+    const res = await fetch("/api/tasks");
+    tasksCache = await res.json();
+    renderTasks(tasksCache, peopleCache);
+    renderAnalytics(tasksCache, peopleCache);
+  } catch (e) {
+    console.error("Could not fetch tasks:", e);
+  }
 }
 
-// ==========================
-// Render Functions
-// ==========================
-
+/**
+ * Render the list of people
+ */
 function renderPeople(people) {
   personList.innerHTML = "";
   people.forEach(p => {
@@ -130,13 +81,16 @@ function renderPeople(people) {
   }
 }
 
+/**
+ * Render the list of tasks with checkboxes, assign dropdown, delete
+ */
 function renderTasks(tasks, people) {
   taskList.innerHTML = "";
 
   if (tasks.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
-    li.textContent = "No tasks for today 🎉";
+    li.textContent = "No tasks added";
     taskList.appendChild(li);
     return;
   }
@@ -145,18 +99,22 @@ function renderTasks(tasks, people) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
 
-    // Left: checkbox + text
+    // Left: checkbox + task text
     const left = document.createElement("div");
     left.className = "d-flex align-items-center";
+
     const chk = document.createElement("input");
     chk.type = "checkbox";
     chk.checked = t.done;
     chk.className = "form-check-input me-3";
     chk.addEventListener("change", () => updateTask(t.id, { done: chk.checked }));
+
     const span = document.createElement("span");
     span.innerHTML = `<strong>${t.name}</strong> <small class="text-muted">(${t.date})</small>`;
     if (t.done) span.classList.add("task-done");
-    left.append(chk, span);
+
+    left.appendChild(chk);
+    left.appendChild(span);
 
     // Middle: assignment dropdown
     const select = document.createElement("select");
@@ -178,15 +136,64 @@ function renderTasks(tasks, people) {
     del.innerHTML = '<i class="bi bi-trash"></i>';
     del.addEventListener("click", () => deleteTask(t.id));
 
-    li.append(left, select, del);
+    li.appendChild(left);
+    li.appendChild(select);
+    li.appendChild(del);
     taskList.appendChild(li);
   });
 }
 
-// ==========================
-// CRUD Handlers
-// ==========================
+/**
+ * Render analytics charts
+ */
+function renderAnalytics(tasks, people) {
+  // 1. Tasks Completed Per Week (last 4 weeks)
+  const today = new Date();
+  const weeklyCounts = [];
+  const weekLabels = [];
+  for (let i = 3; i >= 0; i--) {
+    const end = new Date(today);
+    end.setDate(today.getDate() - i * 7);
+    const label = `${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}`;
+    weekLabels.push(label);
 
+    const count = tasks.filter(t => {
+      if (!t.done) return false;
+      const d = new Date(t.date);
+      const diff = (today - d) / (1000*60*60*24);
+      return diff >= i*7 && diff < (i+1)*7;
+    }).length;
+    weeklyCounts.push(count);
+  }
+  updateChart(chartWeekly, weekLabels, weeklyCounts);
+
+  // 2. Busiest Weekdays
+  const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dayCounts = [0,0,0,0,0,0,0];
+  tasks.forEach(t => {
+    const d = new Date(t.date);
+    dayCounts[d.getDay()]++;
+  });
+  updateChart(chartWeekdays, dayLabels, dayCounts);
+
+  // 3. Chores Per Person
+  const personLabels = people.map(p => p.name);
+  const personCounts = people.map(p => tasks.filter(t => t.assignedTo === p.id).length);
+  updateChart(chartPerPerson, personLabels, personCounts);
+}
+
+/**
+ * Update or redraw a Chart.js instance
+ */
+function updateChart(chart, labels, data) {
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
+}
+
+/**
+ * CRUD handlers
+ */
 personForm.addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -236,10 +243,60 @@ async function deleteTask(id) {
   await fetchTasks();
 }
 
-// ==========================
-// Auto-refresh & Initial Load
-// ==========================
+/**
+ * Initialize charts and load data on DOM ready
+ */
+document.addEventListener("DOMContentLoaded", () => {
+  // Weekly bar chart
+  const ctxW = document.getElementById("chartWeekly").getContext("2d");
+  chartWeekly = new Chart(ctxW, {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Completed",
+        data: [],
+        backgroundColor: "rgba(75,192,192,0.5)",
+        borderColor: "rgba(75,192,192,1)",
+        borderWidth: 1
+      }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
 
-setInterval(fetchTasks, 30 * 1000);
-fetchPeople();
-fetchTasks();
+  // Weekday pie chart
+  const ctxD = document.getElementById("chartWeekdays").getContext("2d");
+  chartWeekdays = new Chart(ctxD, {
+    type: "pie",
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        backgroundColor: [
+          "#FF6384","#36A2EB","#FFCE56","#4BC0C0","#9966FF","#FF9F40","#C9CBCF"
+        ]
+      }]
+    },
+    options: {}
+  });
+
+  // Per-person bar chart
+  const ctxP = document.getElementById("chartPerPerson").getContext("2d");
+  chartPerPerson = new Chart(ctxP, {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Assigned Tasks",
+        data: [],
+        backgroundColor: "rgba(153,102,255,0.5)",
+        borderColor: "rgba(153,102,255,1)",
+        borderWidth: 1
+      }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+
+  // Load initial data
+  fetchPeople().then(fetchTasks);
+});
