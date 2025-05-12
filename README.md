@@ -9,14 +9,15 @@ Manage and keep track of your household Chores
 
 
 ```
-{
-  module: "MMM-Chores",
-  position: "top_left",
-  config: {
-    updateInterval: 60 * 1000,
-    adminPort: 5003
+  {
+    module: "MMM-Chores",
+    position: "top_left",
+    config: {
+      updateInterval: 60 * 1000,
+      adminPort: 5003,
+      showDays: 3   // show tasks dated today, tomorrow, and the day after
+    }
   }
-}
 ```
 
 ```
