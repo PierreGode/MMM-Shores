@@ -28,3 +28,5 @@ npm install
 
 
 Go to http://yourmirrorIP:5003/
+
+Data is stored in data.json to make the data persistent between restarts.
