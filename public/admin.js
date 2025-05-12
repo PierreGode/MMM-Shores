@@ -1,20 +1,22 @@
-// PEOPLE UI elements
-const personForm = document.getElementById("personForm");
-const personList = document.getElementById("peopleList");
-
-// TASK UI elements
-const taskForm = document.getElementById("taskForm");
-const taskList = document.getElementById("taskList");
-
-/**
- * Helper: returns today’s date in YYYY-MM-DD format
- */
+// Helper: today’s date in YYYY-MM-DD format
 function getTodayDate() {
   const d = new Date();
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+}
+
+// UI elements
+const personForm = document.getElementById("personForm");
+const personList = document.getElementById("peopleList");
+const taskForm = document.getElementById("taskForm");
+const taskList = document.getElementById("taskList");
+const taskDateInput = document.getElementById("taskDate");
+
+// Set the date input to today
+function resetTaskDate() {
+  taskDateInput.value = getTodayDate();
 }
 
 // Fetch and render people
@@ -24,7 +26,7 @@ async function fetchPeople() {
   renderPeople(people);
 }
 
-// Render list of people
+// Render people list
 function renderPeople(people) {
   personList.innerHTML = "";
   people.forEach(p => {
@@ -54,7 +56,7 @@ personForm.addEventListener("submit", async e => {
   });
   personForm.reset();
   await fetchPeople();
-  await fetchTasks(); // refresh assignments dropdown
+  await fetchTasks();
 });
 
 // Delete a person
@@ -64,7 +66,7 @@ async function deletePerson(id) {
   await fetchTasks();
 }
 
-// Fetch and render tasks (with current people for assignment)
+// Fetch and render tasks (with people for assignment)
 async function fetchTasks() {
   const [resT, resP] = await Promise.all([
     fetch("/api/tasks"),
@@ -75,7 +77,7 @@ async function fetchTasks() {
   renderTasks(tasks, people);
 }
 
-// Render task list with checkbox, assignment dropdown, delete button
+// Render tasks list
 function renderTasks(tasks, people) {
   taskList.innerHTML = "";
 
@@ -131,7 +133,6 @@ function renderTasks(tasks, people) {
     del.textContent = "Delete";
     del.addEventListener("click", () => deleteTask(t.id));
 
-    // Assemble list item
     li.appendChild(left);
     li.appendChild(select);
     li.appendChild(del);
@@ -139,25 +140,24 @@ function renderTasks(tasks, people) {
   });
 }
 
-// Add a new task, defaulting the date to today if none selected
+// Add a new task, defaulting date to today if user clears it
 taskForm.addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("taskName").value.trim();
-  let date = document.getElementById("taskDate").value;
+  let date = taskDateInput.value;
   if (!name) return;
-  if (!date) {
-    date = getTodayDate();
-  }
+  if (!date) date = getTodayDate();
   await fetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, date })
   });
   taskForm.reset();
+  resetTaskDate();
   await fetchTasks();
 });
 
-// Update a task (done status or assignment)
+// Update a task
 async function updateTask(id, changes) {
   await fetch(`/api/tasks/${id}`, {
     method: "PUT",
@@ -173,9 +173,8 @@ async function deleteTask(id) {
   await fetchTasks();
 }
 
-// Auto-refresh every 30 seconds
-setInterval(fetchTasks, 30 * 1000);
-
-// Initial load
+// Initial setup: set default date, load data, and auto-refresh
+resetTaskDate();
 fetchPeople();
 fetchTasks();
+setInterval(fetchTasks, 30 * 1000);
