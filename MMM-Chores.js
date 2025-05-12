@@ -3,7 +3,8 @@ Module.register("MMM-Chores", {
   defaults: {
     updateInterval: 60 * 1000,   // update every minute
     adminPort: 5003,             // admin page port
-    showDays: 1                  // how many days of tasks to show (1 = today only)
+    showDays: 1,                 // how many days from today to show (1 = today only)
+    showPast: false              // whether to include unfinished tasks from past days
   },
 
   start() {
@@ -33,18 +34,29 @@ Module.register("MMM-Chores", {
   },
 
   /**
-   * Returns true if `taskDate` is within the next `this.config.showDays` days (inclusive).
+   * Decide whether a task should be visible:
+   * - Past unfinished tasks if showPast = true
+   * - Tasks dated today through (showDays-1) days ahead
    */
-  isInRange(taskDate) {
+  shouldShowTask(task) {
     const showDays = parseInt(this.config.showDays, 10);
+    const showPast = Boolean(this.config.showPast);
+
     const today = new Date();
-    // Normalize to midnight:
     today.setHours(0, 0, 0, 0);
-    const target = new Date(taskDate);
-    target.setHours(0, 0, 0, 0);
-    const diffMs = target - today;
+
+    const tDate = new Date(task.date);
+    tDate.setHours(0, 0, 0, 0);
+
+    const diffMs = tDate - today;
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    return diffDays >= 0 && diffDays < showDays;
+
+    if (diffDays < 0) {
+      // it's in the past
+      return showPast && task.done === false;
+    }
+    // diffDays >= 0
+    return diffDays < showDays;
   },
 
   getPersonName(id) {
@@ -55,19 +67,19 @@ Module.register("MMM-Chores", {
   getDom() {
     const wrapper = document.createElement("div");
 
-    // Module header
+    // Header
     const header = document.createElement("div");
     header.innerHTML = "MMM-Chores";
     header.className = "bright large";
     wrapper.appendChild(header);
 
-    // Filter tasks by date range
-    const visibleTasks = this.tasks.filter(t => this.isInRange(t.date));
+    // Filter tasks
+    const visible = this.tasks.filter(t => this.shouldShowTask(t));
 
-    if (visibleTasks.length === 0) {
+    if (visible.length === 0) {
       const emptyEl = document.createElement("div");
       emptyEl.className = "small dimmed";
-      emptyEl.innerHTML = "No tasks in range 🎉";
+      emptyEl.innerHTML = "No tasks to show 🎉";
       wrapper.appendChild(emptyEl);
       return wrapper;
     }
@@ -76,7 +88,7 @@ Module.register("MMM-Chores", {
     const ul = document.createElement("ul");
     ul.className = "normal";
 
-    visibleTasks.forEach(task => {
+    visible.forEach(task => {
       const li = document.createElement("li");
       li.className = "small";
 
