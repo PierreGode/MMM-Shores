@@ -36,12 +36,13 @@
     <!-- TASK MANAGEMENT -->
     <section>
       <h2 class="h5">Tasks</h2>
-      <form id="taskForm" class="row g-3 mb-3">
+      <form id="taskForm" class="row g-3 mb-3" novalidate>
         <div class="col-sm-5">
           <input type="text" id="taskName" class="form-control" placeholder="Task name" required />
         </div>
         <div class="col-sm-3">
-          <input type="date" id="taskDate" class="form-control" required />
+          <!-- removed required here -->
+          <input type="date" id="taskDate" class="form-control" placeholder="Optional date" />
         </div>
         <div class="col-sm-2">
           <button type="submit" class="btn btn-primary w-100">Add Task</button>
