@@ -56,7 +56,7 @@ If you wish to use push notifications follow guide below.
 mkdir MagicMirror/modules/MMM-Chores/certs
 ```
 
-# 2. Generate a private key
+# 2. Generate a private key in MMM-Chores/certs
 ```
 openssl genrsa -out server.key 2048
 ```
