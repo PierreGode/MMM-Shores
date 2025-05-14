@@ -1,55 +1,53 @@
-// ==========================
-// admin.js — Theme Toggle + Existing Logic
-// ==========================
+/* =======================================================================
+ *  admin.js  –  MMM-Chores front-end logic
+ *  (theme toggle • CRUD for /api • Chart.js analytics • GridStack dashboard)
+ * ===================================================================== */
 
-// ---------- THEME TOGGLE SETUP ----------
+/* -----------------------------------------------------------------------
+ *  1.  THEME TOGGLE
+ * -------------------------------------------------------------------- */
 const root        = document.documentElement;
 const themeTgl    = document.getElementById("themeToggle");
 const themeIcon   = document.getElementById("themeIcon");
 const STORAGE_KEY = "mmm-chores-theme";
 
-// Read saved theme (or default to light)
 const savedTheme  = localStorage.getItem(STORAGE_KEY) || "light";
 root.setAttribute("data-theme", savedTheme);
-themeTgl.checked = (savedTheme === "dark");
+themeTgl.checked = savedTheme === "dark";
 setIcon(savedTheme);
 
-// When user flips the switch
 themeTgl.addEventListener("change", () => {
   const theme = themeTgl.checked ? "dark" : "light";
   root.setAttribute("data-theme", theme);
   localStorage.setItem(STORAGE_KEY, theme);
   setIcon(theme);
 });
-
 function setIcon(theme) {
-  themeIcon.className = theme === "dark"
-    ? "bi bi-moon-stars-fill"
-    : "bi bi-brightness-high-fill";
+  themeIcon.className =
+    theme === "dark" ? "bi bi-moon-stars-fill" : "bi bi-brightness-high-fill";
 }
-// ---------------------------------------
 
-// ==========================
-// admin.js — Dashboard + Analytics
-// ==========================
+/* -----------------------------------------------------------------------
+ *  2.  DOM REFERENCES
+ * -------------------------------------------------------------------- */
+const personForm = document.getElementById("personForm");
+const personList = document.getElementById("peopleList");
+const taskForm   = document.getElementById("taskForm");
+const taskList   = document.getElementById("taskList");
 
-// UI elements
-const personForm   = document.getElementById("personForm");
-const personList   = document.getElementById("peopleList");
-const taskForm     = document.getElementById("taskForm");
-const taskList     = document.getElementById("taskList");
+/* -----------------------------------------------------------------------
+ *  3.  STATE
+ * -------------------------------------------------------------------- */
+let peopleCache = [];          // fetched /api/people
+let tasksCache  = [];          // fetched /api/tasks
 
-// Chart.js instances
+// default (main) Chart.js instances
 let chartWeekly, chartWeekdays, chartPerPerson;
 
-// Caches
-let peopleCache = [];
-let tasksCache  = [];
-
-/**
- * Helper: today’s date in YYYY-MM-DD
- */
-function getTodayDate() {
+/* -----------------------------------------------------------------------
+ *  4.  HELPERS
+ * -------------------------------------------------------------------- */
+function todayISO () {
   const d = new Date();
   return [
     d.getFullYear(),
@@ -58,31 +56,153 @@ function getTodayDate() {
   ].join("-");
 }
 
-// ==========================
-// Data Fetch & Render
-// ==========================
+/* Calculate the three datasets we use several times */
+function weeklyStats() {
+  const today = new Date();
+  const labels = [], counts = [];
+  for (let i = 3; i >= 0; i--) {
+    const start = new Date(today);
+    start.setDate(today.getDate() - i * 7);
+    labels.push(`${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,"0")}-${String(start.getDate()).padStart(2,"0")}`);
 
+    const c = tasksCache.filter(t => {
+      if (!t.done) return false;
+      const d = new Date(t.date);
+      const diff = Math.floor((today - d) / (1000*60*60*24));
+      return diff >= i*7 && diff < (i+1)*7;
+    }).length;
+    counts.push(c);
+  }
+  return { labels, counts };
+}
+function weekdayStats() {
+  const labels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const counts = [0,0,0,0,0,0,0];
+  tasksCache.forEach(t => counts[new Date(t.date).getDay()]++);
+  return { labels, counts };
+}
+function perPersonStats() {
+  const labels = peopleCache.map(p => p.name);
+  const counts = peopleCache.map(p =>
+    tasksCache.filter(t => t.assignedTo === p.id).length
+  );
+  return { labels, counts };
+}
+
+/* -----------------------------------------------------------------------
+ *  5.  CHART-DRAW HELPERS  (used by both static & dynamic widgets)
+ * -------------------------------------------------------------------- */
+function renderWeeklyChart(canvasId) {
+  const { labels, counts } = weeklyStats();
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  return new Chart(ctx, {
+    type : "bar",
+    data : {
+      labels,
+      datasets : [{
+        label: "Completed",
+        data : counts,
+        backgroundColor: "rgba(75,192,192,.5)",
+        borderColor    : "rgba(75,192,192,1)",
+        borderWidth    : 1
+      }]
+    },
+    options : { scales: { y: { beginAtZero: true } } }
+  });
+}
+function renderWeekdaysChart(canvasId) {
+  const { labels, counts } = weekdayStats();
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  return new Chart(ctx, {
+    type : "pie",
+    data : {
+      labels,
+      datasets : [{
+        data : counts,
+        backgroundColor: [
+          "#FF6384","#36A2EB","#FFCE56","#4BC0C0","#9966FF","#FF9F40","#C9CBCF"
+        ]
+      }]
+    }
+  });
+}
+function renderPerPersonChart(canvasId) {
+  const { labels, counts } = perPersonStats();
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  return new Chart(ctx, {
+    type : "bar",
+    data : {
+      labels,
+      datasets : [{
+        label: "Assigned Tasks",
+        data : counts,
+        backgroundColor: "rgba(153,102,255,.5)",
+        borderColor    : "rgba(153,102,255,1)",
+        borderWidth    : 1
+      }]
+    },
+    options : { scales: { y: { beginAtZero: true } } }
+  });
+}
+function renderTaskmasterChart(canvasId) {
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const month = now.getMonth();
+
+  const labels = peopleCache.map(p => p.name);
+  const counts = peopleCache.map(p =>
+    tasksCache.filter(t => {
+      if (!t.done) return false;
+      const d = new Date(t.date);
+      return d.getFullYear() === year && d.getMonth() === month && t.assignedTo === p.id;
+    }).length
+  );
+
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  return new Chart(ctx, {
+    type : "bar",
+    data : {
+      labels,
+      datasets : [{
+        label: "Tasks Done This Month",
+        data : counts,
+        backgroundColor: "rgba(255,159,64,.5)",
+        borderColor    : "rgba(255,159,64,1)",
+        borderWidth    : 1
+      }]
+    },
+    options : { scales: { y: { beginAtZero: true } } }
+  });
+}
+
+/* -----------------------------------------------------------------------
+ *  6.  FETCH & CRUD
+ * -------------------------------------------------------------------- */
 async function fetchPeople() {
   const res = await fetch("/api/people");
   peopleCache = await res.json();
-  renderPeople(peopleCache);
+  renderPeople();
 }
-
 async function fetchTasks() {
   const res = await fetch("/api/tasks");
   tasksCache = await res.json();
-  renderTasks(tasksCache, peopleCache);
-  renderAnalytics(tasksCache, peopleCache);
+  renderTasks();
+  refreshStaticCharts();   // update the 3 main charts
 }
 
-// ==========================
-// Render Functions
-// ==========================
-
-function renderPeople(people) {
+/* --- PERSONS list drawing ------------------------------------------------ */
+function renderPeople() {
   personList.innerHTML = "";
-  people.forEach(p => {
+  if (peopleCache.length === 0) {
     const li = document.createElement("li");
+    li.className = "list-group-item text-center text-muted";
+    li.textContent = "No people added";
+    personList.appendChild(li);
+    return;
+  }
+
+  peopleCache.forEach(p => {
+    const li  = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
     li.textContent = p.name;
 
@@ -94,19 +214,12 @@ function renderPeople(people) {
     li.appendChild(del);
     personList.appendChild(li);
   });
-
-  if (people.length === 0) {
-    const li = document.createElement("li");
-    li.className = "list-group-item text-center text-muted";
-    li.textContent = "No people added";
-    personList.appendChild(li);
-  }
 }
 
-function renderTasks(tasks, people) {
+/* --- TASKS list drawing -------------------------------------------------- */
+function renderTasks() {
   taskList.innerHTML = "";
-
-  if (tasks.length === 0) {
+  if (tasksCache.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
     li.textContent = "No tasks added";
@@ -114,11 +227,11 @@ function renderTasks(tasks, people) {
     return;
   }
 
-  tasks.forEach(t => {
+  tasksCache.forEach(t => {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
 
-    // Left: checkbox + task text
+    /* left: checkbox + label */
     const left = document.createElement("div");
     left.className = "d-flex align-items-center";
 
@@ -135,326 +248,215 @@ function renderTasks(tasks, people) {
     left.appendChild(chk);
     left.appendChild(span);
 
-    // Middle: assignment dropdown
-    const select = document.createElement("select");
-    select.className = "form-select mx-3";
-    select.add(new Option("Unassigned", ""));
-    people.forEach(p => {
-      const opt = new Option(p.name, p.id);
-      if (t.assignedTo === p.id) opt.selected = true;
-      select.add(opt);
+    /* middle: assignment select */
+    const sel = document.createElement("select");
+    sel.className = "form-select mx-3";
+    sel.add(new Option("Unassigned", ""));
+    peopleCache.forEach(p => {
+      const o = new Option(p.name, p.id);
+      if (t.assignedTo === p.id) o.selected = true;
+      sel.add(o);
     });
-    select.addEventListener("change", () => {
-      const val = select.value ? parseInt(select.value, 10) : null;
+    sel.addEventListener("change", () => {
+      const val = sel.value ? parseInt(sel.value, 10) : null;
       updateTask(t.id, { assignedTo: val });
     });
 
-    // Right: delete button
+    /* right: delete */
     const del = document.createElement("button");
     del.className = "btn btn-sm btn-outline-danger";
     del.innerHTML = '<i class="bi bi-trash"></i>';
     del.addEventListener("click", () => deleteTask(t.id));
 
-    li.appendChild(left);
-    li.appendChild(select);
-    li.appendChild(del);
+    li.append(left, sel, del);
     taskList.appendChild(li);
   });
 }
 
-// ==========================
-// Analytics Rendering
-// ==========================
-
-function renderAnalytics(tasks, people) {
-  // Tasks Completed Per Week (last 4 weeks)
-  const today = new Date();
-  const weeklyCounts = [];
-  const weekLabels = [];
-  for (let i = 3; i >= 0; i--) {
-    const day = new Date(today);
-    day.setDate(today.getDate() - i * 7);
-    const label = `${day.getFullYear()}-${String(day.getMonth()+1).padStart(2,'0')}-${String(day.getDate()).padStart(2,'0')}`;
-    weekLabels.push(label);
-
-    const count = tasks.filter(t => {
-      if (!t.done) return false;
-      const d = new Date(t.date);
-      const diffDays = Math.floor((today - d)/(1000*60*60*24));
-      return diffDays >= i*7 && diffDays < (i+1)*7;
-    }).length;
-    weeklyCounts.push(count);
-  }
-  updateChart(chartWeekly, weekLabels, weeklyCounts);
-
-  // Busiest Weekdays
-  const dayLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const dayCounts = [0,0,0,0,0,0,0];
-  tasksCache.forEach(t => {
-    const d = new Date(t.date);
-    dayCounts[d.getDay()]++;
-  });
-  updateChart(chartWeekdays, dayLabels, dayCounts);
-
-  // Chores Per Person
-  const personLabels = people.map(p => p.name);
-  const personCounts = people.map(p => tasksCache.filter(t => t.assignedTo === p.id).length);
-  updateChart(chartPerPerson, personLabels, personCounts);
-}
-
-/**
- * New: Taskmaster This Month
- * Bar chart of completed tasks per person in current month
- */
-function renderTaskmasterChart(canvasId) {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const labels = peopleCache.map(p => p.name);
-  const counts = peopleCache.map(p =>
-    tasksCache.filter(t => {
-      if (!t.done) return false;
-      const d = new Date(t.date);
-      return d.getFullYear() === year && d.getMonth() === month && t.assignedTo === p.id;
-    }).length
-  );
-
-  const ctx = document.getElementById(canvasId).getContext("2d");
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "Tasks Done This Month",
-        data: counts,
-        backgroundColor: "rgba(255,159,64,0.5)",
-        borderColor: "rgba(255,159,64,1)",
-        borderWidth: 1
-      }]
-    },
-    options: { scales: { y: { beginAtZero: true } } }
-  });
-}
-
-// Utility to update a Chart.js chart
-function updateChart(chart, labels, data) {
-  chart.data.labels = labels;
-  chart.data.datasets[0].data = data;
-  chart.update();
-}
-
-// ==========================
-// CRUD Handlers
-// ==========================
-
+/* --- Mutations ----------------------------------------------------------- */
 personForm.addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
   if (!name) return;
   await fetch("/api/people", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name })
+    method : "POST",
+    headers: { "Content-Type":"application/json" },
+    body   : JSON.stringify({ name })
   });
   personForm.reset();
-  await fetchPeople();
-  await fetchTasks();
+  await fetchPeople(); await fetchTasks();
 });
-
 taskForm.addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("taskName").value.trim();
-  let date = document.getElementById("taskDate").value;
+  let   date = document.getElementById("taskDate").value;
   if (!name) return;
-  if (!date) date = getTodayDate();
+  if (!date) date = todayISO();
   await fetch("/api/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, date })
+    method : "POST",
+    headers: { "Content-Type":"application/json" },
+    body   : JSON.stringify({ name, date })
   });
   taskForm.reset();
   await fetchTasks();
 });
-
 async function updateTask(id, changes) {
   await fetch(`/api/tasks/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(changes)
+    method : "PUT",
+    headers: { "Content-Type":"application/json" },
+    body   : JSON.stringify(changes)
   });
   await fetchTasks();
 }
-
 async function deletePerson(id) {
-  await fetch(`/api/people/${id}`, { method: "DELETE" });
-  await fetchPeople();
-  await fetchTasks();
+  await fetch(`/api/people/${id}`, { method:"DELETE" });
+  await fetchPeople(); await fetchTasks();
 }
-
 async function deleteTask(id) {
-  await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+  await fetch(`/api/tasks/${id}`, { method:"DELETE" });
   await fetchTasks();
 }
 
-// ==========================
-// Chart Initialization & Initial Load
-// ==========================
-
+/* -----------------------------------------------------------------------
+ *  7.  INITIAL PAGE SET-UP (Charts + GridStack)
+ * -------------------------------------------------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
-  const ctxW = document.getElementById("chartWeekly").getContext("2d");
-  chartWeekly = new Chart(ctxW, {
-    type: "bar",
-    data: {
-      labels: [],
-      datasets: [{
-        label: "Completed",
-        data: [],
-        backgroundColor: "rgba(75,192,192,0.5)",
-        borderColor: "rgba(75,192,192,1)",
-        borderWidth: 1
-      }]
-    },
-    options: { scales: { y: { beginAtZero: true } } }
-  });
 
-  const ctxD = document.getElementById("chartWeekdays").getContext("2d");
-  chartWeekdays = new Chart(ctxD, {
-    type: "pie",
-    data: {
-      labels: [],
-      datasets: [{
-        data: [],
-        backgroundColor: [
-          "#FF6384","#36A2EB","#FFCE56","#4BC0C0","#9966FF","#FF9F40","#C9CBCF"
-        ]
-      }]
-    },
-    options: {}
-  });
+  /* --- build the 3 default charts ----------------------------------- */
+  chartWeekly    = renderWeeklyChart("chartWeekly");
+  chartWeekdays  = renderWeekdaysChart("chartWeekdays");
+  chartPerPerson = renderPerPersonChart("chartPerPerson");
 
-  const ctxP = document.getElementById("chartPerPerson").getContext("2d");
-  chartPerPerson = new Chart(ctxP, {
-    type: "bar",
-    data: {
-      labels: [],
-      datasets: [{
-        label: "Assigned Tasks",
-        data: [],
-        backgroundColor: "rgba(153,102,255,0.5)",
-        borderColor: "rgba(153,102,255,1)",
-        borderWidth: 1
-      }]
-    },
-    options: { scales: { y: { beginAtZero: true } } }
-  });
-
-  // Load data
+  /* --- pull initial data -------------------------------------------- */
   fetchPeople().then(fetchTasks);
 
-  // ==========================
-  // START: Analytics Dashboard GridStack integration
-  // ==========================
-  const grid = GridStack.init({
-    column: 6,
-    disableOneColumnMode: true,   // ← disable mobile single-column mode
-    mobileBreakpoint: 0,          // ← never switch to mobile mode
-    float: false,
-    cellHeight: 120,
-    resizable: { handles: 'all' },
-    draggable: { handle: '.card-header' }
+  /* ------------------------------------------------------------------
+   *      GRIDSTACK  (editable dashboard + responsive columns)
+   * ------------------------------------------------------------------ */
+  const MAX_COLS    = 6;     // desktop grid
+  const MIN_CELL_W  = 160;   // px
+  const grid        = GridStack.init({
+    column             : MAX_COLS,
+    disableOneColumnMode: true,   // keep multi-col even on phone
+    mobileBreakpoint   : 0,
+    float              : false,
+    cellHeight         : 120,
+    resizable          : { handles: "all" },
+    draggable          : { handle : ".card-header" }
   });
 
-  // Load saved layout
-  const saved = localStorage.getItem('analyticsLayout');
-  if (saved) {
-    grid.removeAll();
-    grid.load(JSON.parse(saved));
-    grid.engine.nodes.forEach(n => {
-      const canvas = n.el.querySelector('canvas');
-      if (!canvas) return;
-      if (canvas.id.startsWith('chartWeekly'))    renderWeeklyChart(canvas.id);
-      if (canvas.id.startsWith('chartWeekdays'))  renderWeekdaysChart(canvas.id);
-      if (canvas.id.startsWith('chartPerPerson')) renderPerPersonChart(canvas.id);
-      if (canvas.id.includes('taskmaster'))       renderTaskmasterChart(canvas.id);
-    });
+  /* load saved layout (if any) */
+  const saved = localStorage.getItem("analyticsLayout");
+  if (saved) grid.load(JSON.parse(saved));
+
+  /* re-draw every widget’s canvas */
+  grid.engine.nodes.forEach(n => {
+    const c = n.el.querySelector("canvas");
+    if (!c) return;
+    if (c.id.startsWith("chartWeekly"))    renderWeeklyChart(c.id);
+    if (c.id.startsWith("chartWeekdays"))  renderWeekdaysChart(c.id);
+    if (c.id.startsWith("chartPerPerson")) renderPerPersonChart(c.id);
+    if (c.id.includes("taskmaster"))       renderTaskmasterChart(c.id);
+  });
+
+  /* persist on change */
+  grid.on("change", () => {
+    localStorage.setItem("analyticsLayout", JSON.stringify(grid.save()));
+  });
+
+  /* ----------  RESPONSIVE COLUMN COUNT  ---------- */
+  function currentCols() {
+    return grid.getColumn ? grid.getColumn() : grid.opts.column;
   }
+  function calcCols() {
+    const w = grid.el.getBoundingClientRect().width;
+    return Math.min(
+      MAX_COLS,
+      Math.max(2, Math.floor(w / MIN_CELL_W))
+    );
+  }
+  function applyResponsiveCols() {
+    const cols = calcCols();
+    if (cols !== currentCols()) grid.column(cols, "moveScale");
+  }
+  applyResponsiveCols();            // once at start
+  window.addEventListener("resize", applyResponsiveCols);
 
-  // Persist on layout change
-  grid.on('change', () => {
-    localStorage.setItem('analyticsLayout', JSON.stringify(grid.save()));
-  });
+  /* ----------  EDIT MODE + ADD / REMOVE ---------- */
+  const editBtn      = document.getElementById("analyticsEditBtn");
+  const widgetSelect = document.getElementById("widgetSelect");
+  let   editing      = false;
 
-  // Edit-mode toggle
-  const editBtn      = document.getElementById('analyticsEditBtn');
-  const widgetSelect = document.getElementById('widgetSelect');
-  let editing = false;
-
-  editBtn.addEventListener('click', () => {
+  editBtn.addEventListener("click", () => {
     editing = !editing;
-    document.querySelector('.grid-stack').classList.toggle('editing', editing);
+    grid.el.classList.toggle("editing", editing);
     grid.setStatic(!editing);
-    widgetSelect.classList.toggle('d-none', !editing);
-    editBtn.textContent = editing ? 'Done Editing' : 'Edit Dashboard';
+    widgetSelect.classList.toggle("d-none", !editing);
+    editBtn.textContent = editing ? "Done Editing" : "Edit Dashboard";
   });
 
-  // Add new widget
-  widgetSelect.addEventListener('change', () => {
+  widgetSelect.addEventListener("change", () => {
     const preset = widgetSelect.value;
     if (!preset) return;
 
     let header, renderFn;
     switch (preset) {
-      case 'tasksWeekly':
-        header   = 'Tasks Completed Per Week';
-        renderFn = renderWeeklyChart;
-        break;
-      case 'busiestWeekdays':
-        header   = 'Busiest Weekdays';
-        renderFn = renderWeekdaysChart;
-        break;
-      case 'choresPerPerson':
-        header   = 'Chores Per Person';
-        renderFn = renderPerPersonChart;
-        break;
-      case 'taskmaster':
-        header   = 'Taskmaster This Month';
-        renderFn = renderTaskmasterChart;
-        break;
-      default:
-        return;
+      case "tasksWeekly":     header="Tasks Completed Per Week"; renderFn=renderWeeklyChart;    break;
+      case "busiestWeekdays": header="Busiest Weekdays";         renderFn=renderWeekdaysChart;  break;
+      case "choresPerPerson": header="Chores Per Person";        renderFn=renderPerPersonChart; break;
+      case "taskmaster":      header="Taskmaster This Month";    renderFn=renderTaskmasterChart;break;
+      default: return;
     }
 
-    const id = `${preset}-${Date.now()}`;
-    const item = document.createElement('div');
-    item.classList.add('grid-stack-item');
-    item.setAttribute('gs-w', '2');
-    item.setAttribute('gs-h', '2');
+    const id   = `${preset}-${Date.now()}`;
+    const item = document.createElement("div");
+    item.className = "grid-stack-item";
+    item.setAttribute("gs-w", "2");
+    item.setAttribute("gs-h", "2");
     item.innerHTML = `
       <div class="grid-stack-item-content card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <span>${header}</span>
           <button class="btn btn-sm btn-outline-danger remove-widget">&times;</button>
         </div>
-        <div class="card-body">
-          <canvas id="${id}"></canvas>
-        </div>
+        <div class="card-body"><canvas id="${id}"></canvas></div>
       </div>`;
-
     grid.addWidget(item);
     renderFn(id);
-    widgetSelect.value = '';
+    widgetSelect.value = "";
   });
 
-  // Remove widget
-  document.querySelector('.grid-stack').addEventListener('click', e => {
-    if (e.target.classList.contains('remove-widget')) {
-      grid.removeWidget(e.target.closest('.grid-stack-item'));
+  grid.el.addEventListener("click", e => {
+    if (e.target.classList.contains("remove-widget")) {
+      grid.removeWidget(e.target.closest(".grid-stack-item"));
     }
   });
-  // ==========================
-  // END: Analytics Dashboard GridStack integration
-  // ==========================
 });
 
-// Auto-refresh every 30 sec
-setInterval(fetchTasks, 30 * 1000);
+/* -----------------------------------------------------------------------
+ *  8.  PERIODIC REFRESH
+ * -------------------------------------------------------------------- */
+setInterval(fetchTasks, 30_000);
+
+/* -----------------------------------------------------------------------
+ *  9.  UPDATE THE 3 STATIC CHARTS WHEN DATA CHANGES
+ * -------------------------------------------------------------------- */
+function refreshStaticCharts() {
+  /* weekly */
+  const w = weeklyStats();
+  chartWeekly.data.labels = w.labels;
+  chartWeekly.data.datasets[0].data = w.counts;
+  chartWeekly.update();
+
+  /* weekdays */
+  const d = weekdayStats();
+  chartWeekdays.data.labels = d.labels;
+  chartWeekdays.data.datasets[0].data = d.counts;
+  chartWeekdays.update();
+
+  /* per person */
+  const p = perPersonStats();
+  chartPerPerson.data.labels = p.labels;
+  chartPerPerson.data.datasets[0].data = p.counts;
+  chartPerPerson.update();
+}
