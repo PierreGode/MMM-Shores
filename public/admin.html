@@ -5,13 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MMM-Chores Admin</title>
 
-
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
+  <!-- GridStack for drag/resize -->
+  <link href="https://unpkg.com/gridstack/dist/gridstack.min.css" rel="stylesheet" />
+  <script src="https://unpkg.com/gridstack/dist/gridstack.all.js"></script>
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
 
+  <!-- Your custom styles -->
   <link href="admin.css" rel="stylesheet">
 </head>
 <body>
@@ -44,6 +49,7 @@
 
     <div class="tab-content">
 
+      <!-- Dashboard Tab (unchanged) -->
       <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
         <div class="row g-4">
           <div class="col-lg-4">
@@ -60,7 +66,6 @@
               </div>
             </div>
           </div>
-
           <div class="col-lg-8">
             <div class="card card-shadow h-100">
               <div class="card-header d-flex justify-content-between align-items-center">
@@ -91,26 +96,44 @@
         </div>
       </div>
 
+      <!-- Analytics Tab (now editable) -->
       <div class="tab-pane fade" id="analytics" role="tabpanel">
-        <div class="row g-4">
-          <div class="col-md-6">
-            <div class="card card-shadow">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h2 class="h5 mb-0">Analytics</h2>
+          <div>
+            <button id="analyticsEditBtn" class="btn btn-sm btn-outline-primary">
+              Edit Dashboard
+            </button>
+            <select id="widgetSelect" class="form-select form-select-sm d-none">
+              <option value="" selected>Add widget…</option>
+              <option value="tasksWeekly">Tasks Completed Per Week</option>
+              <option value="busiestWeekdays">Busiest Weekdays</option>
+              <option value="choresPerPerson">Chores Per Person</option>
+              <option value="taskmaster">Taskmaster This Month</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-stack">
+          <!-- Initial widgets -->
+          <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="4" gs-h="3">
+            <div class="grid-stack-item-content card">
               <div class="card-header">Tasks Completed Per Week</div>
               <div class="card-body">
                 <canvas id="chartWeekly"></canvas>
               </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="card card-shadow">
+          <div class="grid-stack-item" gs-x="4" gs-y="0" gs-w="2" gs-h="3">
+            <div class="grid-stack-item-content card">
               <div class="card-header">Busiest Weekdays</div>
               <div class="card-body">
                 <canvas id="chartWeekdays"></canvas>
               </div>
             </div>
           </div>
-          <div class="col-md-12">
-            <div class="card card-shadow">
+          <div class="grid-stack-item" gs-x="0" gs-y="3" gs-w="6" gs-h="3">
+            <div class="grid-stack-item-content card">
               <div class="card-header">Chores Per Person</div>
               <div class="card-body">
                 <canvas id="chartPerPerson"></canvas>
@@ -119,7 +142,6 @@
           </div>
         </div>
       </div>
-
     </div><!-- /.tab-content -->
   </div><!-- /.container -->
 
@@ -127,14 +149,8 @@
     Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode
   </footer>
 
-
-  <script>
-    /* ... your existing theme toggle code ... */
-  </script>
-
-
+  <!-- Your existing theme toggle code, if any -->
   <script src="admin.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
