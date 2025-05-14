@@ -227,6 +227,10 @@ function getChartTitle(type) {
     case "weekdays": return "Busiest Weekdays";
     case "perPerson": return "Chores Per Person";
     case "taskmaster": return "Taskmaster This Month";
+    case "lazyLegends": return "Lazy Legends";
+    case "speedDemons": return "Speed Demons";
+    case "weekendWarriors": return "Weekend Warriors";
+    case "slacker9000": return "Slacker Detector 9000";
     default: return "";
   }
 }
@@ -316,6 +320,93 @@ function renderChart(canvasId, type) {
       };
       break;
     }
+
+    // --- New fun charts ---
+    case "lazyLegends": {
+      // Most unfinished tasks per person (bar)
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        tasksCache.filter(t => t.assignedTo === p.id && !t.done).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: "Unfinished Tasks",
+          data: counts,
+          backgroundColor: "rgba(255,99,132,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "speedDemons": {
+      // Average completion time (days) per person (bar)
+      const labels = peopleCache.map(p => p.name);
+      const avgDays = peopleCache.map(p => {
+        const times = tasksCache
+          .filter(t => t.assignedTo === p.id && t.done && t.date && t.assignedDate)
+          .map(t => {
+            const dDone = new Date(t.date);
+            const dAssigned = new Date(t.assignedDate);
+            return (dDone - dAssigned) / (1000*60*60*24);
+          });
+        if (times.length === 0) return 0;
+        return times.reduce((a,b) => a+b, 0) / times.length;
+      });
+      data = {
+        labels,
+        datasets: [{
+          label: "Avg Completion Time (days)",
+          data: avgDays,
+          backgroundColor: "rgba(54,162,235,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "weekendWarriors": {
+      // Tasks completed on weekend per person (bar)
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        tasksCache.filter(t => {
+          if (!t.done || t.assignedTo !== p.id) return false;
+          const d = new Date(t.date);
+          return d.getDay() === 0 || d.getDay() === 6;
+        }).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: "Weekend Tasks Completed",
+          data: counts,
+          backgroundColor: "rgba(255,206,86,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "slacker9000": {
+      // Oldest open task age (days) per person (bar)
+      const labels = peopleCache.map(p => p.name);
+      const ages = peopleCache.map(p => {
+        const openTasks = tasksCache.filter(t => t.assignedTo === p.id && !t.done && t.assignedDate);
+        if (openTasks.length === 0) return 0;
+        const now = new Date();
+        return Math.max(...openTasks.map(t => (now - new Date(t.assignedDate)) / (1000*60*60*24)));
+      });
+      data = {
+        labels,
+        datasets: [{
+          label: "Oldest Open Task Age (days)",
+          data: ages,
+          backgroundColor: "rgba(153,102,255,0.5)"
+        }]
+      };
+      break;
+    }
+
+    default:
+      break;
   }
 
   return new Chart(ctx, { type: chartType, data, options });
@@ -323,10 +414,18 @@ function renderChart(canvasId, type) {
 
 function updateAllCharts() {
   for (const [id, chart] of Object.entries(chartInstances)) {
-    const type = chart.config.data.datasets[0]?.label?.includes("Weekdays") ? "weekdays"
-               : chart.config.data.datasets[0]?.label?.includes("Month") ? "taskmaster"
-               : chart.config.data.datasets[0]?.label?.includes("Chores") ? "perPerson"
-               : "weekly";
+    const label = chart.data.datasets[0]?.label || "";
+    let type = "";
+
+    if (label.includes("Weekdays")) type = "weekdays";
+    else if (label.includes("Month")) type = "taskmaster";
+    else if (label.includes("Chores")) type = "perPerson";
+    else if (label.includes("Unfinished")) type = "lazyLegends";
+    else if (label.includes("Completion")) type = "speedDemons";
+    else if (label.includes("Weekend")) type = "weekendWarriors";
+    else if (label.includes("Oldest")) type = "slacker9000";
+    else type = "weekly";
+
     chart.destroy();
     chartInstances[id] = renderChart(id, type);
   }
