@@ -10,15 +10,17 @@ const CERT_DIR  = path.join(__dirname, "certs");
 
 let tasks = [];
 let people = [];
+let analyticsBoards = [];  // <-- new storage for analytics boards
 
-// Load and save data (same as before)
+// Load and save data (updated to include analyticsBoards)
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     try {
       const j = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
       tasks = j.tasks || [];
       people = j.people || [];
-      console.log(`MMM-Chores: Loaded ${tasks.length} tasks and ${people.length} people`);
+      analyticsBoards = j.analyticsBoards || [];
+      console.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`);
     } catch (e) {
       console.error("MMM-Chores: Error reading data.json:", e);
     }
@@ -26,8 +28,8 @@ function loadData() {
 }
 function saveData() {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ tasks, people }, null, 2), "utf8");
-    console.log(`MMM-Chores: Saved ${tasks.length} tasks and ${people.length} people`);
+    fs.writeFileSync(DATA_FILE, JSON.stringify({ tasks, people, analyticsBoards }, null, 2), "utf8");
+    console.log(`MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`);
   } catch (e) {
     console.error("MMM-Chores: Error writing data.json:", e);
   }
@@ -109,12 +111,28 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
+    // Analytics Boards endpoints
+    app.get("/api/analyticsBoards", (req, res) => {
+      res.json(analyticsBoards);
+    });
+    app.post("/api/analyticsBoards", (req, res) => {
+      const newBoards = req.body;
+      if (!Array.isArray(newBoards)) {
+        return res.status(400).json({ error: "Expected an array of board types" });
+      }
+      analyticsBoards = newBoards;
+      saveData();
+      self.sendSocketNotification("ANALYTICS_UPDATE", analyticsBoards);
+      res.json({ success: true, analyticsBoards });
+    });
+
     // HTTP server
     app.listen(port, "0.0.0.0", () => {
       console.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);
       // send initial data
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       self.sendSocketNotification("PEOPLE_UPDATE", people);
+      self.sendSocketNotification("ANALYTICS_UPDATE", analyticsBoards);
     });
 
     // HTTPS server on port+1
