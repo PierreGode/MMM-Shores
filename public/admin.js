@@ -186,7 +186,7 @@ async function deleteTask(id) {
 }
 
 // ==========================
-// Analytics Board Persistence
+// Analytics Board Persistence Helpers
 // ==========================
 
 async function fetchSavedBoards() {
@@ -245,7 +245,7 @@ document.getElementById("addChartSelect").addEventListener("change", function ()
 });
 
 function addChart(type) {
-  // Prevent duplicate charts
+  // Prevent duplicates
   if (getCurrentBoardTypes().includes(type)) return;
 
   const container = document.getElementById("analyticsContainer");
@@ -266,15 +266,12 @@ function addChart(type) {
   container.appendChild(card);
   chartInstances[cardId] = renderChart(cardId, type);
 
-  // Save after adding
   saveBoards(getCurrentBoardTypes());
 
   card.querySelector(".remove-widget").addEventListener("click", () => {
     chartInstances[cardId].destroy();
     delete chartInstances[cardId];
     card.remove();
-
-    // Save after removing
     saveBoards(getCurrentBoardTypes());
   });
 }
@@ -289,17 +286,172 @@ function renderChart(canvasId, type) {
   let options = { scales: { y: { beginAtZero: true } } };
   let chartType = "bar";
 
-  // ... include your previous renderChart switch logic here for all 8 types ...
+  switch (type) {
+    case "weekly": {
+      const today = new Date();
+      const labels = [];
+      const counts = [];
+      for (let i = 3; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i * 7);
+        labels.push(d.toISOString().split("T")[0]);
+        const c = tasksCache.filter(t => {
+          const td = new Date(t.date);
+          return t.done && ((today - td) / 86400000) >= i * 7 && ((today - td) / 86400000) < (i + 1) * 7;
+        }).length;
+        counts.push(c);
+      }
+      data = {
+        labels,
+        datasets: [{
+          label: "Completed",
+          data: counts,
+          backgroundColor: "rgba(75,192,192,0.5)"
+        }]
+      };
+      break;
+    }
 
-  // For brevity, please copy your previous renderChart switch from your current code here
+    case "weekdays": {
+      chartType = "pie";
+      const labels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const dataArr = [0,0,0,0,0,0,0];
+      tasksCache.forEach(t => dataArr[new Date(t.date).getDay()]++);
+      data = {
+        labels,
+        datasets: [{
+          data: dataArr,
+          backgroundColor: [
+            "#FF6384","#36A2EB","#FFCE56","#4BC0C0","#9966FF","#FF9F40","#C9CBCF"
+          ]
+        }]
+      };
+      options = {};
+      break;
+    }
 
-  // If needed, ask me to supply full renderChart again with all types
+    case "perPerson": {
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        tasksCache.filter(t => t.assignedTo === p.id).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: "Chores",
+          data: counts,
+          backgroundColor: "rgba(153,102,255,0.5)"
+        }]
+      };
+      break;
+    }
 
-  // Example fallback:
-  data = {
-    labels: ["Example"],
-    datasets: [{ label: "Example", data: [1], backgroundColor: "rgba(0,0,0,0.1)" }]
-  };
+    case "taskmaster": {
+      const now = new Date();
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        tasksCache.filter(t => {
+          const d = new Date(t.date);
+          return t.done && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.assignedTo === p.id;
+        }).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: "Tasks Done This Month",
+          data: counts,
+          backgroundColor: "rgba(255,159,64,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "lazyLegends": {
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        tasksCache.filter(t => t.assignedTo === p.id && !t.done).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: "Unfinished Tasks",
+          data: counts,
+          backgroundColor: "rgba(255,99,132,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "speedDemons": {
+      const labels = peopleCache.map(p => p.name);
+      const avgDays = peopleCache.map(p => {
+        const times = tasksCache
+          .filter(t => t.assignedTo === p.id && t.done && t.date && t.assignedDate)
+          .map(t => {
+            const dDone = new Date(t.date);
+            const dAssigned = new Date(t.assignedDate);
+            return (dDone - dAssigned) / (1000*60*60*24);
+          });
+        if (times.length === 0) return 0;
+        return times.reduce((a,b) => a+b, 0) / times.length;
+      });
+      data = {
+        labels,
+        datasets: [{
+          label: "Avg Completion Time (days)",
+          data: avgDays,
+          backgroundColor: "rgba(54,162,235,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "weekendWarriors": {
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        tasksCache.filter(t => {
+          if (!t.done || t.assignedTo !== p.id) return false;
+          const d = new Date(t.date);
+          return d.getDay() === 0 || d.getDay() === 6;
+        }).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: "Weekend Tasks Completed",
+          data: counts,
+          backgroundColor: "rgba(255,206,86,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "slacker9000": {
+      const labels = peopleCache.map(p => p.name);
+      const ages = peopleCache.map(p => {
+        const openTasks = tasksCache.filter(t => t.assignedTo === p.id && !t.done && t.assignedDate);
+        if (openTasks.length === 0) return 0;
+        const now = new Date();
+        return Math.max(...openTasks.map(t => (now - new Date(t.assignedDate)) / (1000*60*60*24)));
+      });
+      data = {
+        labels,
+        datasets: [{
+          label: "Oldest Open Task Age (days)",
+          data: ages,
+          backgroundColor: "rgba(153,102,255,0.5)"
+        }]
+      };
+      break;
+    }
+
+    default:
+      data = {
+        labels: [],
+        datasets: []
+      };
+      break;
+  }
 
   return new Chart(ctx, { type: chartType, data, options });
 }
@@ -307,13 +459,23 @@ function renderChart(canvasId, type) {
 function updateAllCharts() {
   for (const [id, chart] of Object.entries(chartInstances)) {
     chart.destroy();
-    // Identify type by title
     const title = chart.config.data.datasets[0]?.label || "";
     let type = Object.entries(boardTitleMap).find(([key, val]) => title.includes(val))?.[0];
     if (!type) type = "weekly";
     chartInstances[id] = renderChart(id, type);
   }
 }
+
+const boardTitleMap = {
+  weekly: "Tasks Completed Per Week",
+  weekdays: "Busiest Weekdays",
+  perPerson: "Chores Per Person",
+  taskmaster: "Taskmaster This Month",
+  lazyLegends: "Lazy Legends",
+  speedDemons: "Speed Demons",
+  weekendWarriors: "Weekend Warriors",
+  slacker9000: "Slacker Detector 9000"
+};
 
 // ==========================
 // Initial Load
@@ -324,7 +486,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
-    savedBoards.forEach(type => addChart(type));
+    savedBoards.forEach(type => {
+      if (!getCurrentBoardTypes().includes(type)) {
+        addChart(type);
+      }
+    });
   }
 });
 
