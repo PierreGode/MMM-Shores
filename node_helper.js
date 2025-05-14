@@ -2,9 +2,9 @@ const Log        = require("logger");
 const NodeHelper = require("node_helper");
 const express    = require("express");
 const bodyParser = require("body-parser");
-const path       = require("path");
-const fs         = require("fs");
-const https      = require("https");
+const path       = require("node:path");
+const fs         = require("node:fs");
+const https      = require("node:https");
 
 const DATA_FILE = path.join(__dirname, "data.json");
 const CERT_DIR  = path.join(__dirname, "certs");
