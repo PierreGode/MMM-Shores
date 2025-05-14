@@ -1,4 +1,4 @@
-/* Magic Mirror² Module: MMM-Chores */
+/* MagicMirror² Module: MMM-Chores */
 Module.register("MMM-Chores", {
   defaults: {
     updateInterval: 60 * 1000,   // update every minute
