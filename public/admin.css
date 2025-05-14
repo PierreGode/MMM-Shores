@@ -92,3 +92,17 @@ h1, h2 {
   border-radius: 0.25rem !important;
   border: 1px solid var(--text);
 }
+
+/* Hide remove buttons unless editing */
+.grid-stack-item-content .remove-widget {
+  display: none;
+}
+.grid-stack.editing .remove-widget {
+  display: inline-block;
+}
+
+/* Slight transparency while dragging/resizing */
+.grid-stack-item.ui-draggable-dragging .grid-stack-item-content,
+.grid-stack-item.ui-resizable-resizing .grid-stack-item-content {
+  opacity: 0.8;
+}
