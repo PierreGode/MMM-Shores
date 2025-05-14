@@ -34,10 +34,10 @@ function setIcon(theme) {
 // ==========================
 
 // UI elements
-const personForm = document.getElementById("personForm");
-const personList = document.getElementById("peopleList");
-const taskForm   = document.getElementById("taskForm");
-const taskList   = document.getElementById("taskList");
+const personForm   = document.getElementById("personForm");
+const personList   = document.getElementById("peopleList");
+const taskForm     = document.getElementById("taskForm");
+const taskList     = document.getElementById("taskList");
 
 // Chart.js instances
 let chartWeekly, chartWeekdays, chartPerPerson;
@@ -202,6 +202,41 @@ function renderAnalytics(tasks, people) {
   updateChart(chartPerPerson, personLabels, personCounts);
 }
 
+/**
+ * New: Taskmaster This Month
+ * Bar chart of completed tasks per person in current month
+ */
+function renderTaskmasterChart(canvasId) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  // Count per person
+  const labels = peopleCache.map(p => p.name);
+  const counts = peopleCache.map(p =>
+    tasksCache.filter(t => {
+      if (!t.done) return false;
+      const d = new Date(t.date);
+      return d.getFullYear() === year && d.getMonth() === month && t.assignedTo === p.id;
+    }).length
+  );
+
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Tasks Done This Month",
+        data: counts,
+        backgroundColor: "rgba(255,159,64,0.5)",
+        borderColor: "rgba(255,159,64,1)",
+        borderWidth: 1
+      }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+  });
+}
+
 // Utility to update a Chart.js chart
 function updateChart(chart, labels, data) {
   chart.data.labels = labels;
@@ -316,6 +351,109 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load data
   fetchPeople().then(fetchTasks);
+
+  // ==========================
+  // START: Analytics Dashboard GridStack integration
+  // ==========================
+  const grid = GridStack.init({
+    column: 6,
+    float: false,
+    cellHeight: 120,
+    resizable: { handles: 'all' },
+    draggable: { handle: '.card-header' }
+  });
+
+  // helper to rerender by canvas ID
+  function renderById(id) {
+    if (id.startsWith('chartWeekly'))     return renderChart(chartWeekly, [], []); // already handled by fetchTasks
+    if (id.startsWith('chartWeekdays'))   return renderChart(chartWeekdays, [], []);
+    if (id.startsWith('chartPerPerson'))  return renderChart(chartPerPerson, [], []);
+    if (id.includes('taskmaster'))        return renderTaskmasterChart(id);
+  }
+
+  // Load saved layout, or leave initial three as-is
+  const saved = localStorage.getItem('analyticsLayout');
+  if (saved) {
+    grid.removeAll();
+    grid.load(JSON.parse(saved));
+    grid.engine.nodes.forEach(n => {
+      const canvas = n.el.querySelector('canvas');
+      if (canvas) {
+        // rerender each widget
+        if (canvas.id.startsWith('chartWeekly'))    renderWeeklyChart(canvas.id);
+        if (canvas.id.startsWith('chartWeekdays'))  renderWeekdaysChart(canvas.id);
+        if (canvas.id.startsWith('chartPerPerson')) renderPerPersonChart(canvas.id);
+        if (canvas.id.includes('taskmaster'))       renderTaskmasterChart(canvas.id);
+      }
+    });
+  }
+
+  // persist whenever layout changes
+  grid.on('change', () => {
+    localStorage.setItem('analyticsLayout', JSON.stringify(grid.save()));
+  });
+
+  // toggle edit mode
+  const editBtn     = document.getElementById('analyticsEditBtn');
+  const widgetSelect = document.getElementById('widgetSelect');
+  let editing = false;
+
+  editBtn.addEventListener('click', () => {
+    editing = !editing;
+    document.querySelector('.grid-stack').classList.toggle('editing', editing);
+    grid.setStatic(!editing);
+    widgetSelect.classList.toggle('d-none', !editing);
+    editBtn.textContent = editing ? 'Done Editing' : 'Edit Dashboard';
+  });
+
+  // add new widget
+  widgetSelect.addEventListener('change', () => {
+    const preset = widgetSelect.value;
+    if (!preset) return;
+
+    let header, renderFn;
+    switch (preset) {
+      case 'tasksWeekly':
+        header = 'Tasks Completed Per Week';    renderFn = renderWeeklyChart;     break;
+      case 'busiestWeekdays':
+        header = 'Busiest Weekdays';            renderFn = renderWeekdaysChart;   break;
+      case 'choresPerPerson':
+        header = 'Chores Per Person';           renderFn = renderPerPersonChart;  break;
+      case 'taskmaster':
+        header = 'Taskmaster This Month';       renderFn = renderTaskmasterChart; break;
+      default: return;
+    }
+
+    const id = `${preset}-${Date.now()}`;
+    const item = document.createElement('div');
+    item.classList.add('grid-stack-item');
+    item.setAttribute('gs-w', '2');
+    item.setAttribute('gs-h', '2');
+    item.innerHTML = `
+      <div class="grid-stack-item-content card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span>${header}</span>
+          <button class="btn btn-sm btn-outline-danger remove-widget">&times;</button>
+        </div>
+        <div class="card-body">
+          <canvas id="${id}"></canvas>
+        </div>
+      </div>`;
+
+    grid.addWidget(item);
+    renderFn(id);
+    widgetSelect.value = '';
+  });
+
+  // remove widget
+  document.querySelector('.grid-stack').addEventListener('click', e => {
+    if (e.target.classList.contains('remove-widget')) {
+      grid.removeWidget(e.target.closest('.grid-stack-item'));
+    }
+  });
+  // ==========================
+  // END: Analytics Dashboard GridStack integration
+  // ==========================
 });
 
 // Auto-refresh every 30 sec
