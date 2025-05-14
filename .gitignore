@@ -1,2 +1,5 @@
 # Ignore the generated data file
 /data.json
+
+# Ignore node_modules
+/node_modules
