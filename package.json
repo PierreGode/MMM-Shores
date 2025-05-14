@@ -13,7 +13,9 @@
     "url": "https://github.com/PierreGode/MMM-Chores"
   },
   "main": "MMM-Chores.js",
-  "scripts": {},
+  "scripts": {
+    "postinstall": "node -e \"if (!require('fs').existsSync('data.json')) { require('fs').writeFileSync('data.json', JSON.stringify({ tasks: [] }, null, 2)); }\""
+  },
   "author": "Pierre Gode",
   "license": "Apache-2.0",
   "dependencies": {
