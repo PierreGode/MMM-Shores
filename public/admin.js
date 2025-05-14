@@ -210,7 +210,6 @@ function renderTaskmasterChart(canvasId) {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
-  // Count per person
   const labels = peopleCache.map(p => p.name);
   const counts = peopleCache.map(p =>
     tasksCache.filter(t => {
@@ -357,44 +356,36 @@ document.addEventListener("DOMContentLoaded", () => {
   // ==========================
   const grid = GridStack.init({
     column: 6,
+    disableOneColumnMode: true,   // ← disable mobile single-column mode
+    mobileBreakpoint: 0,          // ← never switch to mobile mode
     float: false,
     cellHeight: 120,
     resizable: { handles: 'all' },
     draggable: { handle: '.card-header' }
   });
 
-  // helper to rerender by canvas ID
-  function renderById(id) {
-    if (id.startsWith('chartWeekly'))     return renderChart(chartWeekly, [], []); // already handled by fetchTasks
-    if (id.startsWith('chartWeekdays'))   return renderChart(chartWeekdays, [], []);
-    if (id.startsWith('chartPerPerson'))  return renderChart(chartPerPerson, [], []);
-    if (id.includes('taskmaster'))        return renderTaskmasterChart(id);
-  }
-
-  // Load saved layout, or leave initial three as-is
+  // Load saved layout
   const saved = localStorage.getItem('analyticsLayout');
   if (saved) {
     grid.removeAll();
     grid.load(JSON.parse(saved));
     grid.engine.nodes.forEach(n => {
       const canvas = n.el.querySelector('canvas');
-      if (canvas) {
-        // rerender each widget
-        if (canvas.id.startsWith('chartWeekly'))    renderWeeklyChart(canvas.id);
-        if (canvas.id.startsWith('chartWeekdays'))  renderWeekdaysChart(canvas.id);
-        if (canvas.id.startsWith('chartPerPerson')) renderPerPersonChart(canvas.id);
-        if (canvas.id.includes('taskmaster'))       renderTaskmasterChart(canvas.id);
-      }
+      if (!canvas) return;
+      if (canvas.id.startsWith('chartWeekly'))    renderWeeklyChart(canvas.id);
+      if (canvas.id.startsWith('chartWeekdays'))  renderWeekdaysChart(canvas.id);
+      if (canvas.id.startsWith('chartPerPerson')) renderPerPersonChart(canvas.id);
+      if (canvas.id.includes('taskmaster'))       renderTaskmasterChart(canvas.id);
     });
   }
 
-  // persist whenever layout changes
+  // Persist on layout change
   grid.on('change', () => {
     localStorage.setItem('analyticsLayout', JSON.stringify(grid.save()));
   });
 
-  // toggle edit mode
-  const editBtn     = document.getElementById('analyticsEditBtn');
+  // Edit-mode toggle
+  const editBtn      = document.getElementById('analyticsEditBtn');
   const widgetSelect = document.getElementById('widgetSelect');
   let editing = false;
 
@@ -406,7 +397,7 @@ document.addEventListener("DOMContentLoaded", () => {
     editBtn.textContent = editing ? 'Done Editing' : 'Edit Dashboard';
   });
 
-  // add new widget
+  // Add new widget
   widgetSelect.addEventListener('change', () => {
     const preset = widgetSelect.value;
     if (!preset) return;
@@ -414,14 +405,23 @@ document.addEventListener("DOMContentLoaded", () => {
     let header, renderFn;
     switch (preset) {
       case 'tasksWeekly':
-        header = 'Tasks Completed Per Week';    renderFn = renderWeeklyChart;     break;
+        header   = 'Tasks Completed Per Week';
+        renderFn = renderWeeklyChart;
+        break;
       case 'busiestWeekdays':
-        header = 'Busiest Weekdays';            renderFn = renderWeekdaysChart;   break;
+        header   = 'Busiest Weekdays';
+        renderFn = renderWeekdaysChart;
+        break;
       case 'choresPerPerson':
-        header = 'Chores Per Person';           renderFn = renderPerPersonChart;  break;
+        header   = 'Chores Per Person';
+        renderFn = renderPerPersonChart;
+        break;
       case 'taskmaster':
-        header = 'Taskmaster This Month';       renderFn = renderTaskmasterChart; break;
-      default: return;
+        header   = 'Taskmaster This Month';
+        renderFn = renderTaskmasterChart;
+        break;
+      default:
+        return;
     }
 
     const id = `${preset}-${Date.now()}`;
@@ -445,7 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
     widgetSelect.value = '';
   });
 
-  // remove widget
+  // Remove widget
   document.querySelector('.grid-stack').addEventListener('click', e => {
     if (e.target.classList.contains('remove-widget')) {
       grid.removeWidget(e.target.closest('.grid-stack-item'));
