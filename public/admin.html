@@ -5,13 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MMM-Chores Admin</title>
 
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
-
   <link href="admin.css" rel="stylesheet">
 </head>
 <body>
@@ -29,21 +25,17 @@
       <small class="opacity-75">Manage tasks, people & analytics</small>
     </div>
 
-    <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
+    <ul class="nav nav-tabs mb-3" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
-          Dashboard
-        </button>
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button">Dashboard</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
-          Analytics
-        </button>
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#analytics" type="button">Analytics</button>
       </li>
     </ul>
 
     <div class="tab-content">
-
+      <!-- Dashboard Tab -->
       <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
         <div class="row g-4">
           <div class="col-lg-4">
@@ -60,7 +52,6 @@
               </div>
             </div>
           </div>
-
           <div class="col-lg-8">
             <div class="card card-shadow h-100">
               <div class="card-header d-flex justify-content-between align-items-center">
@@ -91,50 +82,32 @@
         </div>
       </div>
 
+      <!-- Analytics Tab -->
       <div class="tab-pane fade" id="analytics" role="tabpanel">
-        <div class="row g-4">
-          <div class="col-md-6">
-            <div class="card card-shadow">
-              <div class="card-header">Tasks Completed Per Week</div>
-              <div class="card-body">
-                <canvas id="chartWeekly"></canvas>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="card card-shadow">
-              <div class="card-header">Busiest Weekdays</div>
-              <div class="card-body">
-                <canvas id="chartWeekdays"></canvas>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-12">
-            <div class="card card-shadow">
-              <div class="card-header">Chores Per Person</div>
-              <div class="card-body">
-                <canvas id="chartPerPerson"></canvas>
-              </div>
-            </div>
-          </div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0">Analytics</h5>
+          <select id="addChartSelect" class="form-select w-auto">
+            <option value="">Add Chart...</option>
+            <option value="weekly">Tasks Completed Per Week</option>
+            <option value="weekdays">Busiest Weekdays</option>
+            <option value="perPerson">Chores Per Person</option>
+            <option value="taskmaster">Taskmaster This Month</option>
+            <option value="lazyLegends">Lazy Legends</option>
+            <option value="speedDemons">Speed Demons</option>
+            <option value="weekendWarriors">Weekend Warriors</option>
+            <option value="slacker9000">Slacker Detector 9000</option>
+          </select>
         </div>
+        <div id="analyticsContainer" class="row g-3"></div>
       </div>
-
-    </div><!-- /.tab-content -->
-  </div><!-- /.container -->
+    </div>
+  </div>
 
   <footer class="text-center py-3 small text-muted">
     Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode
   </footer>
 
-
-  <script>
-    /* ... your existing theme toggle code ... */
-  </script>
-
-
   <script src="admin.js"></script>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
