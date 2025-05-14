@@ -32,6 +32,17 @@ let tasksCache = [];
 let chartInstances = {};
 let chartIdCounter = 0;
 
+const boardTitleMap = {
+  weekly: "Tasks Completed Per Week",
+  weekdays: "Busiest Weekdays",
+  perPerson: "Chores Per Person",
+  taskmaster: "Taskmaster This Month",
+  lazyLegends: "Lazy Legends",
+  speedDemons: "Speed Demons",
+  weekendWarriors: "Weekend Warriors",
+  slacker9000: "Slacker Detector 9000"
+};
+
 // ==========================
 // Fetch People & Tasks
 // ==========================
@@ -134,7 +145,7 @@ function renderTasks() {
 }
 
 // ==========================
-// Add/Remove People or Tasks
+// CRUD Handlers
 // ==========================
 document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
@@ -186,9 +197,8 @@ async function deleteTask(id) {
 }
 
 // ==========================
-// Analytics Board Persistence Helpers
+// Analytics Board Persistence
 // ==========================
-
 async function fetchSavedBoards() {
   try {
     const res = await fetch('/api/analyticsBoards');
@@ -223,17 +233,6 @@ function getCurrentBoardTypes() {
     }).filter(Boolean);
 }
 
-const boardTitleMap = {
-  weekly: "Tasks Completed Per Week",
-  weekdays: "Busiest Weekdays",
-  perPerson: "Chores Per Person",
-  taskmaster: "Taskmaster This Month",
-  lazyLegends: "Lazy Legends",
-  speedDemons: "Speed Demons",
-  weekendWarriors: "Weekend Warriors",
-  slacker9000: "Slacker Detector 9000"
-};
-
 // ==========================
 // Analytics Chart Handling
 // ==========================
@@ -245,8 +244,7 @@ document.getElementById("addChartSelect").addEventListener("change", function ()
 });
 
 function addChart(type) {
-  // Prevent duplicates
-  if (getCurrentBoardTypes().includes(type)) return;
+  if (getCurrentBoardTypes().includes(type)) return; // no duplicates
 
   const container = document.getElementById("analyticsContainer");
   const card = document.createElement("div");
@@ -256,7 +254,7 @@ function addChart(type) {
   card.innerHTML = `
     <div class="card card-shadow h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>${getChartTitle(type)}</span>
+        <span>${boardTitleMap[type]}</span>
         <button class="btn btn-sm btn-outline-danger remove-widget" title="Remove">&times;</button>
       </div>
       <div class="card-body"><canvas id="${cardId}"></canvas></div>
@@ -274,10 +272,6 @@ function addChart(type) {
     card.remove();
     saveBoards(getCurrentBoardTypes());
   });
-}
-
-function getChartTitle(type) {
-  return boardTitleMap[type] || "";
 }
 
 function renderChart(canvasId, type) {
@@ -446,10 +440,7 @@ function renderChart(canvasId, type) {
     }
 
     default:
-      data = {
-        labels: [],
-        datasets: []
-      };
+      data = { labels: [], datasets: [] };
       break;
   }
 
@@ -459,23 +450,13 @@ function renderChart(canvasId, type) {
 function updateAllCharts() {
   for (const [id, chart] of Object.entries(chartInstances)) {
     chart.destroy();
-    const title = chart.config.data.datasets[0]?.label || "";
-    let type = Object.entries(boardTitleMap).find(([key, val]) => title.includes(val))?.[0];
+    // Identify type by label
+    const label = chart.data.datasets[0]?.label || "";
+    let type = Object.entries(boardTitleMap).find(([key, val]) => label.includes(val))?.[0];
     if (!type) type = "weekly";
     chartInstances[id] = renderChart(id, type);
   }
 }
-
-const boardTitleMap = {
-  weekly: "Tasks Completed Per Week",
-  weekdays: "Busiest Weekdays",
-  perPerson: "Chores Per Person",
-  taskmaster: "Taskmaster This Month",
-  lazyLegends: "Lazy Legends",
-  speedDemons: "Speed Demons",
-  weekendWarriors: "Weekend Warriors",
-  slacker9000: "Slacker Detector 9000"
-};
 
 // ==========================
 // Initial Load
@@ -486,13 +467,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
-    savedBoards.forEach(type => {
-      if (!getCurrentBoardTypes().includes(type)) {
-        addChart(type);
-      }
-    });
+    savedBoards.forEach(type => addChart(type));
   }
 });
 
-// Auto-refresh every 30s
+// Auto-refresh every 30 seconds
 setInterval(fetchTasks, 30000);
