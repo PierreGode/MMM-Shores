@@ -1,239 +1,277 @@
-/* =======================================================================
- *  admin.js  –  MMM-Chores front-end
- *    • theme toggle
- *    • CRUD to /api
- *    • Chart.js analytics
- *    • GridStack editable dashboard (works on mobile)
+/* =====================================================================
+ *  admin.js  –  MMM-Chores 2025 edition
  * ===================================================================== */
 
-/* ---------------------------------------------------------------------
- *  1.  THEME TOGGLE
- * ------------------------------------------------------------------ */
-const root        = document.documentElement;
-const themeTgl    = document.getElementById("themeToggle");
-const themeIcon   = document.getElementById("themeIcon");
-const STORAGE_KEY = "mmm-chores-theme";
+/* --------------------------------------------------  THEME TOGGLE  --- */
+const root = document.documentElement;
+const themeTgl  = document.getElementById("themeToggle");
+const themeIcon = document.getElementById("themeIcon");
+const THEME_KEY = "mmm-chores-theme";
+const savedTheme = localStorage.getItem(THEME_KEY) || "light";
 
-const savedTheme  = localStorage.getItem(STORAGE_KEY) || "light";
 root.setAttribute("data-theme", savedTheme);
-themeTgl.checked  = savedTheme === "dark";
-setIcon(savedTheme);
+themeTgl.checked = savedTheme === "dark";
+setThemeIcon(savedTheme);
 
 themeTgl.addEventListener("change", () => {
-  const theme = themeTgl.checked ? "dark" : "light";
-  root.setAttribute("data-theme", theme);
-  localStorage.setItem(STORAGE_KEY, theme);
-  setIcon(theme);
+  const next = themeTgl.checked ? "dark" : "light";
+  root.setAttribute("data-theme", next);
+  localStorage.setItem(THEME_KEY, next);
+  setThemeIcon(next);
+  Chart.defaults.color = next === "dark" ? "#e9ecef" : "#212529";
 });
-function setIcon(theme) {
+function setThemeIcon(t) {
   themeIcon.className =
-    theme === "dark" ? "bi bi-moon-stars-fill" : "bi bi-brightness-high-fill";
+    t === "dark" ? "bi bi-moon-stars-fill" : "bi bi-brightness-high-fill";
 }
 
-/* ---------------------------------------------------------------------
- *  2.  DOM REFERENCES
- * ------------------------------------------------------------------ */
-const personForm = document.getElementById("personForm");
-const personList = document.getElementById("peopleList");
-const taskForm   = document.getElementById("taskForm");
-const taskList   = document.getElementById("taskList");
+/* -------------------------------------------  CHART GLOBAL DEFAULTS  --- */
+Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+Chart.defaults.color = savedTheme === "dark" ? "#e9ecef" : "#212529";
 
-/* ---------------------------------------------------------------------
- *  3.  STATE
- * ------------------------------------------------------------------ */
+/* --------------------------------------------------  DOM SHORTCUTS  --- */
+const qs   = s => document.querySelector(s);
+const qsa  = s => document.querySelectorAll(s);
+
+const personForm = qs("#personForm");
+const personList = qs("#peopleList");
+const taskForm   = qs("#taskForm");
+const taskList   = qs("#taskList");
+
+/* --------------------------------------------------  STATE / CACHE  --- */
 let peopleCache = [];
 let tasksCache  = [];
 
-let chartWeekly, chartWeekdays, chartPerPerson;   // default charts
+/* Chart instances for the 3 “built-in” widgets */
+let chartWeekly, chartWeekdays, chartPerPerson;
 
-/* ---------------------------------------------------------------------
- *  4.  HELPERS
- * ------------------------------------------------------------------ */
-function todayISO() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+/* Promise queue (avoid flooding the Pi) */
+let apiQueue = Promise.resolve();
+
+/* --------------------------------------------------  HELPER FNS  --- */
+const isoToday = () => new Date().toISOString().slice(0, 10);
+
+const debounce = (fn, ms = 300) => {
+  let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+};
+const raf      = fn => { let id; const cb=()=>{fn();id=null}; return ()=>{if(!id)id=requestAnimationFrame(cb);} };
+
+/* Standardised fetch with basic error banner */
+const errBanner = (() => {
+  const el = document.createElement("div");
+  el.className = "alert alert-danger text-center m-0 d-none";
+  document.body.prepend(el);
+  return {
+    show: msg => { el.textContent = msg; el.classList.remove("d-none"); },
+    hide: () => el.classList.add("d-none")
+  };
+})();
+async function api(path, opts = {}) {
+  try {
+    const res = await fetch(path, opts);
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    errBanner.hide();
+    return res.json().catch(() => ({}));
+  } catch (e) {
+    errBanner.show(`Connection error: ${e.message}`);
+    throw e;
+  }
 }
-/* quick stats builders used by multiple charts */
-function weeklyStats() {
-  const today = new Date();
+
+/* --------------------------------------------------  STATS HELPERS  --- */
+const statsWeekly = () => {
+  const now = new Date();
   const labels = [], counts = [];
   for (let i = 3; i >= 0; i--) {
-    const start = new Date(today);
-    start.setDate(today.getDate() - i*7);
-    labels.push(`${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,"0")}-${String(start.getDate()).padStart(2,"0")}`);
-
-    const c = tasksCache.filter(t => {
-      if (!t.done) return false;
-      const d = new Date(t.date);
-      const diff = Math.floor((today-d)/(864e5));
-      return diff >= i*7 && diff < (i+1)*7;
+    const d = new Date(now); d.setDate(now.getDate() - i * 7);
+    labels.push(d.toLocaleDateString(undefined, { month:"short", day:"numeric" }));
+    const c = tasksCache.filter(t=>{
+      if(!t.done) return false;
+      const td = new Date(t.date);
+      const delta = Math.floor((now-td)/864e5);
+      return delta >= i*7 && delta < (i+1)*7;
     }).length;
     counts.push(c);
   }
   return { labels, counts };
-}
-function weekdayStats() {
+};
+const statsWeekday = () => {
   const labels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const counts = [0,0,0,0,0,0,0];
+  const counts = new Array(7).fill(0);
   tasksCache.forEach(t => counts[new Date(t.date).getDay()]++);
   return { labels, counts };
-}
-function perPersonStats() {
-  const labels = peopleCache.map(p => p.name);
-  const counts = peopleCache.map(p =>
-    tasksCache.filter(t => t.assignedTo === p.id).length
+};
+const statsPerPerson = () => {
+  const labels = peopleCache.map(p=>p.name);
+  const counts = peopleCache.map(p=>
+    tasksCache.filter(t=>t.assignedTo===p.id).length
   );
   return { labels, counts };
+};
+
+/* --------------------------------------------------  CHART BUILDERS  --- */
+const buildWeekly = id => new Chart(qs(`#${id}`), {
+  type:"bar",
+  data:{labels:[],datasets:[{label:"Completed",data:[],backgroundColor:"rgba(75,192,192,.5)",borderColor:"rgba(75,192,192,1)",borderWidth:1}]},
+  options:{scales:{y:{beginAtZero:true}}}
+});
+const buildWeekdays = id => new Chart(qs(`#${id}`), {
+  type:"pie",
+  data:{labels:[],datasets:[{data:[],backgroundColor:["#FF6384","#36A2EB","#FFCE56","#4BC0C0","#9966FF","#FF9F40","#C9CBCF"]}]}
+});
+const buildPerPerson = id => new Chart(qs(`#${id}`), {
+  type:"bar",
+  data:{labels:[],datasets:[{label:"Assigned",data:[],backgroundColor:"rgba(153,102,255,.5)",borderColor:"rgba(153,102,255,1)",borderWidth:1}]},
+  options:{scales:{y:{beginAtZero:true}}}
+});
+const buildTaskmaster = id => new Chart(qs(`#${id}`), {
+  type:"bar",
+  data:{labels:[],datasets:[{label:"Done this month",data:[],backgroundColor:"rgba(255,159,64,.5)",borderColor:"rgba(255,159,64,1)",borderWidth:1}]},
+  options:{scales:{y:{beginAtZero:true}}}
+});
+
+/* Immutable update helper */
+function updateChart(chart, labels, data) {
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
 }
 
-/* ---------------------------------------------------------------------
- *  5.  CHART RENDERERS (accept any canvas ID)
- * ------------------------------------------------------------------ */
-function renderWeeklyChart(id){
-  const {labels,counts}=weeklyStats();
-  return new Chart(document.getElementById(id),{
-    type:"bar",
-    data:{labels,datasets:[{label:"Completed",data:counts,
-      backgroundColor:"rgba(75,192,192,.5)",borderColor:"rgba(75,192,192,1)",borderWidth:1}]},
-    options:{scales:{y:{beginAtZero:true}}}
-  });
+/* --------------------------------------------------  FETCH & RENDER  --- */
+async function loadPeople() {
+  peopleCache = await api("/api/people");
+  renderPeople();
 }
-function renderWeekdaysChart(id){
-  const {labels,counts}=weekdayStats();
-  return new Chart(document.getElementById(id),{
-    type:"pie",
-    data:{labels,datasets:[{data:counts,backgroundColor:[
-      "#FF6384","#36A2EB","#FFCE56","#4BC0C0","#9966FF","#FF9F40","#C9CBCF"]}]}
-  });
-}
-function renderPerPersonChart(id){
-  const {labels,counts}=perPersonStats();
-  return new Chart(document.getElementById(id),{
-    type:"bar",
-    data:{labels,datasets:[{label:"Assigned Tasks",data:counts,
-      backgroundColor:"rgba(153,102,255,.5)",borderColor:"rgba(153,102,255,1)",borderWidth:1}]},
-    options:{scales:{y:{beginAtZero:true}}}
-  });
-}
-function renderTaskmasterChart(id){
-  const now=new Date(),Y=now.getFullYear(),M=now.getMonth();
-  const labels=peopleCache.map(p=>p.name);
-  const counts=peopleCache.map(p=>
-    tasksCache.filter(t=>{
-      if(!t.done)return false;
-      const d=new Date(t.date);
-      return d.getFullYear()===Y&&d.getMonth()===M&&t.assignedTo===p.id;
-    }).length);
-  return new Chart(document.getElementById(id),{
-    type:"bar",
-    data:{labels,datasets:[{label:"Tasks Done This Month",data:counts,
-      backgroundColor:"rgba(255,159,64,.5)",borderColor:"rgba(255,159,64,1)",borderWidth:1}]},
-    options:{scales:{y:{beginAtZero:true}}}
-  });
+async function loadTasks() {
+  tasksCache = await api("/api/tasks");
+  renderTasks();
+  refreshStaticCharts();
 }
 
-/* ---------------------------------------------------------------------
- *  6.  FETCH & CRUD
- * ------------------------------------------------------------------ */
-async function fetchPeople(){peopleCache=await (await fetch("/api/people")).json();renderPeople();}
-async function fetchTasks (){tasksCache =await (await fetch("/api/tasks")).json();renderTasks();refreshStaticCharts();}
-
-/* ------- render lists ------------------------------------------------ */
-function renderPeople(){
-  personList.innerHTML="";
-  if(!peopleCache.length){
-    const li=document.createElement("li");
-    li.className="list-group-item text-center text-muted";
-    li.textContent="No people added";personList.appendChild(li);return;
+/* ---------  PERSON LIST  -------- */
+function renderPeople() {
+  personList.innerHTML = "";
+  if (!peopleCache.length) {
+    const li = `<li class="list-group-item text-center text-muted">No people added</li>`;
+    personList.insertAdjacentHTML("beforeend", li);
+    return;
   }
-  peopleCache.forEach(p=>{
-    const li=document.createElement("li");
-    li.className="list-group-item d-flex justify-content-between align-items-center";
-    li.textContent=p.name;
-    const del=document.createElement("button");
-    del.className="btn btn-sm btn-outline-danger";del.innerHTML='<i class="bi bi-trash"></i>';
-    del.addEventListener("click",()=>deletePerson(p.id));
-    li.appendChild(del);personList.appendChild(li);
+  peopleCache.forEach(p => {
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.textContent = p.name;
+    const del = document.createElement("button");
+    del.className = "btn btn-sm btn-outline-danger"; del.innerHTML = '<i class="bi bi-trash"></i>';
+    del.onclick = () => removePerson(p.id);
+    li.appendChild(del);
+    personList.appendChild(li);
   });
 }
-function renderTasks(){
-  taskList.innerHTML="";
-  if(!tasksCache.length){
-    const li=document.createElement("li");
-    li.className="list-group-item text-center text-muted";
-    li.textContent="No tasks added";taskList.appendChild(li);return;
+
+/* ---------  TASK LIST + FILTER  -------- */
+function renderTasks() {
+  const filter = qs("#taskFilter")?.value?.toLowerCase() ?? "";
+  taskList.innerHTML = "";
+  const visible = tasksCache.filter(t => t.name.toLowerCase().includes(filter));
+  if (!visible.length) {
+    taskList.insertAdjacentHTML("beforeend",
+      `<li class="list-group-item text-center text-muted">No tasks to show</li>`);
+    updateTaskBadges();
+    return;
   }
-  tasksCache.forEach(t=>{
-    const li=document.createElement("li");
-    li.className="list-group-item d-flex justify-content-between align-items-center";
-    const left=document.createElement("div");
-    left.className="d-flex align-items-center";
-    const chk=document.createElement("input");
-    chk.type="checkbox";chk.className="form-check-input me-3";chk.checked=t.done;
-    chk.addEventListener("change",()=>updateTask(t.id,{done:chk.checked}));
-    const span=document.createElement("span");
-    span.innerHTML=`<strong>${t.name}</strong> <small class="text-muted">(${t.date})</small>`;
-    if(t.done)span.classList.add("task-done");
+  visible.forEach(t => {
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+
+    const left = document.createElement("div");
+    left.className = "d-flex align-items-center";
+
+    const chk   = document.createElement("input");
+    chk.type="checkbox"; chk.className="form-check-input me-3"; chk.checked=t.done;
+    chk.onchange = () => patchTask(t.id,{done:chk.checked});
+
+    const span  = document.createElement("span");
+    span.innerHTML = `<strong>${t.name}</strong> <small class="text-muted">(${t.date})</small>`;
+    if (t.done) span.classList.add("task-done");
     left.append(chk,span);
 
-    const sel=document.createElement("select");
+    const sel   = document.createElement("select");
     sel.className="form-select mx-3";
     sel.add(new Option("Unassigned",""));
     peopleCache.forEach(p=>{
-      const o=new Option(p.name,p.id);
-      if(t.assignedTo===p.id)o.selected=true;
-      sel.add(o);
+      const opt = new Option(p.name,p.id);
+      if(t.assignedTo===p.id) opt.selected=true;
+      sel.add(opt);
     });
-    sel.addEventListener("change",()=>{
-      updateTask(t.id,{assignedTo:sel.value?parseInt(sel.value,10):null});
-    });
+    sel.onchange = () => patchTask(t.id,{assignedTo: sel.value ? Number(sel.value):null});
 
-    const del=document.createElement("button");
-    del.className="btn btn-sm btn-outline-danger";del.innerHTML='<i class="bi bi-trash"></i>';
-    del.addEventListener("click",()=>deleteTask(t.id));
+    const del   = document.createElement("button");
+    del.className="btn btn-sm btn-outline-danger"; del.innerHTML='<i class="bi bi-trash"></i>';
+    del.onclick = () => removeTask(t.id);
 
     li.append(left,sel,del);
     taskList.appendChild(li);
   });
+  updateTaskBadges();
+}
+/* Badges in header */
+function updateTaskBadges() {
+  const total = tasksCache.length;
+  const done  = tasksCache.filter(t=>t.done).length;
+  qs(".badge .bi-check2-square").nextSibling.textContent = ` ${done} `;
+  qs(".badge .bi-square").nextSibling.textContent        = ` ${total - done} `;
 }
 
-/* ------- mutations --------------------------------------------------- */
-personForm.addEventListener("submit",async e=>{
-  e.preventDefault();
-  const name=document.getElementById("personName").value.trim();
-  if(!name)return;
-  await fetch("/api/people",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name})});
-  personForm.reset();await fetchPeople();await fetchTasks();
-});
-taskForm.addEventListener("submit",async e=>{
-  e.preventDefault();
-  const name=document.getElementById("taskName").value.trim();
-  let date=document.getElementById("taskDate").value || todayISO();
-  if(!name)return;
-  await fetch("/api/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,date})});
-  taskForm.reset();await fetchTasks();
-});
-async function updateTask(id,changes){await fetch(`/api/tasks/${id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(changes)});await fetchTasks();}
-async function deletePerson(id){await fetch(`/api/people/${id}`,{method:"DELETE"});await fetchPeople();await fetchTasks();}
-async function deleteTask  (id){await fetch(`/api/tasks/${id}`,{method:"DELETE"});await fetchTasks();}
+/* --------------------------------------------------  CRUD HELPERS  --- */
+function queue(fn){ apiQueue = apiQueue.then(fn).catch(()=>{}); }
+function addPerson(name)  { queue(()=>api("/api/people",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name})})) .then(loadPeople);}
+function removePerson(id) { queue(()=>api(`/api/people/${id}`,{method:"DELETE"})) .then(()=>{peopleCache=peopleCache.filter(p=>p.id!==id);renderPeople();renderTasks();});}
+function addTask(name,date){ queue(()=>api("/api/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name,date})})) .then(loadTasks);}
+function patchTask(id,ch) { queue(()=>api(`/api/tasks/${id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(ch)})) .then(loadTasks);}
+function removeTask(id)   { queue(()=>api(`/api/tasks/${id}`,{method:"DELETE"})) .then(loadTasks);}
 
-/* ---------------------------------------------------------------------
- *  7.  INITIALISE CHARTS + GRIDSTACK
- * ------------------------------------------------------------------ */
+/* --------------------------------------------------  FORM HANDLERS  --- */
+personForm.onsubmit = e => { e.preventDefault();
+  const name = qs("#personName").value.trim();
+  if(name) addPerson(name);
+  personForm.reset();
+};
+taskForm.onsubmit = e => { e.preventDefault();
+  const name = qs("#taskName").value.trim();
+  const date = qs("#taskDate").value || isoToday();
+  if(name) addTask(name,date);
+  taskForm.reset();
+};
+
+/* Live task filter input */
+const filterBox = document.createElement("input");
+filterBox.type="search"; filterBox.className="form-control form-control-sm";
+filterBox.placeholder="Filter…"; filterBox.id="taskFilter";
+filterBox.oninput = debounce(renderTasks,150);
+qs(".card-header span").after(filterBox);
+
+/* --------------------------------------------------  CHART REFRESH  --- */
+function refreshStaticCharts() {
+  const w = statsWeekly();   updateChart(chartWeekly,   w.labels,w.counts);
+  const d = statsWeekday();  updateChart(chartWeekdays, d.labels,d.counts);
+  const p = statsPerPerson();updateChart(chartPerPerson,p.labels,p.counts);
+}
+
+/* --------------------------------------------------  GRIDSTACK  --- */
 document.addEventListener("DOMContentLoaded",()=>{
 
-  /* ----- default (static) charts ------ */
-  chartWeekly    = renderWeeklyChart   ("chartWeekly");
-  chartWeekdays  = renderWeekdaysChart ("chartWeekdays");
-  chartPerPerson = renderPerPersonChart("chartPerPerson");
+  /* Build the three default charts now that canvases exist */
+  chartWeekly    = buildWeekly   ("chartWeekly");
+  chartWeekdays  = buildWeekdays ("chartWeekdays");
+  chartPerPerson = buildPerPerson("chartPerPerson");
 
-  /* ----- fetch initial data ----------- */
-  fetchPeople().then(fetchTasks);
+  /* initial data fetch */
+  loadPeople().then(loadTasks);
 
-  /* ----- GRIDSTACK -------------------- */
-  const MAX_COLS=6, MIN_CELL_W=160;
-  const grid=GridStack.init({
-    column:MAX_COLS,
+  /* Grid init */
+  const MAX_COL=6, MINW=160;
+  const grid = GridStack.init({
+    column:MAX_COL,
     disableOneColumnMode:true,
     mobileBreakpoint:0,
     float:false,
@@ -242,100 +280,116 @@ document.addEventListener("DOMContentLoaded",()=>{
     draggable:{handle:".card-header"}
   });
 
-  /* load saved layout */
-  const saved=localStorage.getItem("analyticsLayout");
-  if(saved)grid.load(JSON.parse(saved));
+  /* Restore layout */
+  const LAYOUT_KEY="analyticsLayout";
+  try{ const saved=localStorage.getItem(LAYOUT_KEY); if(saved) grid.load(JSON.parse(saved)); }catch{}
 
-  /* render each widget’s chart */
+  /* Render charts for restored widgets */
   grid.engine.nodes.forEach(n=>{
-    const c=n.el.querySelector("canvas");
-    if(!c)return;
-    if(c.id.startsWith("chartWeekly"))   renderWeeklyChart(c.id);
-    if(c.id.startsWith("chartWeekdays")) renderWeekdaysChart(c.id);
-    if(c.id.startsWith("chartPerPerson"))renderPerPersonChart(c.id);
-    if(c.id.includes("taskmaster"))      renderTaskmasterChart(c.id);
+    const c=n.el.querySelector("canvas"); if(!c) return;
+    if(c.id.startsWith("chartWeekly"))     buildWeekly   (c.id);
+    else if(c.id.startsWith("chartWeekdays")) buildWeekdays(c.id);
+    else if(c.id.startsWith("chartPerPerson"))buildPerPerson(c.id);
+    else if(c.id.includes("taskmaster"))   buildTaskmaster(c.id);
   });
 
-  grid.on("change",()=>localStorage.setItem("analyticsLayout",JSON.stringify(grid.save())));
+  /* Responsive column function */
+  const calcCols = ()=>Math.min(MAX_COL,Math.max(2,Math.floor(grid.el.getBoundingClientRect().width/MINW)));
+  const applyCols = ()=>{ const c=calcCols(); if(c!==grid.getColumn()) grid.column(c,"moveScale"); };
 
-  /* ---------- responsive columns ------------ */
-  function currentCols(){return grid.getColumn?grid.getColumn():grid.opts.column;}
-  function calcCols(){
-    const w=grid.el.getBoundingClientRect().width;
-    return Math.min(MAX_COLS,Math.max(2,Math.floor(w/MIN_CELL_W)));
-  }
-  function applyResponsiveCols(){
-    const cols=calcCols();
-    if(cols!==currentCols())grid.column(cols,"moveScale");
-  }
-  applyResponsiveCols();
-  window.addEventListener("resize",applyResponsiveCols);
+  window.addEventListener("resize", raf(applyCols));
+  qs('button[data-bs-target="#analytics"]')
+    .addEventListener("shown.bs.tab", applyCols);
 
-  /* ▶ TAB-SHOWN FIX — recalc when Analytics tab is first displayed */
-  document.querySelector('button[data-bs-target="#analytics"]')
-          .addEventListener("shown.bs.tab",applyResponsiveCols);
+  /* Debounced persistent save */
+  const saveLayout = debounce(()=>localStorage.setItem(LAYOUT_KEY,JSON.stringify(grid.save())),500);
+  grid.on("change", saveLayout);
 
-  /* ---------- edit mode + add/remove ---------- */
-  const editBtn=document.getElementById("analyticsEditBtn");
-  const widgetSel=document.getElementById("widgetSelect");
+  /* ----------  EDIT-MODE UI  ---------- */
+  const editBtn   = qs("#analyticsEditBtn");
+  const widgetSel = qs("#widgetSelect");
+  const toolsBar  = document.createElement("div");
+  toolsBar.className="d-inline-flex gap-2 ms-2 d-none";
+
+  /* Reset layout */
+  const btnReset = Object.assign(document.createElement("button"),{
+    className:"btn btn-sm btn-outline-secondary",textContent:"Reset"
+  });
+  btnReset.onclick = ()=>{ if(confirm("Reset dashboard layout?")){localStorage.removeItem(LAYOUT_KEY);location.reload();}};
+  /* Export layout */
+  const btnExport = Object.assign(document.createElement("button"),{
+    className:"btn btn-sm btn-outline-secondary",textContent:"Export"
+  });
+  btnExport.onclick = ()=>{ navigator.clipboard.writeText(JSON.stringify(grid.save(),null,2)); alert("Layout JSON copied to clipboard!");};
+  /* Import layout */
+  const btnImport = Object.assign(document.createElement("button"),{
+    className:"btn btn-sm btn-outline-secondary",textContent:"Import"
+  });
+  btnImport.onclick = async ()=>{
+    const json = prompt("Paste layout JSON:");
+    try{ if(json){ localStorage.setItem(LAYOUT_KEY,json); location.reload(); }}catch(e){alert("Invalid JSON");}
+  };
+  /* Screenshot */
+  const btnShot = Object.assign(document.createElement("button"),{
+    className:"btn btn-sm btn-outline-secondary",innerHTML:'<i class="bi bi-camera"></i>'
+  });
+  btnShot.onclick = async () => {
+    const {default:html2canvas}=await import("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm");
+    const canvas = await html2canvas(grid.el,{backgroundColor:null,scrollY:-window.scrollY});
+    const link=document.createElement("a");
+    link.download="dashboard.png";
+    link.href=canvas.toDataURL("image/png");
+    link.click();
+  };
+
+  toolsBar.append(btnReset,btnExport,btnImport,btnShot);
+  editBtn.after(toolsBar);
+
   let editing=false;
-
-  editBtn.addEventListener("click",()=>{
+  editBtn.onclick = ()=>{
     editing=!editing;
     grid.el.classList.toggle("editing",editing);
     grid.setStatic(!editing);
     widgetSel.classList.toggle("d-none",!editing);
-    editBtn.textContent=editing?"Done Editing":"Edit Dashboard";
-  });
+    toolsBar.classList.toggle("d-none",!editing);
+    editBtn.textContent = editing ? "Done" : "Edit Dashboard";
+  };
 
-  widgetSel.addEventListener("change",()=>{
-    const preset=widgetSel.value;if(!preset)return;
-    let header,fn;
-    switch(preset){
-      case"tasksWeekly":     header="Tasks Completed Per Week";fn=renderWeeklyChart;break;
-      case"busiestWeekdays": header="Busiest Weekdays";        fn=renderWeekdaysChart;break;
-      case"choresPerPerson": header="Chores Per Person";       fn=renderPerPersonChart;break;
-      case"taskmaster":      header="Taskmaster This Month";   fn=renderTaskmasterChart;break;
-      default:return;
-    }
-    const id=`${preset}-${Date.now()}`;
-    const item=document.createElement("div");
-    item.className="grid-stack-item";
-    item.setAttribute("gs-w","2");item.setAttribute("gs-h","2");
-    item.innerHTML=`
-      <div class="grid-stack-item-content card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <span>${header}</span>
-          <button class="btn btn-sm btn-outline-danger remove-widget">&times;</button>
-        </div>
-        <div class="card-body"><canvas id="${id}"></canvas></div>
-      </div>`;
-    grid.addWidget(item); fn(id);
+  /* Add widget */
+  widgetSel.onchange = ()=>{
+    const val = widgetSel.value; if(!val) return;
+    const map = {
+      tasksWeekly   : ["Tasks Completed Per Week", buildWeekly],
+      busiestWeekdays:["Busiest Weekdays",          buildWeekdays],
+      choresPerPerson:["Chores Per Person",         buildPerPerson],
+      taskmaster     :["Taskmaster This Month",     buildTaskmaster]
+    };
+    const [title,builder] = map[val] || [];
+    if(!title) return;
+    const id = `${val}-${Date.now()}`;
+    const item = document.createElement("div");
+    item.className="grid-stack-item"; item.setAttribute("gs-w","2"); item.setAttribute("gs-h","2");
+    item.innerHTML=`<div class="grid-stack-item-content card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>${title}</span>
+        <button class="btn btn-sm btn-outline-danger remove-widget">&times;</button>
+      </div>
+      <div class="card-body"><canvas id="${id}"></canvas></div>
+    </div>`;
+    grid.addWidget(item);
+    builder(id);
     widgetSel.value="";
-  });
+    saveLayout();
+  };
 
+  /* Remove widget */
   grid.el.addEventListener("click",e=>{
     if(e.target.classList.contains("remove-widget")){
-      grid.removeWidget(e.target.closest(".grid-stack-item"));
+      grid.removeWidget(e.target.closest(".grid-stack-item")); saveLayout();
     }
   });
+
 });
 
-/* ---------------------------------------------------------------------
- *  8.  PERIODIC TASK REFRESH
- * ------------------------------------------------------------------ */
-setInterval(fetchTasks,30_000);
-
-/* ---------------------------------------------------------------------
- *  9.  UPDATE STATIC CHARTS WHEN DATA REFRESHES
- * ------------------------------------------------------------------ */
-function refreshStaticCharts(){
-  const w=weeklyStats();
-  chartWeekly.data.labels=w.labels;chartWeekly.data.datasets[0].data=w.counts;chartWeekly.update();
-
-  const d=weekdayStats();
-  chartWeekdays.data.labels=d.labels;chartWeekdays.data.datasets[0].data=d.counts;chartWeekdays.update();
-
-  const p=perPersonStats();
-  chartPerPerson.data.labels=p.labels;chartPerPerson.data.datasets[0].data=p.counts;chartPerPerson.update();
-}
+/* --------------------------------------------------  AUTO-REFRESH  --- */
+setInterval(loadTasks, 30_000);
