@@ -20,6 +20,7 @@ Data is stored in data.json to make the data persistent between restarts.
   {
     module: "MMM-Chores",
     position: "top_left",
+    header: "Chores",
     config: {
       updateInterval: 60 * 1000,
       adminPort: 5003,
