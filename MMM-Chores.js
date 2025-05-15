@@ -4,7 +4,8 @@ Module.register("MMM-Chores", {
     updateInterval: 60 * 1000,   // update every minute
     adminPort: 5003,             // admin page port
     showDays: 1,                 // how many days from today to show (1 = today only)
-    showPast: false              // whether to include unfinished tasks from past days
+    showPast: false,             // whether to include unfinished tasks from past days
+    hideYear: false              // hide year in date
   },
 
   start() {
@@ -64,6 +65,19 @@ Module.register("MMM-Chores", {
     return p ? p.name : "";
   },
 
+  // Gör en PATCH-förfrågan för att toggla task.done
+  async toggleDone(task) {
+    try {
+      await fetch(`/api/tasks/${task.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: !task.done })
+      });
+    } catch (e) {
+      Log && Log.error ? Log.error(e) : console.error(e);
+    }
+  },
+
   getDom() {
     const wrapper = document.createElement("div");
 
@@ -92,14 +106,27 @@ Module.register("MMM-Chores", {
       const li = document.createElement("li");
       li.className = "small";
 
-      // Checkbox indicator
+      // Emoji-indikator (klickbar för att toggla!)
       const cb = document.createElement("span");
       cb.innerHTML = task.done ? "✅" : "⬜";
       cb.style.marginRight = "8px";
+      cb.style.cursor = "pointer";
+      cb.title = "Klicka för att markera som klar/inte klar";
+      cb.addEventListener("click", () => {
+        this.toggleDone(task);
+      });
       li.appendChild(cb);
 
-      // Task text
-      const text = document.createTextNode(`${task.name} (${task.date})`);
+      // Datumformattering (med/utan år)
+      let dateText;
+      if (this.config.hideYear) {
+        const [yyyy, mm, dd] = task.date.split("-");
+        dateText = `${mm}-${dd}`;
+      } else {
+        dateText = task.date;
+      }
+
+      const text = document.createTextNode(`${task.name} (${dateText})`);
       li.appendChild(text);
 
       // Assigned person

@@ -111,7 +111,35 @@ function renderTasks() {
     chk.type = "checkbox";
     chk.checked = task.done;
     chk.className = "form-check-input me-3";
-    chk.addEventListener("change", () => updateTask(task.id, { done: chk.checked }));
+    chk.addEventListener("change", async () => {
+      // Skapa uppdaterings-objektet
+      const updateObj = { done: chk.checked };
+
+      // Hämta tid (nu)
+      const now = new Date();
+      const iso = now.toISOString();
+
+      // Kompakt stämpel (C/FMMDDHHmm)
+      const pad = n => n.toString().padStart(2, "0");
+      const stamp = (prefix) => (
+        prefix +
+        pad(now.getMonth() + 1) +
+        pad(now.getDate()) +
+        pad(now.getHours()) +
+        pad(now.getMinutes())
+      );
+
+      if (chk.checked) {
+        // Sätter finish-datum
+        updateObj.finished = iso;
+        updateObj.finishedShort = stamp("F");
+      } else {
+        // Tar bort finish-datum
+        updateObj.finished = null;
+        updateObj.finishedShort = null;
+      }
+      await updateTask(task.id, updateObj);
+    });
 
     const span = document.createElement("span");
     span.innerHTML = `<strong>${task.name}</strong> <small class="text-muted">(${task.date})</small>`;
@@ -130,7 +158,23 @@ function renderTasks() {
     });
     select.addEventListener("change", () => {
       const val = select.value ? parseInt(select.value) : null;
-      updateTask(task.id, { assignedTo: val });
+      // Om ansvarig ändras, sätt assignedDate och assignedDateShort
+      const updateObj = { assignedTo: val };
+      if (val !== task.assignedTo) {
+        const now = new Date();
+        const iso = now.toISOString();
+        const pad = n => n.toString().padStart(2, "0");
+        const stamp = (prefix) => (
+          prefix +
+          pad(now.getMonth() + 1) +
+          pad(now.getDate()) +
+          pad(now.getHours()) +
+          pad(now.getMinutes())
+        );
+        updateObj.assignedDate = iso;
+        updateObj.assignedDateShort = stamp("A");
+      }
+      updateTask(task.id, updateObj);
     });
 
     const del = document.createElement("button");
@@ -166,16 +210,38 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   let date = document.getElementById("taskDate").value;
   if (!name) return;
   if (!date) date = new Date().toISOString().split("T")[0];
+
+  // Sätt både ISO och kompakt stämpel för creation
+  const now = new Date();
+  const iso = now.toISOString();
+  const pad = n => n.toString().padStart(2, "0");
+  const stamp = (prefix) => (
+    prefix +
+    pad(now.getMonth() + 1) +
+    pad(now.getDate()) +
+    pad(now.getHours()) +
+    pad(now.getMinutes())
+  );
+
   await fetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, date })
+    body: JSON.stringify({
+      name,
+      date,
+      created: iso,
+      createdShort: stamp("C")
+    })
   });
   e.target.reset();
   await fetchTasks();
 });
 
 async function updateTask(id, changes) {
+  // Rensa bort fält med null (så att backend tar bort dem)
+  Object.keys(changes).forEach(key => {
+    if (changes[key] === null) changes[key] = undefined;
+  });
   await fetch(`/api/tasks/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -379,9 +445,9 @@ function renderChart(canvasId, type) {
       const labels = peopleCache.map(p => p.name);
       const avgDays = peopleCache.map(p => {
         const times = tasksCache
-          .filter(t => t.assignedTo === p.id && t.done && t.date && t.assignedDate)
+          .filter(t => t.assignedTo === p.id && t.done && t.finished && t.assignedDate)
           .map(t => {
-            const dDone = new Date(t.date);
+            const dDone = new Date(t.finished);
             const dAssigned = new Date(t.assignedDate);
             return (dDone - dAssigned) / (1000*60*60*24);
           });
@@ -463,35 +529,8 @@ function getChartData(type) {
   // replicate the data building logic from renderChart but return data only (no new Chart)
   let data = { labels: [], datasets: [] };
 
-  switch (type) {
-    case "weekly": {
-      const today = new Date();
-      const labels = [];
-      const counts = [];
-      for (let i = 3; i >= 0; i--) {
-        const d = new Date(today);
-        d.setDate(today.getDate() - i * 7);
-        labels.push(d.toISOString().split("T")[0]);
-        const c = tasksCache.filter(t => {
-          const td = new Date(t.date);
-          return t.done && ((today - td) / 86400000) >= i * 7 && ((today - td) / 86400000) < (i + 1) * 7;
-        }).length;
-        counts.push(c);
-      }
-      data = {
-        labels,
-        datasets: [{
-          label: "Completed",
-          data: counts,
-          backgroundColor: "rgba(75,192,192,0.5)"
-        }]
-      };
-      break;
-    }
-    // Add other cases exactly like renderChart’s switch, just building and returning data
-    // For brevity, you can copy all cases from renderChart here but only return data
-    // For example, "weekdays", "perPerson", etc.
-  }
+  // ... Fyll på med samtliga cases som i renderChart om du vill ha live-uppdatering på all statistik.
+  // Annars används alltid den senaste datan i renderChart direkt.
 
   return data;
 }
@@ -509,8 +548,4 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// Refresh tasks and update charts every 30 seconds without destroying charts
-setInterval(async () => {
-  await fetchTasks();
-  updateAllCharts();
-}, 30000);
+// Refresh tasks and update charts every
