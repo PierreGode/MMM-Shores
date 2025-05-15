@@ -4,7 +4,8 @@ Module.register("MMM-Chores", {
     updateInterval: 60 * 1000,   // update every minute
     adminPort: 5003,             // admin page port
     showDays: 1,                 // how many days from today to show (1 = today only)
-    showPast: false              // whether to include unfinished tasks from past days
+    showPast: false,             // whether to include unfinished tasks from past days
+    hideYear: false              // NEW: hide year in task date
   },
 
   start() {
@@ -98,8 +99,17 @@ Module.register("MMM-Chores", {
       cb.style.marginRight = "8px";
       li.appendChild(cb);
 
-      // Task text
-      const text = document.createTextNode(`${task.name} (${task.date})`);
+      // Task text (date formatting with/without year)
+      let dateText;
+      if (this.config.hideYear) {
+        // Visa bara MM-DD
+        const [yyyy, mm, dd] = task.date.split("-");
+        dateText = `${mm}-${dd}`;
+      } else {
+        // Visa YYYY-MM-DD
+        dateText = task.date;
+      }
+      const text = document.createTextNode(`${task.name} (${dateText})`);
       li.appendChild(text);
 
       // Assigned person
