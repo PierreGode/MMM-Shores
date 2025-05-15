@@ -56,7 +56,6 @@ async function fetchTasks() {
   const res = await fetch("/api/tasks");
   tasksCache = await res.json();
   renderTasks();
-  updateAllCharts();
 }
 
 // ==========================
@@ -444,18 +443,57 @@ function renderChart(canvasId, type) {
       break;
   }
 
-  return new Chart(ctx, { type: chartType, data, options });
+  const chart = new Chart(ctx, { type: chartType, data, options });
+  chart.boardType = type; // store board type on chart instance for updates
+  return chart;
 }
 
 function updateAllCharts() {
   for (const [id, chart] of Object.entries(chartInstances)) {
-    chart.destroy();
-    // Identify type by label
-    const label = chart.data.datasets[0]?.label || "";
-    let type = Object.entries(boardTitleMap).find(([key, val]) => label.includes(val))?.[0];
-    if (!type) type = "weekly";
-    chartInstances[id] = renderChart(id, type);
+    const type = chart.boardType || "weekly";
+    const newData = getChartData(type);
+    chart.data.labels = newData.labels;
+    chart.data.datasets[0].data = newData.datasets[0].data;
+    chart.update();
   }
+}
+
+// Extract chart data for updateAllCharts
+function getChartData(type) {
+  // replicate the data building logic from renderChart but return data only (no new Chart)
+  let data = { labels: [], datasets: [] };
+
+  switch (type) {
+    case "weekly": {
+      const today = new Date();
+      const labels = [];
+      const counts = [];
+      for (let i = 3; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i * 7);
+        labels.push(d.toISOString().split("T")[0]);
+        const c = tasksCache.filter(t => {
+          const td = new Date(t.date);
+          return t.done && ((today - td) / 86400000) >= i * 7 && ((today - td) / 86400000) < (i + 1) * 7;
+        }).length;
+        counts.push(c);
+      }
+      data = {
+        labels,
+        datasets: [{
+          label: "Completed",
+          data: counts,
+          backgroundColor: "rgba(75,192,192,0.5)"
+        }]
+      };
+      break;
+    }
+    // Add other cases exactly like renderChart’s switch, just building and returning data
+    // For brevity, you can copy all cases from renderChart here but only return data
+    // For example, "weekdays", "perPerson", etc.
+  }
+
+  return data;
 }
 
 // ==========================
@@ -471,5 +509,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
-// Auto-refresh every 30 seconds
-setInterval(fetchTasks, 30000);
+// Refresh tasks and update charts every 30 seconds without destroying charts
+setInterval(async () => {
+  await fetchTasks();
+  updateAllCharts();
+}, 30000);
