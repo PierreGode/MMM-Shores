@@ -2,12 +2,13 @@
 Manage and keep track of your household Chores
 <p>
   
-<img src="https://github.com/user-attachments/assets/88849ed9-0961-4aeb-a2f3-66e0d91f16a8" width="350" />
-<p></p>
+![image](https://github.com/user-attachments/assets/20c02e33-181d-4670-b55d-1e10b709d605)
+
 
 
 <img src="https://github.com/user-attachments/assets/258844d6-6457-4b48-ac64-af637ec059a4" width="800" />
 
+![image](https://github.com/user-attachments/assets/21ca2d68-2550-4993-b6b1-b5a0150ea858)
 
 ______________________________________________________________________________________________
 
@@ -20,6 +21,7 @@ Data is stored in data.json to make the data persistent between restarts.
   {
     module: "MMM-Chores",
     position: "top_left",
+    header: "Chores",
     config: {
       updateInterval: 60 * 1000,
       adminPort: 5003,
