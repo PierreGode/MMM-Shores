@@ -26,13 +26,6 @@ npm install
 ```bash
 cd ~/MagicMirror/modules/MMM-Chores
 git pull
-```
-  
- ## Installation
-
-```bash
-cd ~/MagicMirror/modules/MMM-Chores
-git pull
 npm install
 ```
 
