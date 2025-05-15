@@ -5,7 +5,7 @@ Module.register("MMM-Chores", {
     adminPort: 5003,             // admin page port
     showDays: 1,                 // how many days from today to show (1 = today only)
     showPast: false,             // whether to include unfinished tasks from past days
-    hideYear: false              // NEW: hide year in task date
+    hideYear: false              // hide year in date
   },
 
   start() {
@@ -65,6 +65,19 @@ Module.register("MMM-Chores", {
     return p ? p.name : "";
   },
 
+  // Gör en PATCH-förfrågan för att toggla task.done
+  async toggleDone(task) {
+    try {
+      await fetch(`/api/tasks/${task.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: !task.done })
+      });
+    } catch (e) {
+      Log && Log.error ? Log.error(e) : console.error(e);
+    }
+  },
+
   getDom() {
     const wrapper = document.createElement("div");
 
@@ -93,22 +106,26 @@ Module.register("MMM-Chores", {
       const li = document.createElement("li");
       li.className = "small";
 
-      // Checkbox indicator
+      // Emoji-indikator (klickbar för att toggla!)
       const cb = document.createElement("span");
       cb.innerHTML = task.done ? "✅" : "⬜";
       cb.style.marginRight = "8px";
+      cb.style.cursor = "pointer";
+      cb.title = "Klicka för att markera som klar/inte klar";
+      cb.addEventListener("click", () => {
+        this.toggleDone(task);
+      });
       li.appendChild(cb);
 
-      // Task text (date formatting with/without year)
+      // Datumformattering (med/utan år)
       let dateText;
       if (this.config.hideYear) {
-        // Visa bara MM-DD
         const [yyyy, mm, dd] = task.date.split("-");
         dateText = `${mm}-${dd}`;
       } else {
-        // Visa YYYY-MM-DD
         dateText = task.date;
       }
+
       const text = document.createTextNode(`${task.name} (${dateText})`);
       li.appendChild(text);
 
