@@ -84,9 +84,13 @@ module.exports = NodeHelper.create({
     // Task endpoints
     app.get("/api/tasks", (req, res) => res.json(tasks));
     app.post("/api/tasks", (req, res) => {
-      const { name, date } = req.body;
-      if (!name || !date) return res.status(400).json({ error: "Name and date are required" });
-      const newTask = { id: Date.now(), name, date, done: false, assignedTo: null };
+      // Kopiera ALLA fält från req.body (även timestamps och ev. nya)
+      const newTask = {
+        id: Date.now(),
+        ...req.body,
+        done: false,              // done ska alltid starta som false
+        assignedTo: null,         // och assignedTo som null
+      };
       tasks.push(newTask);
       saveData();
       self.sendSocketNotification("TASKS_UPDATE", tasks);
@@ -96,10 +100,15 @@ module.exports = NodeHelper.create({
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
-      if (typeof req.body.done === "boolean") task.done = req.body.done;
-      if (req.body.hasOwnProperty("assignedTo")) {
-        task.assignedTo = req.body.assignedTo;
-      }
+
+      // Kopiera över ALLA fält från req.body till task
+      Object.entries(req.body).forEach(([key, val]) => {
+        if (val === undefined || val === null) {
+          delete task[key]; // Ta bort om null/undefined (t.ex. finished ska tas bort om task avmarkeras)
+        } else {
+          task[key] = val;
+        }
+      });
       saveData();
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json(task);
