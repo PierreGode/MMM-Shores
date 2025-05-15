@@ -6,8 +6,6 @@
   --card-bg: #fff;
   --shadow: 0 6px 18px rgba(0,0,0,.05);
   --list-hover: rgba(0,0,0,.03);
-  --green: #4caf50;
-  --gray-muted: #888;
 }
 
 [data-theme="dark"] {
@@ -18,8 +16,6 @@
   --card-bg: #1e1e1e;
   --shadow: 0 6px 18px rgba(0,0,0,.4);
   --list-hover: rgba(255,255,255,.03);
-  --green: #4caf50;
-  --gray-muted: #aaa;
 }
 
 /* Global */
@@ -93,8 +89,7 @@ h1, h2 {
 /* Completed task style */
 .task-done {
   text-decoration: line-through;
-  color: var(--green);
-  opacity: 1;
+  opacity: .6;
 }
 
 /* Oversized checkboxes */
@@ -106,47 +101,4 @@ h1, h2 {
   height: 1.4rem;
   border-radius: 0.25rem !important;
   border: 1px solid var(--text);
-  cursor: pointer;
-  position: relative;
-  background-color: transparent;
-  transition: background-color 0.3s, border-color 0.3s;
-}
-
-/* Checkbox checked state with green background and white checkmark */
-.form-check-input:checked {
-  background-color: var(--green);
-  border-color: var(--green);
-  color: white;
-}
-
-/* Add white checkmark when checked using SVG mask */
-.form-check-input:checked::after {
-  content: "";
-  position: absolute;
-  top: 3px;
-  left: 5px;
-  width: 5px;
-  height: 9px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-/* Style for task meta info (datum och namn) */
-.task-meta {
-  font-weight: 300;
-  color: var(--gray-muted);
-  margin-left: 0.4rem;
-  font-size: 0.9rem;
-  font-style: normal;
-  user-select: none;
-}
-
-/* Label styling to align checkbox and text nicely */
-.form-check-label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  cursor: pointer;
-  user-select: none;
 }
