@@ -16,6 +16,7 @@ The data is stored in `data.json` to make the data persistent between restarts.
 ## Screenshots
   
 ![frontend](img/screenshot1_frontend.png)
+
 ![backend](img/screenshot2_backend.png)
 
 ## Installation
@@ -29,6 +30,10 @@ npm install
 
 ## Update
 
+```bash
+cd ~/MagicMirror/modules/MMM-Chores
+git pull
+```
   
  ## Configuration
 
@@ -49,7 +54,7 @@ npm install
     }
   },
 
-
+```
 
 
 ## Admin Interface
