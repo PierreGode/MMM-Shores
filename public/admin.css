@@ -5,7 +5,9 @@
   --hero-end: #6f99ff;
   --card-bg: #fff;
   --shadow: 0 6px 18px rgba(0,0,0,.05);
+  --list-hover: rgba(0,0,0,.03);
 }
+
 [data-theme="dark"] {
   --bg: #121212;
   --text: #e9ecef;
@@ -13,8 +15,10 @@
   --hero-end: #495057;
   --card-bg: #1e1e1e;
   --shadow: 0 6px 18px rgba(0,0,0,.4);
+  --list-hover: rgba(255,255,255,.03);
 }
 
+/* Global */
 body {
   background: var(--bg);
   color: var(--text);
@@ -22,8 +26,11 @@ body {
   display: flex;
   flex-direction: column;
 }
-h1, h2 { font-weight: 600; }
+h1, h2 {
+  font-weight: 600;
+}
 
+/* Hero */
 .hero {
   background: linear-gradient(135deg, var(--hero-start), var(--hero-end));
   color: #fff;
@@ -32,12 +39,15 @@ h1, h2 { font-weight: 600; }
   box-shadow: 0 8px 24px rgba(0,0,0,.12);
   margin-bottom: 2rem;
 }
+
+/* Theme toggle */
 .theme-switch {
   position: absolute;
   top: 30px;
   right: 22px;
 }
 
+/* Cards */
 .card-shadow {
   background: var(--card-bg);
   border: none;
@@ -50,11 +60,45 @@ h1, h2 { font-weight: 600; }
   font-weight: 600;
 }
 
+/* Dark mode adjustment for analytics board headers */
+[data-theme="dark"] .card-shadow .card-header {
+  background-color: #2c2c2c;
+  color: var(--text);
+}
+
+/* List items */
 .list-group-item {
   background: var(--card-bg);
   color: var(--text);
+  transition: background .15s ease;
 }
+.list-group-item:hover {
+  background: var(--list-hover);
+}
+
+/* Buttons with icon */
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+/* Completed task style */
 .task-done {
   text-decoration: line-through;
   opacity: .6;
+}
+
+/* Oversized checkboxes */
+.form-check-input {
+  appearance: auto;
+  -webkit-appearance: checkbox;
+  -moz-appearance: checkbox;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 0.25rem !important;
+  border: 1px solid var(--text);
 }

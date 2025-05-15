@@ -1,8 +1,15 @@
 # MMM-Chores
 
+Manage and keep track of your household Chores
+<p>
+  
+
 **MMM-Chores** is a module for [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror) that allows you to manage your household chores.
 
+
 It provides an admin interface where you can add, edit, and delete tasks. You can also set due dates and assign tasks to different persons. The module displays the tasks on your MagicMirror, allowing you to keep track of your household chores at a glance.
+=======
+
 
 The data is stored in `data.json` to make the data persistent between restarts.
 
@@ -22,26 +29,28 @@ npm install
 
 ## Update
 
+  
+ ## Configuration
+
 ```bash
 cd ~/MagicMirror/modules/MMM-Chores
 git pull
 npm install
-```
 
-## Configuration
+  {
+    module: "MMM-Chores",
+    position: "top_left",
+    header: "Chores",
+    config: {
+      updateInterval: 60 * 1000,
+      adminPort: 5003,
+      showDays: 3,  // show tasks dated today, tomorrow, and the day after
+      showPast: true   // also show unfinished tasks from past days
+    }
+  },
 
-```js
-    {
-      module: "MMM-Chores",
-      position: "top_left",
-      config: {
-        updateInterval: 60 * 1000,
-        adminPort: 5003,
-        showDays: 3,  // show tasks dated today, tomorrow, and the day after
-        showPast: true   // also show unfinished tasks from past days
-      }
-    },
-```
+
+
 
 ## Admin Interface
 
