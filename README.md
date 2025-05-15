@@ -1,22 +1,42 @@
 # MMM-Chores
+
 Manage and keep track of your household Chores
 <p>
   
-![image](https://github.com/user-attachments/assets/c3c768db-35ce-4575-8443-008f6e99fd21)
+
+**MMM-Chores** is a module for [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror) that allows you to manage your household chores.
 
 
-<img src="https://github.com/user-attachments/assets/258844d6-6457-4b48-ac64-af637ec059a4" width="800" />
-
-![image](https://github.com/user-attachments/assets/21ca2d68-2550-4993-b6b1-b5a0150ea858)
-
-______________________________________________________________________________________________
+It provides an admin interface where you can add, edit, and delete tasks. You can also set due dates and assign tasks to different persons. The module displays the tasks on your MagicMirror, allowing you to keep track of your household chores at a glance.
+=======
 
 
+The data is stored in `data.json` to make the data persistent between restarts.
 
-Data is stored in data.json to make the data persistent between restarts.
+## Screenshots
+  
+![frontend](img/screenshot1_frontend.png)
+![backend](img/screenshot2_backend.png)
 
+## Installation
 
+```bash
+cd ~/MagicMirror/modules
+git clone https://github.com/PierreGode/MMM-Chores
+cd MMM-Chores
+npm install
 ```
+
+## Update
+
+  
+ ## Configuration
+
+```bash
+cd ~/MagicMirror/modules/MMM-Chores
+git pull
+npm install
+
   {
     module: "MMM-Chores",
     position: "top_left",
@@ -28,46 +48,40 @@ Data is stored in data.json to make the data persistent between restarts.
       showPast: true   // also show unfinished tasks from past days
     }
   },
-```
 
-```
-cd MagicMirror/modules
-git clone https://github.com/PierreGode/MMM-Chores.git
-cd MMM-Chores
-npm install
-```
 
+
+
+## Admin Interface
 
 Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
 > [!CAUTION]
 > DO NOT expose application with portforward
 
-
-______________________________________________________________________________________________
-______________________________________________________________________________________________
-
+## Push Notifications
 
 If you wish to use push notifications follow guide below. 
 
 
-![image](https://github.com/user-attachments/assets/aa99d0b8-c31e-41f9-b7b9-e4a8d93cd9d1)
+![cert](img/screenshot3_cert.png)
 
-# 1. in MagicMirror/modules/MMM-Chores create a folder certs
+### 1. in MagicMirror/modules/MMM-Chores create a folder certs
 ```
 mkdir MagicMirror/modules/MMM-Chores/certs
 ```
 
-# 2. Generate a private key in MMM-Chores/certs
+### 2. Generate a private key in MMM-Chores/certs
 ```
 openssl genrsa -out server.key 2048
 ```
-# 3. Create a certificate signing request (CSR)
+### 3. Create a certificate signing request (CSR)
 ```
 openssl req -new -key server.key -out server.csr -subj "/C=SE/ST=Stockholm/L=Stockholm/O=Home/CN=192.168.1.192" <--- YOUR IP
 ```
 
-# 4. Generate a self-signed cert valid for 1 year
-```
+### 4. Generate a self-signed cert valid for 1 year
+
+```bash
 openssl x509 -req -in server.csr -signkey server.key -out server.crt -days 365
 ```
 

@@ -1,9 +1,10 @@
+const Log        = require("logger");
 const NodeHelper = require("node_helper");
 const express    = require("express");
 const bodyParser = require("body-parser");
-const path       = require("path");
-const fs         = require("fs");
-const https      = require("https");
+const path       = require("node:path");
+const fs         = require("node:fs");
+const https      = require("node:https");
 
 const DATA_FILE = path.join(__dirname, "data.json");
 const CERT_DIR  = path.join(__dirname, "certs");
@@ -20,24 +21,24 @@ function loadData() {
       tasks = j.tasks || [];
       people = j.people || [];
       analyticsBoards = j.analyticsBoards || [];
-      console.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`);
+      Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`);
     } catch (e) {
-      console.error("MMM-Chores: Error reading data.json:", e);
+      Log.error("MMM-Chores: Error reading data.json:", e);
     }
   }
 }
 function saveData() {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify({ tasks, people, analyticsBoards }, null, 2), "utf8");
-    console.log(`MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`);
+    Log.log(`MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`);
   } catch (e) {
-    console.error("MMM-Chores: Error writing data.json:", e);
+    Log.error("MMM-Chores: Error writing data.json:", e);
   }
 }
 
 module.exports = NodeHelper.create({
   start() {
-    console.log("MMM-Chores helper started...");
+    Log.log("MMM-Chores helper started...");
     loadData();
   },
 
@@ -128,7 +129,7 @@ module.exports = NodeHelper.create({
 
     // HTTP server
     app.listen(port, "0.0.0.0", () => {
-      console.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);
+      Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);
       // send initial data
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       self.sendSocketNotification("PEOPLE_UPDATE", people);
@@ -145,10 +146,10 @@ module.exports = NodeHelper.create({
         cert: fs.readFileSync(certPath)
       };
       https.createServer(options, app).listen(httpsPort, "0.0.0.0", () => {
-        console.log(`MMM-Chores admin (HTTPS) running at https://0.0.0.0:${httpsPort}`);
+        Log.log(`MMM-Chores admin (HTTPS) running at https://0.0.0.0:${httpsPort}`);
       });
     } else {
-      console.warn("MMM-Chores: HTTPS cert/key not found, skipping HTTPS server");
+      Log.warn("MMM-Chores: HTTPS cert/key not found, skipping HTTPS server");
     }
   }
 });
