@@ -2,8 +2,7 @@
 Manage and keep track of your household Chores
 <p>
   
-![image](https://github.com/user-attachments/assets/20c02e33-181d-4670-b55d-1e10b709d605)
-
+![image](https://github.com/user-attachments/assets/c3c768db-35ce-4575-8443-008f6e99fd21)
 
 
 <img src="https://github.com/user-attachments/assets/258844d6-6457-4b48-ac64-af637ec059a4" width="800" />
