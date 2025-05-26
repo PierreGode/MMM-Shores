@@ -59,7 +59,7 @@ h1, h2 {
   z-index: 1100;
   font-weight: 600;
   font-size: 0.5rem;  /* Smaller text */
-  padding: 4px 8px;   /* Optional: adjust padding if needed */
+  padding: 8px 16px;   /* Optional: adjust padding if needed */
 }
 
 /* Cards */
