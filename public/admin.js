@@ -1010,7 +1010,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Skapa språkval dropdown
   const selector = document.createElement("select");
-  selector.className = "form-select w-auto position-absolute end-0 top-0 m-3";
+  selector.className = "form-select w-auto language-select";
   Object.keys(LANGUAGES).forEach(lang => {
     const opt = document.createElement("option");
     opt.value = lang;
