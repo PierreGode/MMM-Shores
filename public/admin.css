@@ -59,23 +59,34 @@ h1, h2 {
   z-index: 1100;
   font-weight: 600;
   font-size: 0.5rem;
-  padding: 2px 4px;
+  padding: 2px 6px;
+  border: 1px solid var(--text);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  line-height: 1.2;
 }
 
-/* Override Bootstrap's form-select arrow for language-select */
+/* Ta bort Bootstrap-pil om form-select klassen används */
 .language-select.form-select {
   background-image: none !important;
   background-color: transparent !important;
-  padding-right: 0.5rem !important; /* Adjust if needed */
+  padding-right: 0.5rem !important;
+  border: 1px solid var(--text);
+  border-radius: 4px;
   -webkit-appearance: none !important;
   -moz-appearance: none !important;
   appearance: none !important;
   cursor: pointer;
-  border: 1px solid var(--text);
-  border-radius: 4px;
+  height: auto !important;
+  font-size: 0.5rem !important;
 }
 
-/* Remove arrow in Internet Explorer */
+/* Ta bort pil i Internet Explorer */
 .language-select select::-ms-expand {
   display: none;
 }
