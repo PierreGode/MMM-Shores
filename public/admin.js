@@ -1023,7 +1023,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     setLanguage(newLang);
     await saveUserLanguage(newLang);
   });
-  document.body.appendChild(selector);
+
+  // Placera dropdown precis efter Light/Dark-knappen
+  const themeSwitch = document.querySelector(".theme-switch");
+  if (themeSwitch) {
+    themeSwitch.parentNode.insertBefore(selector, themeSwitch.nextSibling);
+  } else {
+    document.body.appendChild(selector);
+  }
 
   setLanguage(currentLang);
 
@@ -1035,3 +1042,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     savedBoards.forEach(type => addChart(type));
   }
 });
+
