@@ -52,7 +52,7 @@ h1, h2 {
 /* Språkval dropdown */
 .language-select {
   position: absolute;
-  top: 25px;
+  top: 40px;
   right: 15px;
   width: 90px;
   max-width: 100px;
