@@ -49,11 +49,11 @@ h1, h2 {
   z-index: 1000;
 }
 
-/* Språkval dropdown placerad under theme-switch */
+/* Språkval dropdown placerad längst ner till höger */
 .language-select {
-  position: absolute;
-  top: 65px;
-  right: 22px;
+  position: fixed;   /* sitter fast längst ner till höger */
+  bottom: 20px;
+  right: 20px;
   width: 60px;
   max-width: 80px;
   z-index: 1100;
@@ -71,7 +71,7 @@ h1, h2 {
   line-height: 1.2;
 }
 
-/* Ta bort Bootstrap-pil om form-select klassen används */
+/* Om Bootstrap form-select används */
 .language-select.form-select {
   background-image: none !important;
   background-color: transparent !important;
@@ -152,7 +152,7 @@ h1, h2 {
   .language-select {
     width: 70px;
     font-size: 0.8rem;
-    top: 55px;
+    bottom: 15px;
     right: 15px;
   }
   .theme-switch {
