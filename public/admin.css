@@ -25,6 +25,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative; /* För positionering av språkval */
 }
 h1, h2 {
   font-weight: 600;
@@ -44,10 +45,23 @@ h1, h2 {
 .theme-switch {
   position: absolute;
   top: 30px;
-  right: 22px;
+  right: 70px; /* Flytta lite till vänster så språkval får plats */
+  z-index: 1000;
 }
 
-/* Cards */
+/* Språkval dropdown */
+.language-select {
+  position: absolute;
+  top: 25px;
+  right: 15px;
+  width: 90px;
+  max-width: 100px;
+  z-index: 1100;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Kort med skugga */
 .card-shadow {
   background: var(--card-bg);
   border: none;
@@ -101,4 +115,18 @@ h1, h2 {
   height: 1.4rem;
   border-radius: 0.25rem !important;
   border: 1px solid var(--text);
+}
+
+/* Responsiv justering */
+@media (max-width: 576px) {
+  .language-select {
+    width: 70px;
+    font-size: 0.8rem;
+    top: 20px;
+    right: 10px;
+  }
+  .theme-switch {
+    right: 90px;
+    top: 20px;
+  }
 }
