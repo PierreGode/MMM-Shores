@@ -1,5 +1,3 @@
-// language.js
-
 const LANGUAGES = {
   en: {
     title: "MMM-Chores Admin",
@@ -32,6 +30,7 @@ const LANGUAGES = {
       unfinishedTasks: "Unfinished Tasks",
       completedTasks: "Completed Tasks"
     },
+    remove: "Remove",
     footer: "Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode"
   },
   sv: {
@@ -65,6 +64,7 @@ const LANGUAGES = {
       unfinishedTasks: "Ej färdiga uppgifter",
       completedTasks: "Färdiga uppgifter"
     },
+    remove: "Ta bort",
     footer: "Byggt med Bootstrap & Chart.js • MMM-Chores av Pierre Gode"
   },
   fr: {
@@ -98,6 +98,7 @@ const LANGUAGES = {
       unfinishedTasks: "Tâches non terminées",
       completedTasks: "Tâches terminées"
     },
+    remove: "Supprimer",
     footer: "Construit avec Bootstrap & Chart.js • MMM-Chores par Pierre Gode"
   },
   es: {
@@ -131,6 +132,7 @@ const LANGUAGES = {
       unfinishedTasks: "Tareas sin terminar",
       completedTasks: "Tareas completadas"
     },
+    remove: "Eliminar",
     footer: "Construido con Bootstrap y Chart.js • MMM-Chores por Pierre Gode"
   },
   de: {
@@ -164,6 +166,7 @@ const LANGUAGES = {
       unfinishedTasks: "Unfertige Aufgaben",
       completedTasks: "Abgeschlossene Aufgaben"
     },
+    remove: "Entfernen",
     footer: "Erstellt mit Bootstrap & Chart.js • MMM-Chores von Pierre Gode"
   },
   it: {
@@ -197,6 +200,7 @@ const LANGUAGES = {
       unfinishedTasks: "Compiti non completati",
       completedTasks: "Compiti completati"
     },
+    remove: "Rimuovi",
     footer: "Realizzato con Bootstrap & Chart.js • MMM-Chores di Pierre Gode"
   },
   nl: {
@@ -230,6 +234,7 @@ const LANGUAGES = {
       unfinishedTasks: "Onvoltooide taken",
       completedTasks: "Voltooide taken"
     },
+    remove: "Verwijderen",
     footer: "Gemaakt met Bootstrap & Chart.js • MMM-Chores door Pierre Gode"
   },
   pl: {
@@ -263,6 +268,7 @@ const LANGUAGES = {
       unfinishedTasks: "Niewykonane zadania",
       completedTasks: "Wykonane zadania"
     },
+    remove: "Usuń",
     footer: "Zbudowane z Bootstrap i Chart.js • MMM-Chores przez Pierre Gode"
   },
   zh: {
@@ -296,6 +302,7 @@ const LANGUAGES = {
       unfinishedTasks: "未完成的任务",
       completedTasks: "已完成的任务"
     },
+    remove: "移除",
     footer: "由 Bootstrap 和 Chart.js 构建 • MMM-Chores 由 Pierre Gode 创建"
   },
   ar: {
@@ -329,6 +336,7 @@ const LANGUAGES = {
       unfinishedTasks: "المهام غير المكتملة",
       completedTasks: "المهام المكتملة"
     },
+    remove: "إزالة",
     footer: "تم الإنشاء باستخدام Bootstrap و Chart.js • MMM-Chores بواسطة Pierre Gode"
   }
 };
