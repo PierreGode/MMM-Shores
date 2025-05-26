@@ -3,7 +3,7 @@
 // ==========================
 const LANGUAGES = {
   en: {
-    title: "MMM-Chores Admin",
+    title: "MMM-Chores Admin  ",
     subtitle: "Manage tasks, people & analytics",
     tabs: ["Dashboard", "Analytics"],
     peopleTitle: "People",
