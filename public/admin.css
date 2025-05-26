@@ -54,12 +54,12 @@ h1, h2 {
   position: absolute;
   top: 65px;
   right: 22px;
-  width: 80px;        /* Reduced width */
-  max-width: 80px;    /* Reduced max-width */
+  width: 85px;        /* Reduced width */
+  max-width: 85px;    /* Reduced max-width */
   z-index: 1100;
   font-weight: 600;
   font-size: 0.5rem;  /* Smaller text */
-  padding: 8px 16px;   /* Optional: adjust padding if needed */
+  padding: 4px 8px;   /* Optional: adjust padding if needed */
 }
 
 /* Cards */
