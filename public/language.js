@@ -27,6 +27,11 @@ const LANGUAGES = {
     },
     noPeople: "No people added",
     noTasks: "No tasks added",
+    unassigned: "Unassigned",
+    chartLabels: {
+      unfinishedTasks: "Unfinished Tasks",
+      completedTasks: "Completed Tasks"
+    },
     footer: "Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode"
   },
   sv: {
@@ -55,6 +60,11 @@ const LANGUAGES = {
     },
     noPeople: "Inga personer tillagda",
     noTasks: "Inga uppgifter tillagda",
+    unassigned: "Ej tilldelad",
+    chartLabels: {
+      unfinishedTasks: "Ej färdiga uppgifter",
+      completedTasks: "Färdiga uppgifter"
+    },
     footer: "Byggt med Bootstrap & Chart.js • MMM-Chores av Pierre Gode"
   },
   fr: {
@@ -83,6 +93,11 @@ const LANGUAGES = {
     },
     noPeople: "Aucune personne ajoutée",
     noTasks: "Aucune tâche ajoutée",
+    unassigned: "Non assigné",
+    chartLabels: {
+      unfinishedTasks: "Tâches non terminées",
+      completedTasks: "Tâches terminées"
+    },
     footer: "Construit avec Bootstrap & Chart.js • MMM-Chores par Pierre Gode"
   },
   es: {
@@ -111,6 +126,11 @@ const LANGUAGES = {
     },
     noPeople: "No hay personas agregadas",
     noTasks: "No hay tareas agregadas",
+    unassigned: "Sin asignar",
+    chartLabels: {
+      unfinishedTasks: "Tareas sin terminar",
+      completedTasks: "Tareas completadas"
+    },
     footer: "Construido con Bootstrap y Chart.js • MMM-Chores por Pierre Gode"
   },
   de: {
@@ -139,6 +159,11 @@ const LANGUAGES = {
     },
     noPeople: "Keine Personen hinzugefügt",
     noTasks: "Keine Aufgaben hinzugefügt",
+    unassigned: "Nicht zugeordnet",
+    chartLabels: {
+      unfinishedTasks: "Unfertige Aufgaben",
+      completedTasks: "Abgeschlossene Aufgaben"
+    },
     footer: "Erstellt mit Bootstrap & Chart.js • MMM-Chores von Pierre Gode"
   },
   it: {
@@ -167,6 +192,11 @@ const LANGUAGES = {
     },
     noPeople: "Nessuna persona aggiunta",
     noTasks: "Nessun compito aggiunto",
+    unassigned: "Non assegnato",
+    chartLabels: {
+      unfinishedTasks: "Compiti non completati",
+      completedTasks: "Compiti completati"
+    },
     footer: "Realizzato con Bootstrap & Chart.js • MMM-Chores di Pierre Gode"
   },
   nl: {
@@ -195,6 +225,11 @@ const LANGUAGES = {
     },
     noPeople: "Geen personen toegevoegd",
     noTasks: "Geen taken toegevoegd",
+    unassigned: "Niet toegewezen",
+    chartLabels: {
+      unfinishedTasks: "Onvoltooide taken",
+      completedTasks: "Voltooide taken"
+    },
     footer: "Gemaakt met Bootstrap & Chart.js • MMM-Chores door Pierre Gode"
   },
   pl: {
@@ -223,6 +258,11 @@ const LANGUAGES = {
     },
     noPeople: "Brak dodanych osób",
     noTasks: "Brak dodanych zadań",
+    unassigned: "Nieprzypisane",
+    chartLabels: {
+      unfinishedTasks: "Niewykonane zadania",
+      completedTasks: "Wykonane zadania"
+    },
     footer: "Zbudowane z Bootstrap i Chart.js • MMM-Chores przez Pierre Gode"
   },
   zh: {
@@ -251,6 +291,11 @@ const LANGUAGES = {
     },
     noPeople: "未添加人员",
     noTasks: "未添加任务",
+    unassigned: "未分配",
+    chartLabels: {
+      unfinishedTasks: "未完成的任务",
+      completedTasks: "已完成的任务"
+    },
     footer: "由 Bootstrap 和 Chart.js 构建 • MMM-Chores 由 Pierre Gode 创建"
   },
   ar: {
@@ -279,6 +324,11 @@ const LANGUAGES = {
     },
     noPeople: "لم يتم إضافة أي أشخاص",
     noTasks: "لم يتم إضافة أي مهام",
+    unassigned: "غير معين",
+    chartLabels: {
+      unfinishedTasks: "المهام غير المكتملة",
+      completedTasks: "المهام المكتملة"
+    },
     footer: "تم الإنشاء باستخدام Bootstrap و Chart.js • MMM-Chores بواسطة Pierre Gode"
   }
 };
@@ -334,6 +384,12 @@ function setLanguage(lang) {
   // Footer
   const footer = document.getElementById("footerText");
   if (footer) footer.textContent = t.footer;
+
+  // Unassigned in task assignee dropdowns - update dynamically
+  document.querySelectorAll("select").forEach(select => {
+    const unassignedOption = Array.from(select.options).find(opt => opt.value === "");
+    if (unassignedOption) unassignedOption.textContent = t.unassigned;
+  });
 
   // Empty lists messages
   const peopleList = document.getElementById("peopleList");
