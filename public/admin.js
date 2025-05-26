@@ -40,7 +40,7 @@ const LANGUAGES = {
     footer: "Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode"
   },
   sv: {
-    title: "MMM-Chores Admin",
+    title: "MMM-Chores Admin  ",
     subtitle: "Hantera uppgifter, personer & analys",
     tabs: ["Dashboard", "Analys"],
     peopleTitle: "Personer",
@@ -77,7 +77,7 @@ const LANGUAGES = {
     footer: "Byggt med Bootstrap & Chart.js • MMM-Chores av Pierre Gode"
   },
   fr: {
-    title: "MMM-Chores Admin",
+    title: "MMM-Chores Admin  ",
     subtitle: "Gérer les tâches, les personnes et les analyses",
     tabs: ["Tableau de bord", "Analytique"],
     peopleTitle: "Personnes",
@@ -114,7 +114,7 @@ const LANGUAGES = {
     footer: "Construit avec Bootstrap & Chart.js • MMM-Chores par Pierre Gode"
   },
   es: {
-    title: "MMM-Chores Admin",
+    title: "MMM-Chores Admin  ",
     subtitle: "Gestionar tareas, personas y análisis",
     tabs: ["Panel", "Analítica"],
     peopleTitle: "Personas",
@@ -151,7 +151,7 @@ const LANGUAGES = {
     footer: "Construido con Bootstrap y Chart.js • MMM-Chores por Pierre Gode"
   },
   de: {
-    title: "MMM-Chores Admin",
+    title: "MMM-Chores Admin  ",
     subtitle: "Aufgaben, Personen & Analysen verwalten",
     tabs: ["Übersicht", "Analytik"],
     peopleTitle: "Personen",
@@ -188,7 +188,7 @@ const LANGUAGES = {
     footer: "Erstellt mit Bootstrap & Chart.js • MMM-Chores von Pierre Gode"
   },
   it: {
-    title: "MMM-Chores Admin",
+    title: "MMM-Chores Admin  ",
     subtitle: "Gestisci compiti, persone e analisi",
     tabs: ["Dashboard", "Analisi"],
     peopleTitle: "Persone",
@@ -225,7 +225,7 @@ const LANGUAGES = {
     footer: "Realizzato con Bootstrap & Chart.js • MMM-Chores di Pierre Gode"
   },
   nl: {
-    title: "MMM-Chores Admin",
+    title: "MMM-Chores Admin  ",
     subtitle: "Beheer taken, mensen & analyses",
     tabs: ["Dashboard", "Analyse"],
     peopleTitle: "Mensen",
@@ -262,7 +262,7 @@ const LANGUAGES = {
     footer: "Gemaakt met Bootstrap & Chart.js • MMM-Chores door Pierre Gode"
   },
   pl: {
-    title: "MMM-Chores Admin",
+    title: "MMM-Chores Admin  ",
     subtitle: "Zarządzaj zadaniami, ludźmi i analizami",
     tabs: ["Panel", "Analityka"],
     peopleTitle: "Osoby",
@@ -299,7 +299,7 @@ const LANGUAGES = {
     footer: "Zbudowane z Bootstrap i Chart.js • MMM-Chores przez Pierre Gode"
   },
   zh: {
-    title: "MMM-Chores 管理",
+    title: "MMM-Chores 管理  ",
     subtitle: "管理任务、人员和分析",
     tabs: ["仪表板", "分析"],
     peopleTitle: "人员",
@@ -336,7 +336,7 @@ const LANGUAGES = {
     footer: "由 Bootstrap 和 Chart.js 构建 • MMM-Chores 由 Pierre Gode 创建"
   },
   ar: {
-    title: "إدارة MMM-Chores",
+    title: "إدارة MMM-Chores  ",
     subtitle: "إدارة المهام، الأشخاص والتحليلات",
     tabs: ["لوحة التحكم", "تحليلات"],
     peopleTitle: "الأشخاص",
