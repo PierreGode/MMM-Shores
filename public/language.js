@@ -294,37 +294,34 @@ function setLanguage(lang) {
   document.querySelector(".hero h1").textContent = t.title;
   document.querySelector(".hero small").textContent = t.subtitle;
 
+  // Tabs
   const tabs = document.querySelectorAll(".nav-link");
-  tabs[0].textContent = t.tabs[0];
-  tabs[1].textContent = t.tabs[1];
+  if (tabs[0]) tabs[0].textContent = t.tabs[0];
+  if (tabs[1]) tabs[1].textContent = t.tabs[1];
 
-  const headers = document.querySelectorAll(".card-header");
-  if (headers[0]) headers[0].textContent = t.peopleTitle;
-  const peopleForm = document.getElementById("personName");
-  if (peopleForm) peopleForm.placeholder = t.newPersonPlaceholder;
-
+  // People header & form
+  const peopleHeader = document.getElementById("peopleHeader");
+  if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
+  const peopleInput = document.getElementById("personName");
+  if (peopleInput) peopleInput.placeholder = t.newPersonPlaceholder;
   const personAddBtn = document.querySelector("#personForm button");
   if (personAddBtn) personAddBtn.title = t.addPersonBtnTitle;
 
-  if (headers[1]) headers[1].childNodes[0].textContent = t.taskTitle;
+  // Tasks header, done/pending labels & form
+  const tasksHeader = document.getElementById("tasksHeader");
+  if (tasksHeader) tasksHeader.textContent = t.taskTitle;
+  const doneLabel = document.getElementById("doneLabel");
+  if (doneLabel) doneLabel.textContent = ` ${t.taskDoneLabel}`;
+  const pendingLabel = document.getElementById("pendingLabel");
+  if (pendingLabel) pendingLabel.textContent = ` ${t.taskPendingLabel}`;
   const taskInput = document.getElementById("taskName");
   if (taskInput) taskInput.placeholder = t.taskNamePlaceholder;
-  const taskButton = document.querySelector("#taskForm button");
-  if (taskButton) taskButton.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
+  const taskAddBtn = document.querySelector("#taskForm button");
+  if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
 
-  // Translate done and pending labels
-  const doneLabel = document.querySelector(".badge .bi-check2-square");
-  const pendingLabel = document.querySelector(".badge .bi-square");
-  if (doneLabel) {
-    doneLabel.parentNode.childNodes[1].textContent = ` ${t.taskDoneLabel}  `;
-  }
-  if (pendingLabel) {
-    pendingLabel.parentNode.childNodes[3].textContent = ` ${t.taskPendingLabel}`;
-  }
-
-  const analyticsTitle = document.querySelector("#analytics h5");
-  if (analyticsTitle) analyticsTitle.textContent = t.analyticsTitle;
-
+  // Analytics header and chart select options
+  const analyticsHeader = document.getElementById("analyticsHeader");
+  if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
   const addChartSelect = document.getElementById("addChartSelect");
   if (addChartSelect) {
     addChartSelect.options[0].textContent = t.addChartOption;
@@ -334,9 +331,11 @@ function setLanguage(lang) {
     });
   }
 
-  const footer = document.querySelector("footer");
+  // Footer
+  const footer = document.getElementById("footerText");
   if (footer) footer.textContent = t.footer;
 
+  // Empty lists messages
   const peopleList = document.getElementById("peopleList");
   if (peopleList && peopleList.children.length === 0) {
     peopleList.innerHTML = `<li class='list-group-item text-center text-muted'>${t.noPeople}</li>`;
