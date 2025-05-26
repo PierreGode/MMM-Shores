@@ -54,8 +54,8 @@ h1, h2 {
   position: absolute;
   top: 65px;
   right: 22px;
-  width: 85px;        /* Reduced width */
-  max-width: 85px;    /* Reduced max-width */
+  width: 100px;        /* Reduced width */
+  max-width: 100px;    /* Reduced max-width */
   z-index: 1100;
   font-weight: 600;
   font-size: 0.5rem;  /* Smaller text */
