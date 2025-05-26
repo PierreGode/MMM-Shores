@@ -54,12 +54,32 @@ h1, h2 {
   position: absolute;
   top: 65px;
   right: 22px;
-  width: 70px;        /* Reduced width */
-  max-width: 80px;    /* Reduced max-width */
+  width: 70px;
+  max-width: 80px;
   z-index: 1100;
   font-weight: 600;
-  font-size: 0.5rem;  /* Smaller text */
-  padding: 6px 12px;   /* Optional: adjust padding if needed */
+  font-size: 0.5rem;
+  padding: 6px 12px;
+}
+
+.language-select select {
+  width: 100%;
+  font-size: 0.5rem;
+  font-weight: 600;
+  padding: 4px 6px;
+  border: 1px solid var(--text);
+  border-radius: 4px;
+
+  /* Remove native dropdown arrow */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: none;
+}
+
+/* Remove arrow in Internet Explorer */
+.language-select select::-ms-expand {
+  display: none;
 }
 
 /* Cards */
