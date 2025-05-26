@@ -21,16 +21,16 @@
     </div>
 
     <div class="hero mb-4">
-      <h1 class="mb-0">MMM-Chores Admin</h1>
-      <small class="opacity-75">Manage tasks, people & analytics</small>
+      <h1 class="mb-0" id="titleHeader">MMM-Chores Admin</h1>
+      <small class="opacity-75" id="subtitleHeader">Manage tasks, people & analytics</small>
     </div>
 
     <ul class="nav nav-tabs mb-3" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button">Dashboard</button>
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" id="tabDashboard">Dashboard</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#analytics" type="button">Analytics</button>
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#analytics" type="button" id="tabAnalytics">Analytics</button>
       </li>
     </ul>
 
@@ -40,11 +40,11 @@
         <div class="row g-4">
           <div class="col-lg-4">
             <div class="card card-shadow h-100">
-              <div class="card-header">People</div>
+              <div class="card-header" id="peopleHeader">People</div>
               <div class="card-body">
                 <form id="personForm" class="input-group mb-3">
                   <input type="text" id="personName" class="form-control" placeholder="New person…" required>
-                  <button class="btn btn-outline-secondary btn-icon" type="submit" title="Add">
+                  <button class="btn btn-outline-secondary btn-icon" type="submit" title="Add" id="btnAddPerson">
                     <i class="bi bi-person-plus-fill"></i>
                   </button>
                 </form>
@@ -55,10 +55,10 @@
           <div class="col-lg-8">
             <div class="card card-shadow h-100">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Tasks</span>
+                <span id="tasksHeader">Tasks</span>
                 <span class="badge bg-light text-dark fw-normal">
-                  <i class="bi bi-check2-square text-success me-1"></i> done&nbsp;&nbsp;
-                  <i class="bi bi-square text-muted me-1"></i> pending
+                  <i class="bi bi-check2-square text-success me-1"></i><span id="doneLabel"> done</span>&nbsp;&nbsp;
+                  <i class="bi bi-square text-muted me-1"></i><span id="pendingLabel"> pending</span>
                 </span>
               </div>
               <div class="card-body">
@@ -70,7 +70,7 @@
                     <input type="date" id="taskDate" class="form-control">
                   </div>
                   <div class="col-sm-auto">
-                    <button class="btn btn-primary" type="submit">
+                    <button class="btn btn-primary" type="submit" id="btnAddTask">
                       <i class="bi bi-plus-lg me-1"></i>Add
                     </button>
                   </div>
@@ -85,7 +85,7 @@
       <!-- Analytics Tab -->
       <div class="tab-pane fade" id="analytics" role="tabpanel">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="mb-0">Analytics</h5>
+          <h5 class="mb-0" id="analyticsHeader">Analytics</h5>
           <select id="addChartSelect" class="form-select w-auto">
             <option value="">Add Chart...</option>
             <option value="weekly">Tasks Completed Per Week</option>
@@ -103,8 +103,8 @@
     </div>
   </div>
 
-  <footer class="text-center py-3 small text-muted">
-    Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode
+  <footer class="text-center py-3 small text-muted" id="footerText">
+  MMM-Chores Built  by Pierre Gode
   </footer>
 
   <script src="admin.js"></script>

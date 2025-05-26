@@ -25,6 +25,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative; /* För positionering av språkval */
 }
 h1, h2 {
   font-weight: 600;
@@ -45,6 +46,49 @@ h1, h2 {
   position: absolute;
   top: 30px;
   right: 22px;
+  z-index: 1000;
+}
+
+/* Språkval dropdown placerad under theme-switch */
+.language-select {
+  position: absolute;
+  top: 65px;
+  right: 22px;
+  width: 30px;
+  max-width: 80px;
+  z-index: 1100;
+  font-weight: 600;
+  font-size: 0.5rem;
+  padding: 2px 6px;
+  border: 1px solid var(--text);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  box-sizing: border-box;
+  line-height: 1.2;
+}
+
+/* Ta bort Bootstrap-pil om form-select klassen används */
+.language-select.form-select {
+  background-image: none !important;
+  background-color: transparent !important;
+  padding-right: 0.5rem !important;
+  border: 1px solid var(--text);
+  border-radius: 4px;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  cursor: pointer;
+  height: auto !important;
+  font-size: 0.5rem !important;
+}
+
+/* Ta bort pil i Internet Explorer */
+.language-select select::-ms-expand {
+  display: none;
 }
 
 /* Cards */
@@ -101,4 +145,18 @@ h1, h2 {
   height: 1.4rem;
   border-radius: 0.25rem !important;
   border: 1px solid var(--text);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .language-select {
+    width: 70px;
+    font-size: 0.8rem;
+    top: 55px;
+    right: 15px;
+  }
+  .theme-switch {
+    right: 50px;
+    top: 25px;
+  }
 }
