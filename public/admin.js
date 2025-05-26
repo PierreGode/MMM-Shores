@@ -32,8 +32,6 @@ let tasksCache = [];
 let chartInstances = {};
 let chartIdCounter = 0;
 
-// Här förväntar vi oss att boardTitleMap uppdateras dynamiskt via språkfilen.
-// Vi kan hämta den senare från språkobjektet.
 let boardTitleMap = {};
 
 // ==========================
@@ -41,6 +39,24 @@ let boardTitleMap = {};
 // ==========================
 function getCurrentTranslations() {
   return window.LANGUAGES ? window.LANGUAGES[localStorage.getItem("mmm-chores-lang") || "en"] : null;
+}
+
+function updateBoardTitleMap() {
+  const t = getCurrentTranslations();
+  if (t && t.chartOptions) {
+    boardTitleMap = {...t.chartOptions};
+  } else {
+    boardTitleMap = {
+      weekly: "Tasks Completed Per Week",
+      weekdays: "Busiest Weekdays",
+      perPerson: "Chores Per Person",
+      taskmaster: "Taskmaster This Month",
+      lazyLegends: "Lazy Legends",
+      speedDemons: "Speed Demons",
+      weekendWarriors: "Weekend Warriors",
+      slacker9000: "Slacker Detector 9000"
+    };
+  }
 }
 
 // ==========================
@@ -62,14 +78,14 @@ async function fetchTasks() {
 // Render People & Tasks
 // ==========================
 function renderPeople() {
-  const t = getCurrentTranslations();
+  const t = getCurrentTranslations() || { noPeople: "No people added" };
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
 
   if (peopleCache.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
-    li.textContent = t ? t.noPeople : "No people added";
+    li.textContent = t.noPeople;
     list.appendChild(li);
     return;
   }
@@ -90,14 +106,14 @@ function renderPeople() {
 }
 
 function renderTasks() {
-  const t = getCurrentTranslations();
+  const t = getCurrentTranslations() || { noTasks: "No tasks added", unassigned: "Unassigned" };
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
   if (tasksCache.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
-    li.textContent = t ? t.noTasks : "No tasks added";
+    li.textContent = t.noTasks;
     list.appendChild(li);
     return;
   }
@@ -148,8 +164,7 @@ function renderTasks() {
     const select = document.createElement("select");
     select.className = "form-select mx-3";
 
-    // Använd översatt "unassigned" text
-    select.add(new Option(t ? t.unassigned : "Unassigned", ""));
+    select.add(new Option(t.unassigned, ""));
 
     peopleCache.forEach(p => {
       const opt = new Option(p.name, p.id);
@@ -308,8 +323,7 @@ document.getElementById("addChartSelect").addEventListener("change", function ()
 function addChart(type) {
   const t = getCurrentTranslations();
   if (!boardTitleMap || Object.keys(boardTitleMap).length === 0) {
-    // Bygg boardTitleMap från språkfilen
-    boardTitleMap = t ? t.chartOptions : {};
+    updateBoardTitleMap();
   }
   if (getCurrentBoardTypes().includes(type)) return; // no duplicates
 
@@ -536,6 +550,7 @@ function getChartData(type) {
 // Initial Load
 // ==========================
 document.addEventListener("DOMContentLoaded", async () => {
+  updateBoardTitleMap();   // Sätt rätt titlar för analytics-brädets tabbar
   await fetchPeople();
   await fetchTasks();
 
