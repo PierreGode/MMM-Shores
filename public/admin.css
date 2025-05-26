@@ -62,27 +62,20 @@ h1, h2 {
   padding: 6px 12px;
 }
 
-.language-select select {
-  width: 100%;
-  font-size: 0.5rem;
-  font-weight: 600;
-  padding: 4px 6px;
+/* Override Bootstrap's form-select arrow for language-select */
+.language-select.form-select {
+  background-image: none !important;
+  background-color: transparent !important;
+  padding-right: 0.5rem !important; /* Adjust if needed */
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  cursor: pointer;
   border: 1px solid var(--text);
   border-radius: 4px;
-
-  /* Remove native dropdown arrow in most browsers */
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  /* Remove background and arrow */
-  background: transparent;
-  background-image: none;
-  cursor: pointer;
-  /* Ensure no background arrow is shown */
 }
 
-/* Remove dropdown arrow in Internet Explorer */
+/* Remove arrow in Internet Explorer */
 .language-select select::-ms-expand {
   display: none;
 }
@@ -143,7 +136,7 @@ h1, h2 {
   border: 1px solid var(--text);
 }
 
-/* Responsive adjustment */
+/* Responsive adjustments */
 @media (max-width: 576px) {
   .language-select {
     width: 70px;
