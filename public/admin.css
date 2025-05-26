@@ -54,12 +54,12 @@ h1, h2 {
   position: absolute;
   top: 65px;
   right: 22px;
-  width: 70px;
+  width: 60px;
   max-width: 80px;
   z-index: 1100;
   font-weight: 600;
   font-size: 0.5rem;
-  padding: 6px 12px;
+  padding: 2px 4px;
 }
 
 /* Override Bootstrap's form-select arrow for language-select */
