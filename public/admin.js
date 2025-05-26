@@ -1,5 +1,5 @@
 // ==========================
-// Språkdata (inbakad direkt i admin.js)
+// Språkdata
 // ==========================
 const LANGUAGES = {
   en: {
@@ -26,6 +26,10 @@ const LANGUAGES = {
       weekendWarriors: "Weekend Warriors",
       slacker9000: "Slacker Detector 9000"
     },
+    noPeople: "No people added",
+    noTasks: "No tasks added",
+    unassigned: "Unassigned",
+    remove: "Remove",
     chartLabels: {
       unfinishedTasks: "Unfinished Tasks",
       completedTasks: "Completed Tasks",
@@ -33,10 +37,6 @@ const LANGUAGES = {
       weekendTasksCompleted: "Weekend Tasks Completed",
       oldestOpenTaskAge: "Oldest Open Task Age (days)"
     },
-    noPeople: "No people added",
-    noTasks: "No tasks added",
-    unassigned: "Unassigned",
-    remove: "Remove",
     footer: "Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode"
   },
   sv: {
@@ -63,17 +63,17 @@ const LANGUAGES = {
       weekendWarriors: "Helghjältarna",
       slacker9000: "Slacker Detektor 9000"
     },
-    chartLabels: {
-      unfinishedTasks: "Ej färdiga uppgifter",
-      completedTasks: "Färdiga uppgifter",
-      avgCompletionTime: "Genomsnittlig avslutningstid (dagar)",
-      weekendTasksCompleted: "Helguppgifter slutförda",
-      oldestOpenTaskAge: "Äldsta öppna uppgift (dagar)"
-    },
     noPeople: "Inga personer tillagda",
     noTasks: "Inga uppgifter tillagda",
     unassigned: "Ej tilldelad",
     remove: "Ta bort",
+    chartLabels: {
+      unfinishedTasks: "Ej färdiga uppgifter",
+      completedTasks: "Färdiga uppgifter",
+      avgCompletionTime: "Genomsnittlig slutförandetid (dagar)",
+      weekendTasksCompleted: "Helguppgifter slutförda",
+      oldestOpenTaskAge: "Äldsta öppna uppgiftens ålder (dagar)"
+    },
     footer: "Byggt med Bootstrap & Chart.js • MMM-Chores av Pierre Gode"
   },
   fr: {
@@ -100,17 +100,17 @@ const LANGUAGES = {
       weekendWarriors: "Guerriers du week-end",
       slacker9000: "Détecteur de paresse 9000"
     },
+    noPeople: "Aucune personne ajoutée",
+    noTasks: "Aucune tâche ajoutée",
+    unassigned: "Non assigné",
+    remove: "Supprimer",
     chartLabels: {
       unfinishedTasks: "Tâches non terminées",
       completedTasks: "Tâches terminées",
       avgCompletionTime: "Temps moyen d'achèvement (jours)",
       weekendTasksCompleted: "Tâches du week-end terminées",
-      oldestOpenTaskAge: "Âge de la tâche ouverte la plus ancienne (jours)"
+      oldestOpenTaskAge: "Âge de la plus vieille tâche ouverte (jours)"
     },
-    noPeople: "Aucune personne ajoutée",
-    noTasks: "Aucune tâche ajoutée",
-    unassigned: "Non assigné",
-    remove: "Supprimer",
     footer: "Construit avec Bootstrap & Chart.js • MMM-Chores par Pierre Gode"
   },
   es: {
@@ -137,17 +137,17 @@ const LANGUAGES = {
       weekendWarriors: "Guerreros del fin de semana",
       slacker9000: "Detector de flojos 9000"
     },
-    chartLabels: {
-      unfinishedTasks: "Tareas sin terminar",
-      completedTasks: "Tareas completadas",
-      avgCompletionTime: "Tiempo promedio de finalización (días)",
-      weekendTasksCompleted: "Tareas de fin de semana completadas",
-      oldestOpenTaskAge: "Edad de la tarea abierta más antigua (días)"
-    },
     noPeople: "No hay personas agregadas",
     noTasks: "No hay tareas agregadas",
     unassigned: "Sin asignar",
     remove: "Eliminar",
+    chartLabels: {
+      unfinishedTasks: "Tareas sin terminar",
+      completedTasks: "Tareas completadas",
+      avgCompletionTime: "Tiempo promedio de finalización (días)",
+      weekendTasksCompleted: "Tareas completadas el fin de semana",
+      oldestOpenTaskAge: "Edad de la tarea abierta más antigua (días)"
+    },
     footer: "Construido con Bootstrap y Chart.js • MMM-Chores por Pierre Gode"
   },
   de: {
@@ -174,17 +174,17 @@ const LANGUAGES = {
       weekendWarriors: "Wochenendkrieger",
       slacker9000: "Faulenzer-Detektor 9000"
     },
-    chartLabels: {
-      unfinishedTasks: "Unfertige Aufgaben",
-      completedTasks: "Abgeschlossene Aufgaben",
-      avgCompletionTime: "Durchschnittliche Abschlusszeit (Tage)",
-      weekendTasksCompleted: "Wochenendaufgaben erledigt",
-      oldestOpenTaskAge: "Ältestes offenes Aufgabenalter (Tage)"
-    },
     noPeople: "Keine Personen hinzugefügt",
     noTasks: "Keine Aufgaben hinzugefügt",
     unassigned: "Nicht zugeordnet",
     remove: "Entfernen",
+    chartLabels: {
+      unfinishedTasks: "Unfertige Aufgaben",
+      completedTasks: "Abgeschlossene Aufgaben",
+      avgCompletionTime: "Durchschnittliche Abschlusszeit (Tage)",
+      weekendTasksCompleted: "Wochenendaufgaben abgeschlossen",
+      oldestOpenTaskAge: "Alter der ältesten offenen Aufgabe (Tage)"
+    },
     footer: "Erstellt mit Bootstrap & Chart.js • MMM-Chores von Pierre Gode"
   },
   it: {
@@ -211,17 +211,17 @@ const LANGUAGES = {
       weekendWarriors: "Guerrieri del weekend",
       slacker9000: "Rilevatore di fannulloni 9000"
     },
-    chartLabels: {
-      unfinishedTasks: "Compiti non completati",
-      completedTasks: "Compiti completati",
-      avgCompletionTime: "Tempo medio di completamento (giorni)",
-      weekendTasksCompleted: "Compiti del weekend completati",
-      oldestOpenTaskAge: "Età del compito aperto più vecchio (giorni)"
-    },
     noPeople: "Nessuna persona aggiunta",
     noTasks: "Nessun compito aggiunto",
     unassigned: "Non assegnato",
     remove: "Rimuovi",
+    chartLabels: {
+      unfinishedTasks: "Compiti non completati",
+      completedTasks: "Compiti completati",
+      avgCompletionTime: "Tempo medio di completamento (giorni)",
+      weekendTasksCompleted: "Compiti completati nel weekend",
+      oldestOpenTaskAge: "Età del compito aperto più vecchio (giorni)"
+    },
     footer: "Realizzato con Bootstrap & Chart.js • MMM-Chores di Pierre Gode"
   },
   nl: {
@@ -248,17 +248,17 @@ const LANGUAGES = {
       weekendWarriors: "Weekendstrijders",
       slacker9000: "Luilak Detector 9000"
     },
-    chartLabels: {
-      unfinishedTasks: "Onvoltooide taken",
-      completedTasks: "Voltooide taken",
-      avgCompletionTime: "Gemiddelde voltooiingstijd (dagen)",
-      weekendTasksCompleted: "Voltooide weekendtaken",
-      oldestOpenTaskAge: "Oudste open taak leeftijd (dagen)"
-    },
     noPeople: "Geen personen toegevoegd",
     noTasks: "Geen taken toegevoegd",
     unassigned: "Niet toegewezen",
     remove: "Verwijderen",
+    chartLabels: {
+      unfinishedTasks: "Onvoltooide taken",
+      completedTasks: "Voltooide taken",
+      avgCompletionTime: "Gemiddelde voltooiingstijd (dagen)",
+      weekendTasksCompleted: "Weekendtaken voltooid",
+      oldestOpenTaskAge: "Leeftijd van oudste open taak (dagen)"
+    },
     footer: "Gemaakt met Bootstrap & Chart.js • MMM-Chores door Pierre Gode"
   },
   pl: {
@@ -285,17 +285,17 @@ const LANGUAGES = {
       weekendWarriors: "Wojownicy weekendowi",
       slacker9000: "Detektor leni 9000"
     },
-    chartLabels: {
-      unfinishedTasks: "Niewykonane zadania",
-      completedTasks: "Wykonane zadania",
-      avgCompletionTime: "Średni czas ukończenia (dni)",
-      weekendTasksCompleted: "Ukończone zadania weekendowe",
-      oldestOpenTaskAge: "Wiek najstarszego otwartego zadania (dni)"
-    },
     noPeople: "Brak dodanych osób",
     noTasks: "Brak dodanych zadań",
     unassigned: "Nieprzypisane",
     remove: "Usuń",
+    chartLabels: {
+      unfinishedTasks: "Niewykonane zadania",
+      completedTasks: "Wykonane zadania",
+      avgCompletionTime: "Średni czas realizacji (dni)",
+      weekendTasksCompleted: "Wykonane zadania weekendowe",
+      oldestOpenTaskAge: "Wiek najstarszego otwartego zadania (dni)"
+    },
     footer: "Zbudowane z Bootstrap i Chart.js • MMM-Chores przez Pierre Gode"
   },
   zh: {
@@ -322,17 +322,17 @@ const LANGUAGES = {
       weekendWarriors: "周末勇士",
       slacker9000: "懒散探测器 9000"
     },
-    chartLabels: {
-      unfinishedTasks: "未完成的任务",
-      completedTasks: "已完成的任务",
-      avgCompletionTime: "平均完成时间（天）",
-      weekendTasksCompleted: "周末完成的任务",
-      oldestOpenTaskAge: "最长未完成任务时间（天）"
-    },
     noPeople: "未添加人员",
     noTasks: "未添加任务",
     unassigned: "未分配",
-    remove: "移除",
+    remove: "删除",
+    chartLabels: {
+      unfinishedTasks: "未完成的任务",
+      completedTasks: "已完成的任务",
+      avgCompletionTime: "平均完成时间 (天)",
+      weekendTasksCompleted: "周末完成的任务",
+      oldestOpenTaskAge: "最旧未完成任务时间 (天)"
+    },
     footer: "由 Bootstrap 和 Chart.js 构建 • MMM-Chores 由 Pierre Gode 创建"
   },
   ar: {
@@ -359,27 +359,76 @@ const LANGUAGES = {
       weekendWarriors: "محاربو عطلة نهاية الأسبوع",
       slacker9000: "كاشف الكسالى 9000"
     },
-    chartLabels: {
-      unfinishedTasks: "المهام غير المكتملة",
-      completedTasks: "المهام المكتملة",
-      avgCompletionTime: "متوسط وقت الإنجاز (بالأيام)",
-      weekendTasksCompleted: "المهام المنجزة في عطلة نهاية الأسبوع",
-      oldestOpenTaskAge: "أقدم مهمة مفتوحة (بالأيام)"
-    },
     noPeople: "لم يتم إضافة أي أشخاص",
     noTasks: "لم يتم إضافة أي مهام",
     unassigned: "غير معين",
     remove: "إزالة",
+    chartLabels: {
+      unfinishedTasks: "المهام غير المكتملة",
+      completedTasks: "المهام المكتملة",
+      avgCompletionTime: "متوسط وقت الإكمال (أيام)",
+      weekendTasksCompleted: "المهام المكتملة في عطلة نهاية الأسبوع",
+      oldestOpenTaskAge: "عمر أقدم مهمة مفتوحة (أيام)"
+    },
     footer: "تم الإنشاء باستخدام Bootstrap و Chart.js • MMM-Chores بواسطة Pierre Gode"
   }
 };
 
-let currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
+// ==========================
+// Globala variabler
+// ==========================
+let currentLang = 'en'; // fallback
+let peopleCache = [];
+let tasksCache = [];
+let chartInstances = {};
+let chartIdCounter = 0;
+let boardTitleMap = {};
 
+// ==========================
+// API: Hämta språk från backend
+// ==========================
+async function fetchUserLanguage() {
+  try {
+    const res = await fetch('/api/settings');
+    if (!res.ok) throw new Error('Failed fetching user settings');
+    const data = await res.json();
+    return data.language && LANGUAGES[data.language] ? data.language : null;
+  } catch (e) {
+    console.warn('Could not fetch user language:', e);
+    return null;
+  }
+}
+
+// ==========================
+// API: Spara språk till backend
+// ==========================
+async function saveUserLanguage(lang) {
+  try {
+    await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ language: lang })
+    });
+  } catch (e) {
+    console.error('Failed saving user language:', e);
+  }
+}
+
+// ==========================
+// Uppdatera boardTitleMap
+// ==========================
+function updateBoardTitleMap() {
+  boardTitleMap = { ...LANGUAGES[currentLang].chartOptions };
+}
+
+// ==========================
+// Sätt språk och uppdatera UI
+// ==========================
 function setLanguage(lang) {
   if (!LANGUAGES[lang]) return;
   currentLang = lang;
   localStorage.setItem("mmm-chores-lang", lang);
+
   const t = LANGUAGES[lang];
 
   document.querySelector(".hero h1").textContent = t.title;
@@ -426,57 +475,23 @@ function setLanguage(lang) {
   const footer = document.getElementById("footerText");
   if (footer) footer.textContent = t.footer;
 
-  // Unassigned in task assignee dropdowns - update dynamically
+  // Unassigned in task assignee dropdowns
   document.querySelectorAll("select").forEach(select => {
     const unassignedOption = Array.from(select.options).find(opt => opt.value === "");
     if (unassignedOption) unassignedOption.textContent = t.unassigned;
   });
 
-  // Clear and update empty lists messages after language switch
+  updateBoardTitleMap();
   renderPeople();
   renderTasks();
-}
 
-// ==========================
-// Theme Toggle
-// ==========================
-const root = document.documentElement;
-const themeTgl = document.getElementById("themeToggle");
-const themeIcon = document.getElementById("themeIcon");
-const STORAGE_KEY = "mmm-chores-theme";
-
-const savedTheme = localStorage.getItem(STORAGE_KEY) || "light";
-root.setAttribute("data-theme", savedTheme);
-themeTgl.checked = savedTheme === "dark";
-setIcon(savedTheme);
-
-themeTgl.addEventListener("change", () => {
-  const theme = themeTgl.checked ? "dark" : "light";
-  root.setAttribute("data-theme", theme);
-  localStorage.setItem(STORAGE_KEY, theme);
-  setIcon(theme);
-});
-
-function setIcon(theme) {
-  themeIcon.className = theme === "dark"
-    ? "bi bi-moon-stars-fill"
-    : "bi bi-brightness-high-fill";
-}
-
-// ==========================
-// State
-// ==========================
-let peopleCache = [];
-let tasksCache = [];
-let chartInstances = {};
-let chartIdCounter = 0;
-
-// Mappning av board-titlar för språk (uppdateras i setLanguage)
-let boardTitleMap = { ...LANGUAGES[currentLang].chartOptions };
-
-// Uppdatera boardTitleMap vid språkbyte
-function updateBoardTitleMap() {
-  boardTitleMap = { ...LANGUAGES[currentLang].chartOptions };
+  // Update existing analytics cards titles
+  Object.entries(chartInstances).forEach(([id, chart]) => {
+    const cardHeaderSpan = document.querySelector(`#${id}`).closest(".card").querySelector(".card-header span");
+    if (cardHeaderSpan && boardTitleMap[chart.boardType]) {
+      cardHeaderSpan.textContent = boardTitleMap[chart.boardType];
+    }
+  });
 }
 
 // ==========================
@@ -550,8 +565,10 @@ function renderTasks() {
     chk.className = "form-check-input me-3";
     chk.addEventListener("change", async () => {
       const updateObj = { done: chk.checked };
+
       const now = new Date();
       const iso = now.toISOString();
+
       const pad = n => n.toString().padStart(2, "0");
       const stamp = (prefix) => (
         prefix +
@@ -560,6 +577,7 @@ function renderTasks() {
         pad(now.getHours()) +
         pad(now.getMinutes())
       );
+
       if (chk.checked) {
         updateObj.finished = iso;
         updateObj.finishedShort = stamp("F");
@@ -579,8 +597,7 @@ function renderTasks() {
 
     const select = document.createElement("select");
     select.className = "form-select mx-3";
-    const unassignedOption = new Option(LANGUAGES[currentLang].unassigned, "");
-    select.add(unassignedOption);
+    select.add(new Option(LANGUAGES[currentLang].unassigned, ""));
     peopleCache.forEach(p => {
       const opt = new Option(p.name, p.id);
       if (task.assignedTo === p.id) opt.selected = true;
@@ -773,8 +790,6 @@ function renderChart(canvasId, type) {
   let options = { scales: { y: { beginAtZero: true } } };
   let chartType = "bar";
 
-  const t = LANGUAGES[currentLang].chartLabels;
-
   switch (type) {
     case "weekly": {
       const today = new Date();
@@ -793,7 +808,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t.completedTasks,
+          label: LANGUAGES[currentLang].chartLabels.completedTasks,
           data: counts,
           backgroundColor: "rgba(75,192,192,0.5)"
         }]
@@ -827,7 +842,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t.unfinishedTasks,
+          label: LANGUAGES[currentLang].chartLabels.unfinishedTasks,
           data: counts,
           backgroundColor: "rgba(153,102,255,0.5)"
         }]
@@ -847,7 +862,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t.completedTasks,
+          label: LANGUAGES[currentLang].chartOptions.taskmaster,
           data: counts,
           backgroundColor: "rgba(255,159,64,0.5)"
         }]
@@ -863,7 +878,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t.unfinishedTasks,
+          label: LANGUAGES[currentLang].chartOptions.lazyLegends,
           data: counts,
           backgroundColor: "rgba(255,99,132,0.5)"
         }]
@@ -887,7 +902,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t.avgCompletionTime,
+          label: LANGUAGES[currentLang].chartOptions.speedDemons,
           data: avgDays,
           backgroundColor: "rgba(54,162,235,0.5)"
         }]
@@ -907,7 +922,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t.weekendTasksCompleted,
+          label: LANGUAGES[currentLang].chartOptions.weekendWarriors,
           data: counts,
           backgroundColor: "rgba(255,206,86,0.5)"
         }]
@@ -926,7 +941,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t.oldestOpenTaskAge,
+          label: LANGUAGES[currentLang].chartOptions.slacker9000,
           data: ages,
           backgroundColor: "rgba(153,102,255,0.5)"
         }]
@@ -944,31 +959,56 @@ function renderChart(canvasId, type) {
   return chart;
 }
 
+// ==========================
+// Update All Charts (optional - if you want live update)
+// ==========================
 function updateAllCharts() {
   for (const [id, chart] of Object.entries(chartInstances)) {
     const type = chart.boardType || "weekly";
-    const newData = getChartData(type);
-    chart.data.labels = newData.labels;
-    chart.data.datasets[0].data = newData.datasets[0].data;
-    chart.update();
+    // We could build and update new data here if needed
+    // For brevity, omitted.
   }
 }
 
-// Extract chart data for updateAllCharts
-function getChartData(type) {
-  // replicate the data building logic from renderChart but return data only (no new Chart)
-  let data = { labels: [], datasets: [] };
+// ==========================
+// Theme Toggle (från ditt admin.js)
+// ==========================
+const root = document.documentElement;
+const themeTgl = document.getElementById("themeToggle");
+const themeIcon = document.getElementById("themeIcon");
+const STORAGE_KEY = "mmm-chores-theme";
 
-  // ... Add cases if live update is needed
+const savedTheme = localStorage.getItem(STORAGE_KEY) || "light";
+root.setAttribute("data-theme", savedTheme);
+themeTgl.checked = savedTheme === "dark";
+setIcon(savedTheme);
 
-  return data;
+themeTgl.addEventListener("change", () => {
+  const theme = themeTgl.checked ? "dark" : "light";
+  root.setAttribute("data-theme", theme);
+  localStorage.setItem(STORAGE_KEY, theme);
+  setIcon(theme);
+});
+
+function setIcon(theme) {
+  themeIcon.className = theme === "dark"
+    ? "bi bi-moon-stars-fill"
+    : "bi bi-brightness-high-fill";
 }
 
 // ==========================
 // Initial Load
 // ==========================
 document.addEventListener("DOMContentLoaded", async () => {
-  // Lägg till språkval dropdown längst upp höger
+  // Hämta språk från backend / fallback localStorage
+  const savedLang = await fetchUserLanguage();
+  if (savedLang) {
+    currentLang = savedLang;
+  } else {
+    currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
+  }
+
+  // Skapa språkval dropdown
   const selector = document.createElement("select");
   selector.className = "form-select w-auto position-absolute end-0 top-0 m-3";
   Object.keys(LANGUAGES).forEach(lang => {
@@ -978,26 +1018,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (lang === currentLang) opt.selected = true;
     selector.appendChild(opt);
   });
-  selector.addEventListener("change", e => {
-    setLanguage(e.target.value);
-    updateBoardTitleMap();
-
-    // Uppdatera titlar i befintliga analytics cards
-    Object.entries(chartInstances).forEach(([id, chart]) => {
-      const cardHeaderSpan = document.querySelector(`#${id}`).closest(".card").querySelector(".card-header span");
-      if (cardHeaderSpan && boardTitleMap[chart.boardType]) {
-        cardHeaderSpan.textContent = boardTitleMap[chart.boardType];
-      }
-    });
+  selector.addEventListener("change", async e => {
+    const newLang = e.target.value;
+    setLanguage(newLang);
+    await saveUserLanguage(newLang);
   });
   document.body.appendChild(selector);
+
+  setLanguage(currentLang);
 
   await fetchPeople();
   await fetchTasks();
 
-  updateBoardTitleMap();
-
-  // Ladda sparade boards och återställ dem
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
     savedBoards.forEach(type => addChart(type));
