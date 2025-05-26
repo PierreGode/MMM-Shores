@@ -35,7 +35,7 @@ let chartIdCounter = 0;
 let boardTitleMap = {};
 
 // ==========================
-// Helper to get current language strings
+// Helper to get current translations
 // ==========================
 function getCurrentTranslations() {
   return window.LANGUAGES ? window.LANGUAGES[localStorage.getItem("mmm-chores-lang") || "en"] : null;
@@ -44,7 +44,7 @@ function getCurrentTranslations() {
 function updateBoardTitleMap() {
   const t = getCurrentTranslations();
   if (t && t.chartOptions) {
-    boardTitleMap = {...t.chartOptions};
+    boardTitleMap = { ...t.chartOptions };
   } else {
     boardTitleMap = {
       weekly: "Tasks Completed Per Week",
@@ -325,7 +325,7 @@ function addChart(type) {
   if (!boardTitleMap || Object.keys(boardTitleMap).length === 0) {
     updateBoardTitleMap();
   }
-  if (getCurrentBoardTypes().includes(type)) return; // no duplicates
+  if (getCurrentBoardTypes().includes(type)) return;
 
   const container = document.getElementById("analyticsContainer");
   const card = document.createElement("div");
@@ -335,7 +335,7 @@ function addChart(type) {
   card.innerHTML = `
     <div class="card card-shadow h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span>${boardTitleMap[type]}</span>
+        <span>${boardTitleMap[type] || type}</span>
         <button class="btn btn-sm btn-outline-danger remove-widget" title="${t ? (t.remove || 'Remove') : 'Remove'}">&times;</button>
       </div>
       <div class="card-body"><canvas id="${cardId}"></canvas></div>
@@ -356,7 +356,7 @@ function addChart(type) {
 }
 
 function renderChart(canvasId, type) {
-  const t = getCurrentTranslations();
+  const t = getCurrentTranslations() || {};
   const ctx = document.getElementById(canvasId).getContext("2d");
   let data = { labels: [], datasets: [] };
   let options = { scales: { y: { beginAtZero: true } } };
@@ -380,7 +380,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t ? t.chartLabels.completedTasks : "Completed",
+          label: t.chartLabels?.completedTasks || "Completed",
           data: counts,
           backgroundColor: "rgba(75,192,192,0.5)"
         }]
@@ -414,7 +414,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t ? t.chartLabels.completedTasks : "Chores",
+          label: t.chartLabels?.completedTasks || "Chores",
           data: counts,
           backgroundColor: "rgba(153,102,255,0.5)"
         }]
@@ -434,7 +434,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t ? t.chartLabels.completedTasks : "Tasks Done This Month",
+          label: t.chartLabels?.completedTasks || "Tasks Done This Month",
           data: counts,
           backgroundColor: "rgba(255,159,64,0.5)"
         }]
@@ -450,7 +450,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t ? t.chartLabels.unfinishedTasks : "Unfinished Tasks",
+          label: t.chartLabels?.unfinishedTasks || "Unfinished Tasks",
           data: counts,
           backgroundColor: "rgba(255,99,132,0.5)"
         }]
@@ -474,7 +474,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t ? "Avg Completion Time (days)" : "Avg Completion Time (days)",
+          label: t.chartLabels?.avgCompletionTime || "Avg Completion Time (days)",
           data: avgDays,
           backgroundColor: "rgba(54,162,235,0.5)"
         }]
@@ -494,7 +494,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t ? "Weekend Tasks Completed" : "Weekend Tasks Completed",
+          label: t.chartLabels?.weekendTasksCompleted || "Weekend Tasks Completed",
           data: counts,
           backgroundColor: "rgba(255,206,86,0.5)"
         }]
@@ -513,7 +513,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: t ? "Oldest Open Task Age (days)" : "Oldest Open Task Age (days)",
+          label: t.chartLabels?.oldestOpenTaskAge || "Oldest Open Task Age (days)",
           data: ages,
           backgroundColor: "rgba(153,102,255,0.5)"
         }]
@@ -542,7 +542,7 @@ function updateAllCharts() {
 }
 
 function getChartData(type) {
-  // Implementera om du vill dynamiskt uppdatera datat på diagrammen
+  // Implementera om du vill dynamiskt uppdatera diagramdata (valfritt)
   return { labels: [], datasets: [] };
 }
 
@@ -550,7 +550,7 @@ function getChartData(type) {
 // Initial Load
 // ==========================
 document.addEventListener("DOMContentLoaded", async () => {
-  updateBoardTitleMap();   // Sätt rätt titlar för analytics-brädets tabbar
+  updateBoardTitleMap();
   await fetchPeople();
   await fetchTasks();
 
