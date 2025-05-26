@@ -45,15 +45,15 @@ h1, h2 {
 .theme-switch {
   position: absolute;
   top: 30px;
-  right: 70px; /* Flytta lite till vänster så språkval får plats */
+  right: 22px;
   z-index: 1000;
 }
 
-/* Språkval dropdown */
+/* Språkval dropdown placerad under theme-switch */
 .language-select {
   position: absolute;
-  top: 40px;
-  right: 15px;
+  top: 65px;      /* Under theme-switch (som är vid top:30px) */
+  right: 22px;    /* Samma högerposition som theme-switch */
   width: 90px;
   max-width: 100px;
   z-index: 1100;
@@ -61,7 +61,7 @@ h1, h2 {
   font-size: 0.9rem;
 }
 
-/* Kort med skugga */
+/* Cards */
 .card-shadow {
   background: var(--card-bg);
   border: none;
@@ -122,11 +122,11 @@ h1, h2 {
   .language-select {
     width: 70px;
     font-size: 0.8rem;
-    top: 20px;
-    right: 10px;
+    top: 55px;
+    right: 15px;
   }
   .theme-switch {
-    right: 90px;
-    top: 20px;
+    right: 50px;
+    top: 25px;
   }
 }
