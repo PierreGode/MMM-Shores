@@ -56,7 +56,7 @@ h1, h2 {
   right: 22px;
   width: 100px;        /* Reduced width */
   max-width: 100px;    /* Reduced max-width */
-  z-index: 1100;
+  z-index: 11000;
   font-weight: 600;
   font-size: 0.5rem;  /* Smaller text */
   padding: 4px 8px;   /* Optional: adjust padding if needed */
