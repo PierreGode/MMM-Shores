@@ -1025,12 +1025,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Placera dropdown precis efter Light/Dark-knappen
-  const themeSwitch = document.querySelector(".theme-switch");
-  if (themeSwitch) {
-    themeSwitch.parentNode.insertBefore(selector, themeSwitch.nextSibling);
-  } else {
-    document.body.appendChild(selector);
-  }
+  document.body.appendChild(selector);
 
   setLanguage(currentLang);
 
