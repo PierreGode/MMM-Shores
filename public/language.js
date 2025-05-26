@@ -153,11 +153,12 @@ const LANGUAGES = {
   }
 };
 
-let currentLang = 'en';
+let currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
 
 function setLanguage(lang) {
   if (!LANGUAGES[lang]) return;
   currentLang = lang;
+  localStorage.setItem("mmm-chores-lang", lang);
   const t = LANGUAGES[lang];
 
   document.querySelector(".hero h1").textContent = t.title;
@@ -166,24 +167,32 @@ function setLanguage(lang) {
   tabs[0].textContent = t.tabs[0];
   tabs[1].textContent = t.tabs[1];
 
-  document.querySelector(".card-header").textContent = t.peopleTitle;
-  document.getElementById("personName").placeholder = t.newPersonPlaceholder;
+  const headers = document.querySelectorAll(".card-header");
+  if (headers[0]) headers[0].textContent = t.peopleTitle;
+  const peopleForm = document.getElementById("personName");
+  if (peopleForm) peopleForm.placeholder = t.newPersonPlaceholder;
 
-  document.querySelectorAll(".card-header")[1].firstChild.textContent = t.taskTitle;
-  document.getElementById("taskName").placeholder = t.taskNamePlaceholder;
-  document.querySelector("#taskForm button").innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskButton}`;
+  if (headers[1]) headers[1].childNodes[0].textContent = t.taskTitle;
+  const taskInput = document.getElementById("taskName");
+  if (taskInput) taskInput.placeholder = t.taskNamePlaceholder;
+  const taskButton = document.querySelector("#taskForm button");
+  if (taskButton) taskButton.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskButton}`;
 
-  document.querySelector("#analytics h5").textContent = t.analyticsTitle;
-  document.getElementById("addChartSelect").options[0].textContent = t.addChartOption;
+  const analyticsTitle = document.querySelector("#analytics h5");
+  if (analyticsTitle) analyticsTitle.textContent = t.analyticsTitle;
+  const addChartOpt = document.getElementById("addChartSelect");
+  if (addChartOpt && addChartOpt.options.length > 0)
+    addChartOpt.options[0].textContent = t.addChartOption;
 
-  document.querySelector("footer").textContent = t.footer;
+  const footer = document.querySelector("footer");
+  if (footer) footer.textContent = t.footer;
 
   const peopleList = document.getElementById("peopleList");
-  if (!peopleList.children.length) {
+  if (peopleList && peopleList.children.length === 0) {
     peopleList.innerHTML = `<li class='list-group-item text-center text-muted'>${t.noPeople}</li>`;
   }
   const taskList = document.getElementById("taskList");
-  if (!taskList.children.length) {
+  if (taskList && taskList.children.length === 0) {
     taskList.innerHTML = `<li class='list-group-item text-center text-muted'>${t.noTasks}</li>`;
   }
 }
@@ -195,8 +204,10 @@ window.addEventListener("DOMContentLoaded", () => {
     const opt = document.createElement("option");
     opt.value = lang;
     opt.textContent = lang.toUpperCase();
+    if (lang === currentLang) opt.selected = true;
     selector.appendChild(opt);
   });
   selector.addEventListener("change", e => setLanguage(e.target.value));
   document.body.appendChild(selector);
+  setLanguage(currentLang);
 });
