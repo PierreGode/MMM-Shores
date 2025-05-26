@@ -11,9 +11,12 @@ const CERT_DIR  = path.join(__dirname, "certs");
 
 let tasks = [];
 let people = [];
-let analyticsBoards = [];  // <-- new storage for analytics boards
+let analyticsBoards = [];
+let settings = {
+  language: "en" // default language
+};
 
-// Load and save data (updated to include analyticsBoards)
+// Load and save data (updated to include analyticsBoards and settings)
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     try {
@@ -21,16 +24,18 @@ function loadData() {
       tasks = j.tasks || [];
       people = j.people || [];
       analyticsBoards = j.analyticsBoards || [];
-      Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`);
+      settings = j.settings || { language: "en" };
+      Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
     } catch (e) {
       Log.error("MMM-Chores: Error reading data.json:", e);
     }
   }
 }
+
 function saveData() {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ tasks, people, analyticsBoards }, null, 2), "utf8");
-    Log.log(`MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`);
+    fs.writeFileSync(DATA_FILE, JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2), "utf8");
+    Log.log(`MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
   } catch (e) {
     Log.error("MMM-Chores: Error writing data.json:", e);
   }
@@ -84,12 +89,11 @@ module.exports = NodeHelper.create({
     // Task endpoints
     app.get("/api/tasks", (req, res) => res.json(tasks));
     app.post("/api/tasks", (req, res) => {
-      // Kopiera ALLA fält från req.body (även timestamps och ev. nya)
       const newTask = {
         id: Date.now(),
         ...req.body,
-        done: false,              // done ska alltid starta som false
-        assignedTo: null,         // och assignedTo som null
+        done: false,
+        assignedTo: null,
       };
       tasks.push(newTask);
       saveData();
@@ -101,10 +105,9 @@ module.exports = NodeHelper.create({
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
 
-      // Kopiera över ALLA fält från req.body till task
       Object.entries(req.body).forEach(([key, val]) => {
         if (val === undefined || val === null) {
-          delete task[key]; // Ta bort om null/undefined (t.ex. finished ska tas bort om task avmarkeras)
+          delete task[key];
         } else {
           task[key] = val;
         }
@@ -136,6 +139,25 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
+    // New: Settings endpoints for language (and future settings)
+    app.get("/api/settings", (req, res) => {
+      res.json(settings);
+    });
+
+    app.put("/api/settings", (req, res) => {
+      const newSettings = req.body;
+      if (typeof newSettings !== "object") {
+        return res.status(400).json({ error: "Invalid settings data" });
+      }
+      // Only update keys that exist in settings object
+      Object.entries(newSettings).forEach(([key, val]) => {
+        settings[key] = val;
+      });
+      saveData();
+      self.sendSocketNotification("SETTINGS_UPDATE", settings);
+      res.json({ success: true, settings });
+    });
+
     // HTTP server
     app.listen(port, "0.0.0.0", () => {
       Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);
@@ -143,6 +165,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("ANALYTICS_UPDATE", analyticsBoards);
+      self.sendSocketNotification("SETTINGS_UPDATE", settings);
     });
 
     // HTTPS server on port+1
