@@ -32,16 +32,16 @@ let tasksCache = [];
 let chartInstances = {};
 let chartIdCounter = 0;
 
-const boardTitleMap = {
-  weekly: "Tasks Completed Per Week",
-  weekdays: "Busiest Weekdays",
-  perPerson: "Chores Per Person",
-  taskmaster: "Taskmaster This Month",
-  lazyLegends: "Lazy Legends",
-  speedDemons: "Speed Demons",
-  weekendWarriors: "Weekend Warriors",
-  slacker9000: "Slacker Detector 9000"
-};
+// Här förväntar vi oss att boardTitleMap uppdateras dynamiskt via språkfilen.
+// Vi kan hämta den senare från språkobjektet.
+let boardTitleMap = {};
+
+// ==========================
+// Helper to get current language strings
+// ==========================
+function getCurrentTranslations() {
+  return window.LANGUAGES ? window.LANGUAGES[localStorage.getItem("mmm-chores-lang") || "en"] : null;
+}
 
 // ==========================
 // Fetch People & Tasks
@@ -62,13 +62,14 @@ async function fetchTasks() {
 // Render People & Tasks
 // ==========================
 function renderPeople() {
+  const t = getCurrentTranslations();
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
 
   if (peopleCache.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
-    li.textContent = "No people added";
+    li.textContent = t ? t.noPeople : "No people added";
     list.appendChild(li);
     return;
   }
@@ -89,13 +90,14 @@ function renderPeople() {
 }
 
 function renderTasks() {
+  const t = getCurrentTranslations();
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
   if (tasksCache.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
-    li.textContent = "No tasks added";
+    li.textContent = t ? t.noTasks : "No tasks added";
     list.appendChild(li);
     return;
   }
@@ -112,14 +114,11 @@ function renderTasks() {
     chk.checked = task.done;
     chk.className = "form-check-input me-3";
     chk.addEventListener("change", async () => {
-      // Skapa uppdaterings-objektet
       const updateObj = { done: chk.checked };
 
-      // Hämta tid (nu)
       const now = new Date();
       const iso = now.toISOString();
 
-      // Kompakt stämpel (C/FMMDDHHmm)
       const pad = n => n.toString().padStart(2, "0");
       const stamp = (prefix) => (
         prefix +
@@ -130,11 +129,9 @@ function renderTasks() {
       );
 
       if (chk.checked) {
-        // Sätter finish-datum
         updateObj.finished = iso;
         updateObj.finishedShort = stamp("F");
       } else {
-        // Tar bort finish-datum
         updateObj.finished = null;
         updateObj.finishedShort = null;
       }
@@ -150,7 +147,10 @@ function renderTasks() {
 
     const select = document.createElement("select");
     select.className = "form-select mx-3";
-    select.add(new Option("Unassigned", ""));
+
+    // Använd översatt "unassigned" text
+    select.add(new Option(t ? t.unassigned : "Unassigned", ""));
+
     peopleCache.forEach(p => {
       const opt = new Option(p.name, p.id);
       if (task.assignedTo === p.id) opt.selected = true;
@@ -158,7 +158,6 @@ function renderTasks() {
     });
     select.addEventListener("change", () => {
       const val = select.value ? parseInt(select.value) : null;
-      // Om ansvarig ändras, sätt assignedDate och assignedDateShort
       const updateObj = { assignedTo: val };
       if (val !== task.assignedTo) {
         const now = new Date();
@@ -211,7 +210,6 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   if (!name) return;
   if (!date) date = new Date().toISOString().split("T")[0];
 
-  // Sätt både ISO och kompakt stämpel för creation
   const now = new Date();
   const iso = now.toISOString();
   const pad = n => n.toString().padStart(2, "0");
@@ -238,7 +236,6 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
 });
 
 async function updateTask(id, changes) {
-  // Rensa bort fält med null (så att backend tar bort dem)
   Object.keys(changes).forEach(key => {
     if (changes[key] === null) changes[key] = undefined;
   });
@@ -309,6 +306,11 @@ document.getElementById("addChartSelect").addEventListener("change", function ()
 });
 
 function addChart(type) {
+  const t = getCurrentTranslations();
+  if (!boardTitleMap || Object.keys(boardTitleMap).length === 0) {
+    // Bygg boardTitleMap från språkfilen
+    boardTitleMap = t ? t.chartOptions : {};
+  }
   if (getCurrentBoardTypes().includes(type)) return; // no duplicates
 
   const container = document.getElementById("analyticsContainer");
@@ -320,7 +322,7 @@ function addChart(type) {
     <div class="card card-shadow h-100">
       <div class="card-header d-flex justify-content-between align-items-center">
         <span>${boardTitleMap[type]}</span>
-        <button class="btn btn-sm btn-outline-danger remove-widget" title="Remove">&times;</button>
+        <button class="btn btn-sm btn-outline-danger remove-widget" title="${t ? (t.remove || 'Remove') : 'Remove'}">&times;</button>
       </div>
       <div class="card-body"><canvas id="${cardId}"></canvas></div>
     </div>
@@ -340,6 +342,7 @@ function addChart(type) {
 }
 
 function renderChart(canvasId, type) {
+  const t = getCurrentTranslations();
   const ctx = document.getElementById(canvasId).getContext("2d");
   let data = { labels: [], datasets: [] };
   let options = { scales: { y: { beginAtZero: true } } };
@@ -363,7 +366,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: "Completed",
+          label: t ? t.chartLabels.completedTasks : "Completed",
           data: counts,
           backgroundColor: "rgba(75,192,192,0.5)"
         }]
@@ -373,9 +376,9 @@ function renderChart(canvasId, type) {
 
     case "weekdays": {
       chartType = "pie";
-      const labels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const labels = t ? ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] : ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
       const dataArr = [0,0,0,0,0,0,0];
-      tasksCache.forEach(t => dataArr[new Date(t.date).getDay()]++);
+      tasksCache.forEach(tk => dataArr[new Date(tk.date).getDay()]++);
       data = {
         labels,
         datasets: [{
@@ -397,7 +400,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: "Chores",
+          label: t ? t.chartLabels.completedTasks : "Chores",
           data: counts,
           backgroundColor: "rgba(153,102,255,0.5)"
         }]
@@ -417,7 +420,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: "Tasks Done This Month",
+          label: t ? t.chartLabels.completedTasks : "Tasks Done This Month",
           data: counts,
           backgroundColor: "rgba(255,159,64,0.5)"
         }]
@@ -433,7 +436,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: "Unfinished Tasks",
+          label: t ? t.chartLabels.unfinishedTasks : "Unfinished Tasks",
           data: counts,
           backgroundColor: "rgba(255,99,132,0.5)"
         }]
@@ -457,7 +460,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: "Avg Completion Time (days)",
+          label: t ? "Avg Completion Time (days)" : "Avg Completion Time (days)",
           data: avgDays,
           backgroundColor: "rgba(54,162,235,0.5)"
         }]
@@ -477,7 +480,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: "Weekend Tasks Completed",
+          label: t ? "Weekend Tasks Completed" : "Weekend Tasks Completed",
           data: counts,
           backgroundColor: "rgba(255,206,86,0.5)"
         }]
@@ -496,7 +499,7 @@ function renderChart(canvasId, type) {
       data = {
         labels,
         datasets: [{
-          label: "Oldest Open Task Age (days)",
+          label: t ? "Oldest Open Task Age (days)" : "Oldest Open Task Age (days)",
           data: ages,
           backgroundColor: "rgba(153,102,255,0.5)"
         }]
@@ -510,7 +513,7 @@ function renderChart(canvasId, type) {
   }
 
   const chart = new Chart(ctx, { type: chartType, data, options });
-  chart.boardType = type; // store board type on chart instance for updates
+  chart.boardType = type;
   return chart;
 }
 
@@ -524,15 +527,9 @@ function updateAllCharts() {
   }
 }
 
-// Extract chart data for updateAllCharts
 function getChartData(type) {
-  // replicate the data building logic from renderChart but return data only (no new Chart)
-  let data = { labels: [], datasets: [] };
-
-  // ... Fyll på med samtliga cases som i renderChart om du vill ha live-uppdatering på all statistik.
-  // Annars används alltid den senaste datan i renderChart direkt.
-
-  return data;
+  // Implementera om du vill dynamiskt uppdatera datat på diagrammen
+  return { labels: [], datasets: [] };
 }
 
 // ==========================
@@ -547,5 +544,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     savedBoards.forEach(type => addChart(type));
   }
 });
-
-// Refresh tasks and update charts every
