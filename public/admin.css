@@ -52,13 +52,14 @@ h1, h2 {
 /* Språkval dropdown placerad under theme-switch */
 .language-select {
   position: absolute;
-  top: 65px;      /* Under theme-switch (som är vid top:30px) */
-  right: 22px;    /* Samma högerposition som theme-switch */
-  width: 70px;
-  max-width: 100px;
+  top: 65px;
+  right: 22px;
+  width: 70px;        /* Reduced width */
+  max-width: 80px;    /* Reduced max-width */
   z-index: 1100;
   font-weight: 600;
-  font-size: 0.6rem;
+  font-size: 0.5rem;  /* Smaller text */
+  padding: 2px 4px;   /* Optional: adjust padding if needed */
 }
 
 /* Cards */
