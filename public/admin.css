@@ -54,7 +54,7 @@ h1, h2 {
   position: absolute;
   top: 65px;      /* Under theme-switch (som är vid top:30px) */
   right: 22px;    /* Samma högerposition som theme-switch */
-  width: 90px;
+  width: 70px;
   max-width: 100px;
   z-index: 1100;
   font-weight: 600;
