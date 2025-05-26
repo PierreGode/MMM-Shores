@@ -13,10 +13,11 @@ let tasks = [];
 let people = [];
 let analyticsBoards = [];
 let settings = {
-  language: "en" // default language
+  language: "en",
+  dateFormatting: "yyyy-mm-dd" // Exempel på inställning som kan utökas
 };
 
-// Load and save data (updated to include analyticsBoards and settings)
+// Ladda data från fil
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     try {
@@ -24,7 +25,7 @@ function loadData() {
       tasks = j.tasks || [];
       people = j.people || [];
       analyticsBoards = j.analyticsBoards || [];
-      settings = j.settings || { language: "en" };
+      settings = j.settings || { language: "en", dateFormatting: "yyyy-mm-dd" };
       Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
     } catch (e) {
       Log.error("MMM-Chores: Error reading data.json:", e);
@@ -32,6 +33,7 @@ function loadData() {
   }
 }
 
+// Spara data till fil
 function saveData() {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2), "utf8");
@@ -60,7 +62,7 @@ module.exports = NodeHelper.create({
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
 
-    // Serve admin UI
+    // Admin UI
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
@@ -125,9 +127,7 @@ module.exports = NodeHelper.create({
     });
 
     // Analytics Boards endpoints
-    app.get("/api/analyticsBoards", (req, res) => {
-      res.json(analyticsBoards);
-    });
+    app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
     app.post("/api/analyticsBoards", (req, res) => {
       const newBoards = req.body;
       if (!Array.isArray(newBoards)) {
@@ -139,7 +139,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
-    // New: Settings endpoints for language (and future settings)
+    // Settings endpoints (exempel: language, dateFormatting, etc)
     app.get("/api/settings", (req, res) => {
       res.json(settings);
     });
@@ -149,7 +149,6 @@ module.exports = NodeHelper.create({
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
       }
-      // Only update keys that exist in settings object
       Object.entries(newSettings).forEach(([key, val]) => {
         settings[key] = val;
       });
@@ -158,17 +157,16 @@ module.exports = NodeHelper.create({
       res.json({ success: true, settings });
     });
 
-    // HTTP server
+    // Start HTTP server
     app.listen(port, "0.0.0.0", () => {
       Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);
-      // send initial data
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("ANALYTICS_UPDATE", analyticsBoards);
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
     });
 
-    // HTTPS server on port+1
+    // Optional HTTPS server on port+1
     const httpsPort = port + 1;
     const keyPath  = path.join(CERT_DIR, "server.key");
     const certPath = path.join(CERT_DIR, "server.crt");
