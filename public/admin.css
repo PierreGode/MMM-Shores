@@ -70,14 +70,19 @@ h1, h2 {
   border: 1px solid var(--text);
   border-radius: 4px;
 
-  /* Remove native dropdown arrow */
+  /* Remove native dropdown arrow in most browsers */
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background: none;
+
+  /* Remove background and arrow */
+  background: transparent;
+  background-image: none;
+  cursor: pointer;
+  /* Ensure no background arrow is shown */
 }
 
-/* Remove arrow in Internet Explorer */
+/* Remove dropdown arrow in Internet Explorer */
 .language-select select::-ms-expand {
   display: none;
 }
@@ -138,7 +143,7 @@ h1, h2 {
   border: 1px solid var(--text);
 }
 
-/* Responsiv justering */
+/* Responsive adjustment */
 @media (max-width: 576px) {
   .language-select {
     width: 70px;
