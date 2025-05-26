@@ -1,11 +1,10 @@
-/* MagicMirror² Module: MMM-Chores */
 Module.register("MMM-Chores", {
   defaults: {
-    updateInterval: 60 * 1000,   // update every minute
-    adminPort: 5003,             // admin page port
-    showDays: 1,                 // how many days from today to show (1 = today only)
-    showPast: false,             // whether to include unfinished tasks from past days
-    hideYear: false              // hide year in date
+    updateInterval: 60 * 1000,
+    adminPort: 5003,
+    showDays: 1,
+    showPast: false,
+    dateFormatting: "yyyy-mm-dd" // standardformat, kan ändras i config
   },
 
   start() {
@@ -32,13 +31,13 @@ Module.register("MMM-Chores", {
       this.people = payload;
       this.updateDom();
     }
+    if (notification === "SETTINGS_UPDATE") {
+      // Om du vill uppdatera config live vid settings-ändring
+      Object.assign(this.config, payload);
+      this.updateDom();
+    }
   },
 
-  /**
-   * Decide whether a task should be visible:
-   * - Past unfinished tasks if showPast = true
-   * - Tasks dated today through (showDays-1) days ahead
-   */
   shouldShowTask(task) {
     const showDays = parseInt(this.config.showDays, 10);
     const showPast = Boolean(this.config.showPast);
@@ -53,10 +52,8 @@ Module.register("MMM-Chores", {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-      // it's in the past
       return showPast && task.done === false;
     }
-    // diffDays >= 0
     return diffDays < showDays;
   },
 
@@ -65,7 +62,6 @@ Module.register("MMM-Chores", {
     return p ? p.name : "";
   },
 
-  // Gör en PATCH-förfrågan för att toggla task.done
   async toggleDone(task) {
     try {
       await fetch(`/api/tasks/${task.id}`, {
@@ -78,16 +74,27 @@ Module.register("MMM-Chores", {
     }
   },
 
+  formatDate(dateStr) {
+    const [yyyy, mm, dd] = dateStr.split("-");
+
+    let result = this.config.dateFormatting;
+
+    // Ersätt formatnycklar (case-insensitive)
+    result = result.replace(/yyyy/gi, yyyy);
+    result = result.replace(/mm/gi, mm);
+    result = result.replace(/dd/gi, dd);
+
+    return result;
+  },
+
   getDom() {
     const wrapper = document.createElement("div");
 
-    // Header
     const header = document.createElement("div");
-    header.innerHTML = "";
     header.className = "bright large";
+    header.innerHTML = "";
     wrapper.appendChild(header);
 
-    // Filter tasks
     const visible = this.tasks.filter(t => this.shouldShowTask(t));
 
     if (visible.length === 0) {
@@ -98,7 +105,6 @@ Module.register("MMM-Chores", {
       return wrapper;
     }
 
-    // Task list
     const ul = document.createElement("ul");
     ul.className = "normal";
 
@@ -106,36 +112,24 @@ Module.register("MMM-Chores", {
       const li = document.createElement("li");
       li.className = "small";
 
-      // Emoji-indikator (klickbar för att toggla!)
       const cb = document.createElement("span");
       cb.innerHTML = task.done ? "✅" : "⬜";
       cb.style.marginRight = "8px";
       cb.style.cursor = "pointer";
       cb.title = "Klicka för att markera som klar/inte klar";
-      cb.addEventListener("click", () => {
-        this.toggleDone(task);
-      });
+      cb.addEventListener("click", () => this.toggleDone(task));
       li.appendChild(cb);
 
-      // Datumformattering (med/utan år)
-      let dateText;
-      if (this.config.hideYear) {
-        const [yyyy, mm, dd] = task.date.split("-");
-        dateText = `${mm}-${dd}`;
-      } else {
-        dateText = task.date;
-      }
-
+      const dateText = this.formatDate(task.date);
       const text = document.createTextNode(`${task.name} (${dateText})`);
       li.appendChild(text);
 
-      // Assigned person
       if (task.assignedTo) {
         const person = this.getPersonName(task.assignedTo);
         const assignedEl = document.createElement("span");
         assignedEl.className = "xsmall dimmed";
-        assignedEl.innerHTML = ` — ${person}`;
         assignedEl.style.marginLeft = "6px";
+        assignedEl.innerHTML = ` — ${person}`;
         li.appendChild(assignedEl);
       }
 
