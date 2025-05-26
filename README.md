@@ -32,18 +32,19 @@ npm install
 ## Configuration
 
 ```js
-  {
-    module: "MMM-Chores",
-    position: "top_left",
-    header: "Chores",
-    config: {
-      updateInterval: 60 * 1000,
-      adminPort: 5003,
-      hideYear: true,
-      showDays: 3,  // show tasks dated today, tomorrow, and the day after
-      showPast: true   // also show unfinished tasks from past days
-    }
-  },
+{
+  module: "MMM-Chores",
+  position: "bottom_right",
+  header: "Chores",
+  config: {
+    hideYear: true,
+    updateInterval: 60 * 1000,
+    adminPort: 5003,
+    showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
+    showPast: true,    // also show unfinished tasks from past days
+    dateFormatting: "MM-DD"  // Date format pattern to display task dates,You can use tokens like 'yyyy' (year), 'mm' (month), 'dd' (day), or "mm-dd-yyyy" (US style)
+  }
+},
 ```
 
 ## Admin Interface
