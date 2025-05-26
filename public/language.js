@@ -23,13 +23,16 @@ const LANGUAGES = {
       weekendWarriors: "Weekend Warriors",
       slacker9000: "Slacker Detector 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "Unfinished Tasks",
+      completedTasks: "Completed Tasks",
+      avgCompletionTime: "Avg Completion Time (days)",
+      weekendTasksCompleted: "Weekend Tasks Completed",
+      oldestOpenTaskAge: "Oldest Open Task Age (days)"
+    },
     noPeople: "No people added",
     noTasks: "No tasks added",
     unassigned: "Unassigned",
-    chartLabels: {
-      unfinishedTasks: "Unfinished Tasks",
-      completedTasks: "Completed Tasks"
-    },
     remove: "Remove",
     footer: "Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode"
   },
@@ -57,13 +60,16 @@ const LANGUAGES = {
       weekendWarriors: "Helghjältarna",
       slacker9000: "Slacker Detektor 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "Ej färdiga uppgifter",
+      completedTasks: "Färdiga uppgifter",
+      avgCompletionTime: "Genomsnittlig avslutningstid (dagar)",
+      weekendTasksCompleted: "Helguppgifter slutförda",
+      oldestOpenTaskAge: "Äldsta öppna uppgift (dagar)"
+    },
     noPeople: "Inga personer tillagda",
     noTasks: "Inga uppgifter tillagda",
     unassigned: "Ej tilldelad",
-    chartLabels: {
-      unfinishedTasks: "Ej färdiga uppgifter",
-      completedTasks: "Färdiga uppgifter"
-    },
     remove: "Ta bort",
     footer: "Byggt med Bootstrap & Chart.js • MMM-Chores av Pierre Gode"
   },
@@ -91,13 +97,16 @@ const LANGUAGES = {
       weekendWarriors: "Guerriers du week-end",
       slacker9000: "Détecteur de paresse 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "Tâches non terminées",
+      completedTasks: "Tâches terminées",
+      avgCompletionTime: "Temps moyen d'achèvement (jours)",
+      weekendTasksCompleted: "Tâches du week-end terminées",
+      oldestOpenTaskAge: "Âge de la tâche ouverte la plus ancienne (jours)"
+    },
     noPeople: "Aucune personne ajoutée",
     noTasks: "Aucune tâche ajoutée",
     unassigned: "Non assigné",
-    chartLabels: {
-      unfinishedTasks: "Tâches non terminées",
-      completedTasks: "Tâches terminées"
-    },
     remove: "Supprimer",
     footer: "Construit avec Bootstrap & Chart.js • MMM-Chores par Pierre Gode"
   },
@@ -125,13 +134,16 @@ const LANGUAGES = {
       weekendWarriors: "Guerreros del fin de semana",
       slacker9000: "Detector de flojos 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "Tareas sin terminar",
+      completedTasks: "Tareas completadas",
+      avgCompletionTime: "Tiempo promedio de finalización (días)",
+      weekendTasksCompleted: "Tareas de fin de semana completadas",
+      oldestOpenTaskAge: "Edad de la tarea abierta más antigua (días)"
+    },
     noPeople: "No hay personas agregadas",
     noTasks: "No hay tareas agregadas",
     unassigned: "Sin asignar",
-    chartLabels: {
-      unfinishedTasks: "Tareas sin terminar",
-      completedTasks: "Tareas completadas"
-    },
     remove: "Eliminar",
     footer: "Construido con Bootstrap y Chart.js • MMM-Chores por Pierre Gode"
   },
@@ -159,13 +171,16 @@ const LANGUAGES = {
       weekendWarriors: "Wochenendkrieger",
       slacker9000: "Faulenzer-Detektor 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "Unfertige Aufgaben",
+      completedTasks: "Abgeschlossene Aufgaben",
+      avgCompletionTime: "Durchschnittliche Abschlusszeit (Tage)",
+      weekendTasksCompleted: "Wochenendaufgaben erledigt",
+      oldestOpenTaskAge: "Ältestes offenes Aufgabenalter (Tage)"
+    },
     noPeople: "Keine Personen hinzugefügt",
     noTasks: "Keine Aufgaben hinzugefügt",
     unassigned: "Nicht zugeordnet",
-    chartLabels: {
-      unfinishedTasks: "Unfertige Aufgaben",
-      completedTasks: "Abgeschlossene Aufgaben"
-    },
     remove: "Entfernen",
     footer: "Erstellt mit Bootstrap & Chart.js • MMM-Chores von Pierre Gode"
   },
@@ -193,13 +208,16 @@ const LANGUAGES = {
       weekendWarriors: "Guerrieri del weekend",
       slacker9000: "Rilevatore di fannulloni 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "Compiti non completati",
+      completedTasks: "Compiti completati",
+      avgCompletionTime: "Tempo medio di completamento (giorni)",
+      weekendTasksCompleted: "Compiti del weekend completati",
+      oldestOpenTaskAge: "Età del compito aperto più vecchio (giorni)"
+    },
     noPeople: "Nessuna persona aggiunta",
     noTasks: "Nessun compito aggiunto",
     unassigned: "Non assegnato",
-    chartLabels: {
-      unfinishedTasks: "Compiti non completati",
-      completedTasks: "Compiti completati"
-    },
     remove: "Rimuovi",
     footer: "Realizzato con Bootstrap & Chart.js • MMM-Chores di Pierre Gode"
   },
@@ -227,13 +245,16 @@ const LANGUAGES = {
       weekendWarriors: "Weekendstrijders",
       slacker9000: "Luilak Detector 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "Onvoltooide taken",
+      completedTasks: "Voltooide taken",
+      avgCompletionTime: "Gemiddelde voltooiingstijd (dagen)",
+      weekendTasksCompleted: "Voltooide weekendtaken",
+      oldestOpenTaskAge: "Oudste open taak leeftijd (dagen)"
+    },
     noPeople: "Geen personen toegevoegd",
     noTasks: "Geen taken toegevoegd",
     unassigned: "Niet toegewezen",
-    chartLabels: {
-      unfinishedTasks: "Onvoltooide taken",
-      completedTasks: "Voltooide taken"
-    },
     remove: "Verwijderen",
     footer: "Gemaakt met Bootstrap & Chart.js • MMM-Chores door Pierre Gode"
   },
@@ -261,13 +282,16 @@ const LANGUAGES = {
       weekendWarriors: "Wojownicy weekendowi",
       slacker9000: "Detektor leni 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "Niewykonane zadania",
+      completedTasks: "Wykonane zadania",
+      avgCompletionTime: "Średni czas ukończenia (dni)",
+      weekendTasksCompleted: "Ukończone zadania weekendowe",
+      oldestOpenTaskAge: "Wiek najstarszego otwartego zadania (dni)"
+    },
     noPeople: "Brak dodanych osób",
     noTasks: "Brak dodanych zadań",
     unassigned: "Nieprzypisane",
-    chartLabels: {
-      unfinishedTasks: "Niewykonane zadania",
-      completedTasks: "Wykonane zadania"
-    },
     remove: "Usuń",
     footer: "Zbudowane z Bootstrap i Chart.js • MMM-Chores przez Pierre Gode"
   },
@@ -295,13 +319,16 @@ const LANGUAGES = {
       weekendWarriors: "周末勇士",
       slacker9000: "懒散探测器 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "未完成的任务",
+      completedTasks: "已完成的任务",
+      avgCompletionTime: "平均完成时间（天）",
+      weekendTasksCompleted: "周末完成的任务",
+      oldestOpenTaskAge: "最长未完成任务时间（天）"
+    },
     noPeople: "未添加人员",
     noTasks: "未添加任务",
     unassigned: "未分配",
-    chartLabels: {
-      unfinishedTasks: "未完成的任务",
-      completedTasks: "已完成的任务"
-    },
     remove: "移除",
     footer: "由 Bootstrap 和 Chart.js 构建 • MMM-Chores 由 Pierre Gode 创建"
   },
@@ -329,13 +356,16 @@ const LANGUAGES = {
       weekendWarriors: "محاربو عطلة نهاية الأسبوع",
       slacker9000: "كاشف الكسالى 9000"
     },
+    chartLabels: {
+      unfinishedTasks: "المهام غير المكتملة",
+      completedTasks: "المهام المكتملة",
+      avgCompletionTime: "متوسط وقت الإنجاز (بالأيام)",
+      weekendTasksCompleted: "المهام المنجزة في عطلة نهاية الأسبوع",
+      oldestOpenTaskAge: "أقدم مهمة مفتوحة (بالأيام)"
+    },
     noPeople: "لم يتم إضافة أي أشخاص",
     noTasks: "لم يتم إضافة أي مهام",
     unassigned: "غير معين",
-    chartLabels: {
-      unfinishedTasks: "المهام غير المكتملة",
-      completedTasks: "المهام المكتملة"
-    },
     remove: "إزالة",
     footer: "تم الإنشاء باستخدام Bootstrap و Chart.js • MMM-Chores بواسطة Pierre Gode"
   }
@@ -399,7 +429,7 @@ function setLanguage(lang) {
     if (unassignedOption) unassignedOption.textContent = t.unassigned;
   });
 
-  // Empty lists messages
+  // Clear and update empty lists messages after language switch
   const peopleList = document.getElementById("peopleList");
   if (peopleList && peopleList.children.length === 0) {
     peopleList.innerHTML = `<li class='list-group-item text-center text-muted'>${t.noPeople}</li>`;
@@ -420,7 +450,19 @@ window.addEventListener("DOMContentLoaded", () => {
     if (lang === currentLang) opt.selected = true;
     selector.appendChild(opt);
   });
-  selector.addEventListener("change", e => setLanguage(e.target.value));
+  selector.addEventListener("change", e => {
+    setLanguage(e.target.value);
+    // Update board titles after language change
+    if (window.updateBoardTitleMap) window.updateBoardTitleMap();
+    if (window.chartInstances) {
+      Object.entries(window.chartInstances).forEach(([id, chart]) => {
+        const cardHeaderSpan = document.querySelector(`#${id}`).closest(".card").querySelector(".card-header span");
+        if (cardHeaderSpan && window.boardTitleMap && window.boardTitleMap[chart.boardType]) {
+          cardHeaderSpan.textContent = window.boardTitleMap[chart.boardType];
+        }
+      });
+    }
+  });
   document.body.appendChild(selector);
   setLanguage(currentLang);
 });
