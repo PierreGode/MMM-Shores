@@ -121,7 +121,7 @@ Module.register("MMM-Chores", {
       li.appendChild(cb);
 
       const dateText = this.formatDate(task.date);
-      const text = document.createTextNode(`${task.name} (${dateText})`);
+      const text = document.createTextNode(`${task.name} ${dateText}`);
       li.appendChild(text);
 
       if (task.assignedTo) {
