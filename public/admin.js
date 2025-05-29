@@ -427,7 +427,6 @@ function setLanguage(lang) {
   const personAddBtn = document.querySelector("#personForm button");
   if (personAddBtn) personAddBtn.title = t.addPersonBtnTitle;
 
-  // Tasks header, done/pending labels & form
   const tasksHeader = document.getElementById("tasksHeader");
   if (tasksHeader) tasksHeader.textContent = t.taskTitle;
   const doneLabel = document.getElementById("doneLabel");
@@ -439,7 +438,6 @@ function setLanguage(lang) {
   const taskAddBtn = document.querySelector("#taskForm button");
   if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
 
-  // Analytics header and chart select options
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
   const addChartSelect = document.getElementById("addChartSelect");
@@ -451,11 +449,9 @@ function setLanguage(lang) {
     });
   }
 
-  // Footer
   const footer = document.getElementById("footerText");
   if (footer) footer.textContent = t.footer;
 
-  // Unassigned in task assignee dropdowns
   document.querySelectorAll("select").forEach(select => {
     const unassignedOption = Array.from(select.options).find(opt => opt.value === "");
     if (unassignedOption) unassignedOption.textContent = t.unassigned;
@@ -465,7 +461,6 @@ function setLanguage(lang) {
   renderPeople();
   renderTasks();
 
-  // Update existing analytics cards titles
   Object.entries(chartInstances).forEach(([id, chart]) => {
     const cardHeaderSpan = document.querySelector(`#${id}`).closest(".card").querySelector(".card-header span");
     if (cardHeaderSpan && boardTitleMap[chart.boardType]) {
@@ -474,21 +469,18 @@ function setLanguage(lang) {
   });
 }
 
-// Hämtar alla personer
 async function fetchPeople() {
   const res = await fetch("/api/people");
   peopleCache = await res.json();
   renderPeople();
 }
 
-// Hämtar alla tasks (används även efter AI-generate)
 async function fetchTasks() {
   const res = await fetch("/api/tasks");
   tasksCache = await res.json();
   renderTasks();
 }
 
-// Renderar personer
 function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
@@ -517,7 +509,6 @@ function renderPeople() {
   }
 }
 
-// Renderar tasks
 function renderTasks() {
   const list = document.getElementById("taskList");
   list.innerHTML = "";
@@ -581,6 +572,7 @@ function renderTasks() {
       if (task.assignedTo === p.id) opt.selected = true;
       select.add(opt);
     });
+    
     select.addEventListener("change", () => {
       const val = select.value ? parseInt(select.value) : null;
       const updateObj = { assignedTo: val };
@@ -612,7 +604,6 @@ function renderTasks() {
   }
 }
 
-// CRUD Handlers
 document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -682,7 +673,6 @@ async function deleteTask(id) {
   await fetchTasks();
 }
 
-// Analytics Board Persistence
 async function fetchSavedBoards() {
   try {
     const res = await fetch('/api/analyticsBoards');
@@ -717,7 +707,6 @@ function getCurrentBoardTypes() {
     }).filter(Boolean);
 }
 
-// Analytics Chart Handling
 document.getElementById("addChartSelect").addEventListener("change", function () {
   const value = this.value;
   if (!value) return;
@@ -762,7 +751,6 @@ function renderChart(canvasId, type) {
   let options = { scales: { y: { beginAtZero: true } } };
   let chartType = "bar";
 
-  // Hjälpfunktion för att filtrera tasks:
   const filteredTasks = (filterFn) => tasksCache.filter(t => !(t.deleted && !t.done) && filterFn(t));
 
   switch (type) {
@@ -829,7 +817,6 @@ function renderChart(canvasId, type) {
       const now = new Date();
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        // Taskmaster ska räkna ALLA completed tasks, även de med deleted:true
         tasksCache.filter(t => {
           const d = new Date(t.date);
           return t.done && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.assignedTo === p.id;
@@ -930,19 +917,16 @@ function renderChart(canvasId, type) {
   }
 
   const chart = new Chart(ctx, { type: chartType, data, options });
-  chart.boardType = type; // store board type on chart instance for updates
+  chart.boardType = type;
   return chart;
 }
 
-// Update All Charts (optional)
 function updateAllCharts() {
   for (const [id, chart] of Object.entries(chartInstances)) {
     const type = chart.boardType || "weekly";
-    // Could update data here if needed
   }
 }
 
-// Theme Toggle
 const root = document.documentElement;
 const themeTgl = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
@@ -966,7 +950,6 @@ function setIcon(theme) {
     : "bi bi-brightness-high-fill";
 }
 
-// Initial Load
 document.addEventListener("DOMContentLoaded", async () => {
   const savedLang = await fetchUserLanguage();
   if (savedLang) {
@@ -975,7 +958,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
 
-  // Create language selector dropdown
   const selector = document.createElement("select");
   selector.className = "language-select";
   Object.keys(LANGUAGES).forEach(lang => {
@@ -991,7 +973,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     await saveUserLanguage(newLang);
   });
 
-  // Insert selector after theme toggle
   const themeSwitch = document.querySelector(".theme-switch");
   if (themeSwitch) {
     themeSwitch.parentNode.insertBefore(selector, themeSwitch.nextSibling);
