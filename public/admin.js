@@ -371,7 +371,7 @@ const LANGUAGES = {
   }
 };
 
-let currentLang = 'en';
+let currentLang = 'en'; // fallback
 let peopleCache = [];
 let tasksCache = [];
 let chartInstances = {};
@@ -475,10 +475,11 @@ async function fetchPeople() {
   renderPeople();
 }
 
-async function fetchTasks() {
-  const res = await fetch("/api/tasks");
+// NY: Hämtar ALLA tasks inkl deleted för analytics
+async function fetchAllTasks() {
+  const res = await fetch("/api/alltasks");
   tasksCache = await res.json();
-  renderTasks();
+  renderTasks(); // filtrerar i renderTasks bort deleted i UI
 }
 
 function renderPeople() {
@@ -614,7 +615,7 @@ document.getElementById("personForm").addEventListener("submit", async e => {
   });
   e.target.reset();
   await fetchPeople();
-  await fetchTasks();
+  await fetchAllTasks();
 });
 
 document.getElementById("taskForm").addEventListener("submit", async e => {
@@ -646,7 +647,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     })
   });
   e.target.reset();
-  await fetchTasks();
+  await fetchAllTasks();
 });
 
 async function updateTask(id, changes) {
@@ -658,18 +659,18 @@ async function updateTask(id, changes) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(changes)
   });
-  await fetchTasks();
+  await fetchAllTasks();
 }
 
 async function deletePerson(id) {
   await fetch(`/api/people/${id}`, { method: "DELETE" });
   await fetchPeople();
-  await fetchTasks();
+  await fetchAllTasks();
 }
 
 async function deleteTask(id) {
   await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-  await fetchTasks();
+  await fetchAllTasks();
 }
 
 async function fetchSavedBoards() {
@@ -714,7 +715,7 @@ document.getElementById("addChartSelect").addEventListener("change", function ()
 });
 
 function addChart(type) {
-  if (getCurrentBoardTypes().includes(type)) return; // no duplicates
+  if (getCurrentBoardTypes().includes(type)) return;
 
   const container = document.getElementById("analyticsContainer");
   const card = document.createElement("div");
@@ -749,8 +750,8 @@ function renderChart(canvasId, type) {
   let data = { labels: [], datasets: [] };
   let options = { scales: { y: { beginAtZero: true } } };
   let chartType = "bar";
-  
-  const filteredTasks = (filterFn) => tasksCache.filter(t => (!t.deleted || t.done) && filterFn(t));
+
+  const filteredTasks = (filterFn) => tasksCache.filter(t => filterFn(t));
 
   switch (type) {
     case "weekly": {
@@ -761,10 +762,7 @@ function renderChart(canvasId, type) {
         const d = new Date(today);
         d.setDate(today.getDate() - i * 7);
         labels.push(d.toISOString().split("T")[0]);
-        const c = filteredTasks(t => {
-          const td = new Date(t.date);
-          return t.done && ((today - td) / 86400000) >= i * 7 && ((today - td) / 86400000) < (i + 1) * 7;
-        }).length;
+        const c = filteredTasks(t => t.done && ((today - new Date(t.date)) / 86400000) >= i * 7 && ((today - new Date(t.date)) / 86400000) < (i + 1) * 7).length;
         counts.push(c);
       }
       data = {
@@ -799,7 +797,7 @@ function renderChart(canvasId, type) {
     case "perPerson": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        filteredTasks(t => t.assignedTo === p.id).length
+        filteredTasks(t => t.assignedTo === p.id && !t.deleted).length
       );
       data = {
         labels,
@@ -815,10 +813,10 @@ function renderChart(canvasId, type) {
     case "taskmaster": {
       const now = new Date();
       const labels = peopleCache.map(p => p.name);
-    
-      // Filtrera ALLA tasks som är done, oavsett deleted-status
+
+      // ALLA slutförda tasks, raderade eller ej
       const completedTasks = tasksCache.filter(t => t.done);
-    
+
       const counts = peopleCache.map(p =>
         completedTasks.filter(t => {
           const d = new Date(t.date);
@@ -827,7 +825,7 @@ function renderChart(canvasId, type) {
                  t.assignedTo === p.id;
         }).length
       );
-    
+
       data = {
         labels,
         datasets: [{
@@ -842,7 +840,7 @@ function renderChart(canvasId, type) {
     case "lazyLegends": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        filteredTasks(t => t.assignedTo === p.id && !t.done).length
+        filteredTasks(t => t.assignedTo === p.id && !t.done && !t.deleted).length
       );
       data = {
         labels,
@@ -882,7 +880,7 @@ function renderChart(canvasId, type) {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
         filteredTasks(t => {
-          if (!t.done || t.assignedTo !== p.id) return false;
+          if (!t.done || t.assignedTo !== p.id || t.deleted) return false;
           const d = new Date(t.date);
           return d.getDay() === 0 || d.getDay() === 6;
         }).length
@@ -901,7 +899,7 @@ function renderChart(canvasId, type) {
     case "slacker9000": {
       const labels = peopleCache.map(p => p.name);
       const ages = peopleCache.map(p => {
-        const openTasks = filteredTasks(t => t.assignedTo === p.id && !t.done && t.assignedDate);
+        const openTasks = filteredTasks(t => t.assignedTo === p.id && !t.done && t.assignedDate && !t.deleted);
         if (openTasks.length === 0) return 0;
         const now = new Date();
         return Math.max(...openTasks.map(t => (now - new Date(t.assignedDate)) / (1000*60*60*24)));
@@ -923,15 +921,11 @@ function renderChart(canvasId, type) {
   }
 
   const chart = new Chart(ctx, { type: chartType, data, options });
-  chart.boardType = type; // store board type on chart instance for updates
+  chart.boardType = type;
   return chart;
 }
 
-function updateAllCharts() {
-  for (const [id, chart] of Object.entries(chartInstances)) {
-    const type = chart.boardType || "weekly";
-  }
-}
+// Theme toggle etc. (behåll din befintliga kod)
 
 const root = document.documentElement;
 const themeTgl = document.getElementById("themeToggle");
@@ -989,7 +983,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setLanguage(currentLang);
 
   await fetchPeople();
-  await fetchTasks();
+  await fetchAllTasks();
 
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
