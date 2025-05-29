@@ -1,6 +1,3 @@
-// ==========================
-// Språkdata
-// ==========================
 const LANGUAGES = {
   en: {
     title: "MMM-Chores Admin  ",
@@ -374,19 +371,13 @@ const LANGUAGES = {
   }
 };
 
-// ==========================
-// Globala variabler
-// ==========================
-let currentLang = 'en'; // fallback
+let currentLang = 'en';
 let peopleCache = [];
 let tasksCache = [];
 let chartInstances = {};
 let chartIdCounter = 0;
 let boardTitleMap = {};
 
-// ==========================
-// API: Hämta språk från backend
-// ==========================
 async function fetchUserLanguage() {
   try {
     const res = await fetch('/api/settings');
@@ -399,9 +390,6 @@ async function fetchUserLanguage() {
   }
 }
 
-// ==========================
-// API: Spara språk till backend
-// ==========================
 async function saveUserLanguage(lang) {
   try {
     await fetch('/api/settings', {
@@ -414,16 +402,10 @@ async function saveUserLanguage(lang) {
   }
 }
 
-// ==========================
-// Uppdatera boardTitleMap
-// ==========================
 function updateBoardTitleMap() {
   boardTitleMap = { ...LANGUAGES[currentLang].chartOptions };
 }
 
-// ==========================
-// Sätt språk och uppdatera UI
-// ==========================
 function setLanguage(lang) {
   if (!LANGUAGES[lang]) return;
   currentLang = lang;
@@ -434,12 +416,10 @@ function setLanguage(lang) {
   document.querySelector(".hero h1").textContent = t.title;
   document.querySelector(".hero small").textContent = t.subtitle;
 
-  // Tabs
   const tabs = document.querySelectorAll(".nav-link");
   if (tabs[0]) tabs[0].textContent = t.tabs[0];
   if (tabs[1]) tabs[1].textContent = t.tabs[1];
 
-  // People header & form
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
   const peopleInput = document.getElementById("personName");
@@ -447,7 +427,6 @@ function setLanguage(lang) {
   const personAddBtn = document.querySelector("#personForm button");
   if (personAddBtn) personAddBtn.title = t.addPersonBtnTitle;
 
-  // Tasks header, done/pending labels & form
   const tasksHeader = document.getElementById("tasksHeader");
   if (tasksHeader) tasksHeader.textContent = t.taskTitle;
   const doneLabel = document.getElementById("doneLabel");
@@ -459,7 +438,6 @@ function setLanguage(lang) {
   const taskAddBtn = document.querySelector("#taskForm button");
   if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
 
-  // Analytics header and chart select options
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
   const addChartSelect = document.getElementById("addChartSelect");
@@ -471,11 +449,9 @@ function setLanguage(lang) {
     });
   }
 
-  // Footer
   const footer = document.getElementById("footerText");
   if (footer) footer.textContent = t.footer;
 
-  // Unassigned in task assignee dropdowns
   document.querySelectorAll("select").forEach(select => {
     const unassignedOption = Array.from(select.options).find(opt => opt.value === "");
     if (unassignedOption) unassignedOption.textContent = t.unassigned;
@@ -485,7 +461,6 @@ function setLanguage(lang) {
   renderPeople();
   renderTasks();
 
-  // Update existing analytics cards titles
   Object.entries(chartInstances).forEach(([id, chart]) => {
     const cardHeaderSpan = document.querySelector(`#${id}`).closest(".card").querySelector(".card-header span");
     if (cardHeaderSpan && boardTitleMap[chart.boardType]) {
@@ -494,9 +469,6 @@ function setLanguage(lang) {
   });
 }
 
-// ==========================
-// Fetch People & Tasks
-// ==========================
 async function fetchPeople() {
   const res = await fetch("/api/people");
   peopleCache = await res.json();
@@ -509,9 +481,6 @@ async function fetchTasks() {
   renderTasks();
 }
 
-// ==========================
-// Render People & Tasks
-// ==========================
 function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
@@ -634,9 +603,6 @@ function renderTasks() {
   }
 }
 
-// ==========================
-// CRUD Handlers
-// ==========================
 document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -706,9 +672,6 @@ async function deleteTask(id) {
   await fetchTasks();
 }
 
-// ==========================
-// Analytics Board Persistence
-// ==========================
 async function fetchSavedBoards() {
   try {
     const res = await fetch('/api/analyticsBoards');
@@ -743,9 +706,6 @@ function getCurrentBoardTypes() {
     }).filter(Boolean);
 }
 
-// ==========================
-// Analytics Chart Handling
-// ==========================
 document.getElementById("addChartSelect").addEventListener("change", function () {
   const value = this.value;
   if (!value) return;
@@ -789,9 +749,8 @@ function renderChart(canvasId, type) {
   let data = { labels: [], datasets: [] };
   let options = { scales: { y: { beginAtZero: true } } };
   let chartType = "bar";
-
-  // Hjälpfunktion för att filtrera tasks:
-  const filteredTasks = (filterFn) => tasksCache.filter(t => !(t.deleted && !t.done) && filterFn(t));
+  
+  const filteredTasks = (filterFn) => tasksCache.filter(t => (!t.deleted || t.done) && filterFn(t));
 
   switch (type) {
     case "weekly": {
@@ -961,20 +920,12 @@ function renderChart(canvasId, type) {
   return chart;
 }
 
-// ==========================
-// Update All Charts (optional - if you want live update)
-// ==========================
 function updateAllCharts() {
   for (const [id, chart] of Object.entries(chartInstances)) {
     const type = chart.boardType || "weekly";
-    // We could build and update new data here if needed
-    // For brevity, omitted.
   }
 }
 
-// ==========================
-// Theme Toggle (från ditt admin.js)
-// ==========================
 const root = document.documentElement;
 const themeTgl = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
@@ -998,11 +949,7 @@ function setIcon(theme) {
     : "bi bi-brightness-high-fill";
 }
 
-// ==========================
-// Initial Load
-// ==========================
 document.addEventListener("DOMContentLoaded", async () => {
-  // Hämta språk från backend / fallback localStorage
   const savedLang = await fetchUserLanguage();
   if (savedLang) {
     currentLang = savedLang;
@@ -1010,7 +957,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
 
-  // Skapa språkval dropdown
   const selector = document.createElement("select");
   selector.className = "language-select";
   Object.keys(LANGUAGES).forEach(lang => {
@@ -1026,7 +972,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     await saveUserLanguage(newLang);
   });
 
-  // Placera dropdown precis efter Light/Dark-knappen
   const themeSwitch = document.querySelector(".theme-switch");
   if (themeSwitch) {
     themeSwitch.parentNode.insertBefore(selector, themeSwitch.nextSibling);
