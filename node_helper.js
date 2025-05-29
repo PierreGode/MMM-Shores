@@ -69,17 +69,24 @@ module.exports = NodeHelper.create({
 
       const prompt = this.buildPromptFromTasks();
 
-      const completion = await openai.createChatCompletion({
+      Log.log("MMM-Chores: Sending prompt to OpenAI...");
+
+      const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. Return a JSON array with tasks including name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. Do not include tasks marked as done unless they are recurring." },
+          {
+            role: "system",
+            content: "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. Return a JSON array with tasks including name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. Do not include tasks marked as done unless they are recurring."
+          },
           { role: "user", content: prompt }
         ],
         max_tokens: 700,
         temperature: 0.7
       });
 
-      const text = completion.data.choices[0].message.content;
+      const text = completion.choices[0].message.content;
+
+      Log.log("MMM-Chores: OpenAI response received.");
 
       let newTasks = [];
       try {
