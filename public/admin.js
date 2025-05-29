@@ -552,7 +552,7 @@ function renderTasks() {
     return;
   }
 
-  for (const task of tasksCache) {
+  for (const task of tasksCache.filter(t => !t.deleted)) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
 
