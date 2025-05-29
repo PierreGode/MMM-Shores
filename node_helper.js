@@ -47,23 +47,26 @@ module.exports = NodeHelper.create({
   start() {
     Log.log("MMM-Chores helper started...");
     loadData();
+    this.config = null; // Will be set from main module
   },
 
   socketNotificationReceived(notification, payload) {
     if (notification === "INIT_SERVER") {
-      this.config = payload; // Spara konfig med OpenAI-token
+      this.config = payload; // Spara konfig inkl. OpenAI-token
+      Log.log("Received config in helper");
       this.initServer(payload.adminPort);
     }
   },
 
   async aiGenerateTasks(req, res) {
     try {
-      if (!this.config || !this.config.openAiToken) {
+      if (!this.config || !this.config.openaiApiKey) {
+        Log.error("OpenAI token missing in config");
         return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
       }
 
       const configuration = new Configuration({
-        apiKey: this.config.openAiToken,
+        apiKey: this.config.openaiApiKey,
       });
       const openai = new OpenAIApi(configuration);
 
@@ -109,7 +112,7 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    // Skicka bara tasks som inte är raderade eller historik
+    // Skicka alla tasks inklusive de som är raderade (soft deleted) för AI-analys
     const relevantTasks = tasks.map(t => ({
       name: t.name,
       assignedTo: t.assignedTo,
