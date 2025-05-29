@@ -6,8 +6,6 @@ const path       = require("path");
 const fs         = require("fs");
 const https      = require("https");
 
-const { Configuration, OpenAIApi } = require("openai");
-
 const DATA_FILE = path.join(__dirname, "data.json");
 const CERT_DIR  = path.join(__dirname, "certs");
 
@@ -62,10 +60,8 @@ module.exports = NodeHelper.create({
         return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
       }
 
-      const configuration = new Configuration({
-        apiKey: this.config.openaiApiKey,
-      });
-      const openai = new OpenAIApi(configuration);
+      const OpenAI = require("openai");
+      const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
 
       const prompt = this.buildPromptFromTasks();
 
