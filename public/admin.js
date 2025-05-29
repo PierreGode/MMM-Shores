@@ -1,6 +1,3 @@
-// ==========================
-// Språkdata
-// ==========================
 const LANGUAGES = {
   en: {
     title: "MMM-Chores Admin  ",
