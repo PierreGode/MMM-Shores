@@ -2,9 +2,11 @@ const Log        = require("logger");
 const NodeHelper = require("node_helper");
 const express    = require("express");
 const bodyParser = require("body-parser");
-const path       = require("node:path");
-const fs         = require("node:fs");
-const https      = require("node:https");
+const path       = require("path");
+const fs         = require("fs");
+const https      = require("https");
+
+const { Configuration, OpenAIApi } = require("openai");
 
 const DATA_FILE = path.join(__dirname, "data.json");
 const CERT_DIR  = path.join(__dirname, "certs");
@@ -14,10 +16,9 @@ let people = [];
 let analyticsBoards = [];
 let settings = {
   language: "en",
-  dateFormatting: "yyyy-mm-dd" // Exempel på inställning som kan utökas
+  dateFormatting: "yyyy-mm-dd"
 };
 
-// Ladda data från fil
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     try {
@@ -33,7 +34,6 @@ function loadData() {
   }
 }
 
-// Spara data till fil
 function saveData() {
   try {
     fs.writeFileSync(DATA_FILE, JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2), "utf8");
@@ -51,8 +51,74 @@ module.exports = NodeHelper.create({
 
   socketNotificationReceived(notification, payload) {
     if (notification === "INIT_SERVER") {
+      this.config = payload; // Spara konfig med OpenAI-token
       this.initServer(payload.adminPort);
     }
+  },
+
+  async aiGenerateTasks(req, res) {
+    try {
+      if (!this.config || !this.config.openAiToken) {
+        return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
+      }
+
+      const configuration = new Configuration({
+        apiKey: this.config.openAiToken,
+      });
+      const openai = new OpenAIApi(configuration);
+
+      const prompt = this.buildPromptFromTasks();
+
+      const completion = await openai.createChatCompletion({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. Return a JSON array with tasks including name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. Do not include tasks marked as done unless they are recurring." },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 700,
+        temperature: 0.7
+      });
+
+      const text = completion.data.choices[0].message.content;
+
+      let newTasks = [];
+      try {
+        newTasks = JSON.parse(text);
+      } catch (e) {
+        Log.error("Failed parsing AI response:", e);
+        return res.status(500).json({ success: false, error: "Invalid AI response format." });
+      }
+
+      const now = new Date();
+      newTasks.forEach(task => {
+        task.id = Date.now() + Math.floor(Math.random() * 10000);
+        task.created = now.toISOString();
+        task.done = false;
+        if (!task.assignedTo) task.assignedTo = null;
+        tasks.push(task);
+      });
+
+      saveData();
+      this.sendSocketNotification("TASKS_UPDATE", tasks);
+      res.json({ success: true, createdTasks: newTasks, count: newTasks.length });
+
+    } catch (err) {
+      Log.error("AI Generate error:", err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  buildPromptFromTasks() {
+    // Skicka bara tasks som inte är raderade eller historik
+    const relevantTasks = tasks.map(t => ({
+      name: t.name,
+      assignedTo: t.assignedTo,
+      date: t.date,
+      done: t.done,
+      deleted: t.deleted || false,
+      created: t.created
+    }));
+    return JSON.stringify(relevantTasks);
   },
 
   initServer(port) {
@@ -89,18 +155,10 @@ module.exports = NodeHelper.create({
     });
 
     // Task endpoints
-
-    // Synliga tasks (inga raderade)
     app.get("/api/tasks", (req, res) => {
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
     });
-
-    // ALLA tasks inkl deleted (för analytics)
-    app.get("/api/alltasks", (req, res) => {
-      res.json(tasks);
-    });
-
     app.post("/api/tasks", (req, res) => {
       const newTask = {
         id: Date.now(),
@@ -129,7 +187,6 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json(task);
     });
-    // Soft delete: Sätt deleted=true istället för att ta bort
     app.delete("/api/tasks/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
@@ -172,7 +229,9 @@ module.exports = NodeHelper.create({
       res.json({ success: true, settings });
     });
 
-    // Start HTTP server
+    // AI generate endpoint
+    app.post("/api/ai-generate", (req, res) => self.aiGenerateTasks(req, res));
+
     app.listen(port, "0.0.0.0", () => {
       Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);
       self.sendSocketNotification("TASKS_UPDATE", tasks);
