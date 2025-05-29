@@ -815,15 +815,19 @@ function renderChart(canvasId, type) {
     case "taskmaster": {
       const now = new Date();
       const labels = peopleCache.map(p => p.name);
-      // Filtrera done tasks oavsett deleted-status
-      const filteredDoneTasks = (filterFn) => tasksCache.filter(t => t.done && filterFn(t));
+    
+      // Filtrera ALLA tasks som är done, oavsett deleted-status
+      const completedTasks = tasksCache.filter(t => t.done);
     
       const counts = peopleCache.map(p =>
-        filteredDoneTasks(t => {
+        completedTasks.filter(t => {
           const d = new Date(t.date);
-          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.assignedTo === p.id;
+          return d.getMonth() === now.getMonth() &&
+                 d.getFullYear() === now.getFullYear() &&
+                 t.assignedTo === p.id;
         }).length
       );
+    
       data = {
         labels,
         datasets: [{
