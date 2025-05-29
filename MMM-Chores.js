@@ -95,7 +95,8 @@ Module.register("MMM-Chores", {
     header.innerHTML = "";
     wrapper.appendChild(header);
 
-    const visible = this.tasks.filter(t => this.shouldShowTask(t));
+    // Filtrerar bort raderade tasks
+    const visible = this.tasks.filter(t => !t.deleted && this.shouldShowTask(t));
 
     if (visible.length === 0) {
       const emptyEl = document.createElement("div");
