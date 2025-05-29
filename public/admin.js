@@ -371,7 +371,7 @@ const LANGUAGES = {
   }
 };
 
-let currentLang = 'en'; // fallback
+let currentLang = 'en';
 let peopleCache = [];
 let tasksCache = [];
 let chartInstances = {};
@@ -427,6 +427,7 @@ function setLanguage(lang) {
   const personAddBtn = document.querySelector("#personForm button");
   if (personAddBtn) personAddBtn.title = t.addPersonBtnTitle;
 
+  // Tasks header, done/pending labels & form
   const tasksHeader = document.getElementById("tasksHeader");
   if (tasksHeader) tasksHeader.textContent = t.taskTitle;
   const doneLabel = document.getElementById("doneLabel");
@@ -438,6 +439,7 @@ function setLanguage(lang) {
   const taskAddBtn = document.querySelector("#taskForm button");
   if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
 
+  // Analytics header and chart select options
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
   const addChartSelect = document.getElementById("addChartSelect");
@@ -449,9 +451,11 @@ function setLanguage(lang) {
     });
   }
 
+  // Footer
   const footer = document.getElementById("footerText");
   if (footer) footer.textContent = t.footer;
 
+  // Unassigned in task assignee dropdowns
   document.querySelectorAll("select").forEach(select => {
     const unassignedOption = Array.from(select.options).find(opt => opt.value === "");
     if (unassignedOption) unassignedOption.textContent = t.unassigned;
@@ -461,6 +465,7 @@ function setLanguage(lang) {
   renderPeople();
   renderTasks();
 
+  // Update existing analytics cards titles
   Object.entries(chartInstances).forEach(([id, chart]) => {
     const cardHeaderSpan = document.querySelector(`#${id}`).closest(".card").querySelector(".card-header span");
     if (cardHeaderSpan && boardTitleMap[chart.boardType]) {
@@ -469,19 +474,21 @@ function setLanguage(lang) {
   });
 }
 
+// Hämtar alla personer
 async function fetchPeople() {
   const res = await fetch("/api/people");
   peopleCache = await res.json();
   renderPeople();
 }
 
-// Hämtar ALLA tasks inkl deleted för analytics
-async function fetchAllTasks() {
-  const res = await fetch("/api/alltasks");
+// Hämtar alla tasks (används även efter AI-generate)
+async function fetchTasks() {
+  const res = await fetch("/api/tasks");
   tasksCache = await res.json();
-  renderTasks(); // renderTasks filtrerar bort deleted i UI
+  renderTasks();
 }
 
+// Renderar personer
 function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
@@ -510,6 +517,7 @@ function renderPeople() {
   }
 }
 
+// Renderar tasks
 function renderTasks() {
   const list = document.getElementById("taskList");
   list.innerHTML = "";
@@ -604,6 +612,7 @@ function renderTasks() {
   }
 }
 
+// CRUD Handlers
 document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -615,7 +624,7 @@ document.getElementById("personForm").addEventListener("submit", async e => {
   });
   e.target.reset();
   await fetchPeople();
-  await fetchAllTasks();
+  await fetchTasks();
 });
 
 document.getElementById("taskForm").addEventListener("submit", async e => {
@@ -647,7 +656,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     })
   });
   e.target.reset();
-  await fetchAllTasks();
+  await fetchTasks();
 });
 
 async function updateTask(id, changes) {
@@ -659,20 +668,21 @@ async function updateTask(id, changes) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(changes)
   });
-  await fetchAllTasks();
+  await fetchTasks();
 }
 
 async function deletePerson(id) {
   await fetch(`/api/people/${id}`, { method: "DELETE" });
   await fetchPeople();
-  await fetchAllTasks();
+  await fetchTasks();
 }
 
 async function deleteTask(id) {
   await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-  await fetchAllTasks();
+  await fetchTasks();
 }
 
+// Analytics Board Persistence
 async function fetchSavedBoards() {
   try {
     const res = await fetch('/api/analyticsBoards');
@@ -707,6 +717,7 @@ function getCurrentBoardTypes() {
     }).filter(Boolean);
 }
 
+// Analytics Chart Handling
 document.getElementById("addChartSelect").addEventListener("change", function () {
   const value = this.value;
   if (!value) return;
@@ -715,7 +726,7 @@ document.getElementById("addChartSelect").addEventListener("change", function ()
 });
 
 function addChart(type) {
-  if (getCurrentBoardTypes().includes(type)) return;
+  if (getCurrentBoardTypes().includes(type)) return; // no duplicates
 
   const container = document.getElementById("analyticsContainer");
   const card = document.createElement("div");
@@ -751,7 +762,8 @@ function renderChart(canvasId, type) {
   let options = { scales: { y: { beginAtZero: true } } };
   let chartType = "bar";
 
-  const filteredTasks = (filterFn) => tasksCache.filter(t => filterFn(t));
+  // Hjälpfunktion för att filtrera tasks:
+  const filteredTasks = (filterFn) => tasksCache.filter(t => !(t.deleted && !t.done) && filterFn(t));
 
   switch (type) {
     case "weekly": {
@@ -762,7 +774,10 @@ function renderChart(canvasId, type) {
         const d = new Date(today);
         d.setDate(today.getDate() - i * 7);
         labels.push(d.toISOString().split("T")[0]);
-        const c = filteredTasks(t => t.done && ((today - new Date(t.date)) / 86400000) >= i * 7 && ((today - new Date(t.date)) / 86400000) < (i + 1) * 7).length;
+        const c = filteredTasks(t => {
+          const td = new Date(t.date);
+          return t.done && ((today - td) / 86400000) >= i * 7 && ((today - td) / 86400000) < (i + 1) * 7;
+        }).length;
         counts.push(c);
       }
       data = {
@@ -797,7 +812,7 @@ function renderChart(canvasId, type) {
     case "perPerson": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        filteredTasks(t => t.assignedTo === p.id && !t.deleted).length
+        filteredTasks(t => t.assignedTo === p.id).length
       );
       data = {
         labels,
@@ -813,19 +828,13 @@ function renderChart(canvasId, type) {
     case "taskmaster": {
       const now = new Date();
       const labels = peopleCache.map(p => p.name);
-
-      // ALLA slutförda tasks, raderade eller ej
-      const completedTasks = tasksCache.filter(t => t.done);
-
       const counts = peopleCache.map(p =>
-        completedTasks.filter(t => {
+        // Taskmaster ska räkna ALLA completed tasks, även de med deleted:true
+        tasksCache.filter(t => {
           const d = new Date(t.date);
-          return d.getMonth() === now.getMonth() &&
-                 d.getFullYear() === now.getFullYear() &&
-                 t.assignedTo === p.id;
+          return t.done && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.assignedTo === p.id;
         }).length
       );
-
       data = {
         labels,
         datasets: [{
@@ -840,7 +849,7 @@ function renderChart(canvasId, type) {
     case "lazyLegends": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        filteredTasks(t => t.assignedTo === p.id && !t.done && !t.deleted).length
+        filteredTasks(t => t.assignedTo === p.id && !t.done).length
       );
       data = {
         labels,
@@ -880,7 +889,7 @@ function renderChart(canvasId, type) {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
         filteredTasks(t => {
-          if (!t.done || t.assignedTo !== p.id || t.deleted) return false;
+          if (!t.done || t.assignedTo !== p.id) return false;
           const d = new Date(t.date);
           return d.getDay() === 0 || d.getDay() === 6;
         }).length
@@ -899,7 +908,7 @@ function renderChart(canvasId, type) {
     case "slacker9000": {
       const labels = peopleCache.map(p => p.name);
       const ages = peopleCache.map(p => {
-        const openTasks = filteredTasks(t => t.assignedTo === p.id && !t.done && t.assignedDate && !t.deleted);
+        const openTasks = filteredTasks(t => t.assignedTo === p.id && !t.done && t.assignedDate);
         if (openTasks.length === 0) return 0;
         const now = new Date();
         return Math.max(...openTasks.map(t => (now - new Date(t.assignedDate)) / (1000*60*60*24)));
@@ -921,12 +930,19 @@ function renderChart(canvasId, type) {
   }
 
   const chart = new Chart(ctx, { type: chartType, data, options });
-  chart.boardType = type;
+  chart.boardType = type; // store board type on chart instance for updates
   return chart;
 }
 
-// Theme toggle etc.
+// Update All Charts (optional)
+function updateAllCharts() {
+  for (const [id, chart] of Object.entries(chartInstances)) {
+    const type = chart.boardType || "weekly";
+    // Could update data here if needed
+  }
+}
 
+// Theme Toggle
 const root = document.documentElement;
 const themeTgl = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
@@ -950,6 +966,7 @@ function setIcon(theme) {
     : "bi bi-brightness-high-fill";
 }
 
+// Initial Load
 document.addEventListener("DOMContentLoaded", async () => {
   const savedLang = await fetchUserLanguage();
   if (savedLang) {
@@ -958,6 +975,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
 
+  // Create language selector dropdown
   const selector = document.createElement("select");
   selector.className = "language-select";
   Object.keys(LANGUAGES).forEach(lang => {
@@ -973,6 +991,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await saveUserLanguage(newLang);
   });
 
+  // Insert selector after theme toggle
   const themeSwitch = document.querySelector(".theme-switch");
   if (themeSwitch) {
     themeSwitch.parentNode.insertBefore(selector, themeSwitch.nextSibling);
@@ -981,9 +1000,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   setLanguage(currentLang);
-
   await fetchPeople();
-  await fetchAllTasks();
+  await fetchTasks();
 
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
