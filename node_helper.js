@@ -89,11 +89,18 @@ module.exports = NodeHelper.create({
     });
 
     // Task endpoints
-    // Ändrat: Returnerar endast tasks utan deleted=true
+
+    // Synliga tasks (inga raderade)
     app.get("/api/tasks", (req, res) => {
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
     });
+
+    // ALLA tasks inkl deleted (för analytics)
+    app.get("/api/alltasks", (req, res) => {
+      res.json(tasks);
+    });
+
     app.post("/api/tasks", (req, res) => {
       const newTask = {
         id: Date.now(),
@@ -122,7 +129,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json(task);
     });
-    // Soft delete: Sätter deleted=true istället för att ta bort
+    // Soft delete: Sätt deleted=true istället för att ta bort
     app.delete("/api/tasks/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
@@ -147,7 +154,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
-    // Settings endpoints (exempel: language, dateFormatting, etc)
+    // Settings endpoints
     app.get("/api/settings", (req, res) => {
       res.json(settings);
     });

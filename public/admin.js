@@ -1,6 +1,3 @@
-// ==========================
-// Språkdata
-// ==========================
 const LANGUAGES = {
   en: {
     title: "MMM-Chores Admin  ",
@@ -374,9 +371,6 @@ const LANGUAGES = {
   }
 };
 
-// ==========================
-// Globala variabler
-// ==========================
 let currentLang = 'en'; // fallback
 let peopleCache = [];
 let tasksCache = [];
@@ -384,9 +378,6 @@ let chartInstances = {};
 let chartIdCounter = 0;
 let boardTitleMap = {};
 
-// ==========================
-// API: Hämta språk från backend
-// ==========================
 async function fetchUserLanguage() {
   try {
     const res = await fetch('/api/settings');
@@ -399,9 +390,6 @@ async function fetchUserLanguage() {
   }
 }
 
-// ==========================
-// API: Spara språk till backend
-// ==========================
 async function saveUserLanguage(lang) {
   try {
     await fetch('/api/settings', {
@@ -414,16 +402,10 @@ async function saveUserLanguage(lang) {
   }
 }
 
-// ==========================
-// Uppdatera boardTitleMap
-// ==========================
 function updateBoardTitleMap() {
   boardTitleMap = { ...LANGUAGES[currentLang].chartOptions };
 }
 
-// ==========================
-// Sätt språk och uppdatera UI
-// ==========================
 function setLanguage(lang) {
   if (!LANGUAGES[lang]) return;
   currentLang = lang;
@@ -434,12 +416,10 @@ function setLanguage(lang) {
   document.querySelector(".hero h1").textContent = t.title;
   document.querySelector(".hero small").textContent = t.subtitle;
 
-  // Tabs
   const tabs = document.querySelectorAll(".nav-link");
   if (tabs[0]) tabs[0].textContent = t.tabs[0];
   if (tabs[1]) tabs[1].textContent = t.tabs[1];
 
-  // People header & form
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
   const peopleInput = document.getElementById("personName");
@@ -447,7 +427,6 @@ function setLanguage(lang) {
   const personAddBtn = document.querySelector("#personForm button");
   if (personAddBtn) personAddBtn.title = t.addPersonBtnTitle;
 
-  // Tasks header, done/pending labels & form
   const tasksHeader = document.getElementById("tasksHeader");
   if (tasksHeader) tasksHeader.textContent = t.taskTitle;
   const doneLabel = document.getElementById("doneLabel");
@@ -459,7 +438,6 @@ function setLanguage(lang) {
   const taskAddBtn = document.querySelector("#taskForm button");
   if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
 
-  // Analytics header and chart select options
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
   const addChartSelect = document.getElementById("addChartSelect");
@@ -471,11 +449,9 @@ function setLanguage(lang) {
     });
   }
 
-  // Footer
   const footer = document.getElementById("footerText");
   if (footer) footer.textContent = t.footer;
 
-  // Unassigned in task assignee dropdowns
   document.querySelectorAll("select").forEach(select => {
     const unassignedOption = Array.from(select.options).find(opt => opt.value === "");
     if (unassignedOption) unassignedOption.textContent = t.unassigned;
@@ -485,7 +461,6 @@ function setLanguage(lang) {
   renderPeople();
   renderTasks();
 
-  // Update existing analytics cards titles
   Object.entries(chartInstances).forEach(([id, chart]) => {
     const cardHeaderSpan = document.querySelector(`#${id}`).closest(".card").querySelector(".card-header span");
     if (cardHeaderSpan && boardTitleMap[chart.boardType]) {
@@ -494,24 +469,19 @@ function setLanguage(lang) {
   });
 }
 
-// ==========================
-// Fetch People & Tasks
-// ==========================
 async function fetchPeople() {
   const res = await fetch("/api/people");
   peopleCache = await res.json();
   renderPeople();
 }
 
-async function fetchTasks() {
-  const res = await fetch("/api/tasks");
+// NY: Hämtar ALLA tasks inkl deleted för analytics
+async function fetchAllTasks() {
+  const res = await fetch("/api/alltasks");
   tasksCache = await res.json();
-  renderTasks();
+  renderTasks(); // filtrerar i renderTasks bort deleted i UI
 }
 
-// ==========================
-// Render People & Tasks
-// ==========================
 function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
@@ -634,9 +604,6 @@ function renderTasks() {
   }
 }
 
-// ==========================
-// CRUD Handlers
-// ==========================
 document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -648,7 +615,7 @@ document.getElementById("personForm").addEventListener("submit", async e => {
   });
   e.target.reset();
   await fetchPeople();
-  await fetchTasks();
+  await fetchAllTasks();
 });
 
 document.getElementById("taskForm").addEventListener("submit", async e => {
@@ -680,7 +647,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     })
   });
   e.target.reset();
-  await fetchTasks();
+  await fetchAllTasks();
 });
 
 async function updateTask(id, changes) {
@@ -692,23 +659,20 @@ async function updateTask(id, changes) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(changes)
   });
-  await fetchTasks();
+  await fetchAllTasks();
 }
 
 async function deletePerson(id) {
   await fetch(`/api/people/${id}`, { method: "DELETE" });
   await fetchPeople();
-  await fetchTasks();
+  await fetchAllTasks();
 }
 
 async function deleteTask(id) {
   await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-  await fetchTasks();
+  await fetchAllTasks();
 }
 
-// ==========================
-// Analytics Board Persistence
-// ==========================
 async function fetchSavedBoards() {
   try {
     const res = await fetch('/api/analyticsBoards');
@@ -743,9 +707,6 @@ function getCurrentBoardTypes() {
     }).filter(Boolean);
 }
 
-// ==========================
-// Analytics Chart Handling
-// ==========================
 document.getElementById("addChartSelect").addEventListener("change", function () {
   const value = this.value;
   if (!value) return;
@@ -754,7 +715,7 @@ document.getElementById("addChartSelect").addEventListener("change", function ()
 });
 
 function addChart(type) {
-  if (getCurrentBoardTypes().includes(type)) return; // no duplicates
+  if (getCurrentBoardTypes().includes(type)) return;
 
   const container = document.getElementById("analyticsContainer");
   const card = document.createElement("div");
@@ -790,8 +751,7 @@ function renderChart(canvasId, type) {
   let options = { scales: { y: { beginAtZero: true } } };
   let chartType = "bar";
 
-  // Hjälpfunktion för att filtrera tasks:
-  const filteredTasks = (filterFn) => tasksCache.filter(t => !(t.deleted && !t.done) && filterFn(t));
+  const filteredTasks = (filterFn) => tasksCache.filter(t => filterFn(t));
 
   switch (type) {
     case "weekly": {
@@ -802,10 +762,7 @@ function renderChart(canvasId, type) {
         const d = new Date(today);
         d.setDate(today.getDate() - i * 7);
         labels.push(d.toISOString().split("T")[0]);
-        const c = filteredTasks(t => {
-          const td = new Date(t.date);
-          return t.done && ((today - td) / 86400000) >= i * 7 && ((today - td) / 86400000) < (i + 1) * 7;
-        }).length;
+        const c = filteredTasks(t => t.done && ((today - new Date(t.date)) / 86400000) >= i * 7 && ((today - new Date(t.date)) / 86400000) < (i + 1) * 7).length;
         counts.push(c);
       }
       data = {
@@ -840,7 +797,7 @@ function renderChart(canvasId, type) {
     case "perPerson": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        filteredTasks(t => t.assignedTo === p.id).length
+        filteredTasks(t => t.assignedTo === p.id && !t.deleted).length
       );
       data = {
         labels,
@@ -856,12 +813,19 @@ function renderChart(canvasId, type) {
     case "taskmaster": {
       const now = new Date();
       const labels = peopleCache.map(p => p.name);
+
+      // ALLA slutförda tasks, raderade eller ej
+      const completedTasks = tasksCache.filter(t => t.done);
+
       const counts = peopleCache.map(p =>
-        filteredTasks(t => {
+        completedTasks.filter(t => {
           const d = new Date(t.date);
-          return t.done && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.assignedTo === p.id;
+          return d.getMonth() === now.getMonth() &&
+                 d.getFullYear() === now.getFullYear() &&
+                 t.assignedTo === p.id;
         }).length
       );
+
       data = {
         labels,
         datasets: [{
@@ -876,7 +840,7 @@ function renderChart(canvasId, type) {
     case "lazyLegends": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        filteredTasks(t => t.assignedTo === p.id && !t.done).length
+        filteredTasks(t => t.assignedTo === p.id && !t.done && !t.deleted).length
       );
       data = {
         labels,
@@ -916,7 +880,7 @@ function renderChart(canvasId, type) {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
         filteredTasks(t => {
-          if (!t.done || t.assignedTo !== p.id) return false;
+          if (!t.done || t.assignedTo !== p.id || t.deleted) return false;
           const d = new Date(t.date);
           return d.getDay() === 0 || d.getDay() === 6;
         }).length
@@ -935,7 +899,7 @@ function renderChart(canvasId, type) {
     case "slacker9000": {
       const labels = peopleCache.map(p => p.name);
       const ages = peopleCache.map(p => {
-        const openTasks = filteredTasks(t => t.assignedTo === p.id && !t.done && t.assignedDate);
+        const openTasks = filteredTasks(t => t.assignedTo === p.id && !t.done && t.assignedDate && !t.deleted);
         if (openTasks.length === 0) return 0;
         const now = new Date();
         return Math.max(...openTasks.map(t => (now - new Date(t.assignedDate)) / (1000*60*60*24)));
@@ -957,24 +921,12 @@ function renderChart(canvasId, type) {
   }
 
   const chart = new Chart(ctx, { type: chartType, data, options });
-  chart.boardType = type; // store board type on chart instance for updates
+  chart.boardType = type;
   return chart;
 }
 
-// ==========================
-// Update All Charts (optional - if you want live update)
-// ==========================
-function updateAllCharts() {
-  for (const [id, chart] of Object.entries(chartInstances)) {
-    const type = chart.boardType || "weekly";
-    // We could build and update new data here if needed
-    // For brevity, omitted.
-  }
-}
+// Theme toggle etc. (behåll din befintliga kod)
 
-// ==========================
-// Theme Toggle (från ditt admin.js)
-// ==========================
 const root = document.documentElement;
 const themeTgl = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
@@ -998,11 +950,7 @@ function setIcon(theme) {
     : "bi bi-brightness-high-fill";
 }
 
-// ==========================
-// Initial Load
-// ==========================
 document.addEventListener("DOMContentLoaded", async () => {
-  // Hämta språk från backend / fallback localStorage
   const savedLang = await fetchUserLanguage();
   if (savedLang) {
     currentLang = savedLang;
@@ -1010,7 +958,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
 
-  // Skapa språkval dropdown
   const selector = document.createElement("select");
   selector.className = "language-select";
   Object.keys(LANGUAGES).forEach(lang => {
@@ -1026,7 +973,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     await saveUserLanguage(newLang);
   });
 
-  // Placera dropdown precis efter Light/Dark-knappen
   const themeSwitch = document.querySelector(".theme-switch");
   if (themeSwitch) {
     themeSwitch.parentNode.insertBefore(selector, themeSwitch.nextSibling);
@@ -1037,7 +983,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setLanguage(currentLang);
 
   await fetchPeople();
-  await fetchTasks();
+  await fetchAllTasks();
 
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
