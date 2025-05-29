@@ -89,7 +89,11 @@ module.exports = NodeHelper.create({
     });
 
     // Task endpoints
-    app.get("/api/tasks", (req, res) => res.json(tasks));
+    // Ändrat: Returnerar endast tasks utan deleted=true
+    app.get("/api/tasks", (req, res) => {
+      const visibleTasks = tasks.filter(t => !t.deleted);
+      res.json(visibleTasks);
+    });
     app.post("/api/tasks", (req, res) => {
       const newTask = {
         id: Date.now(),
@@ -118,7 +122,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json(task);
     });
-    // Uppdaterad DELETE med soft delete (deleted = true)
+    // Soft delete: Sätter deleted=true istället för att ta bort
     app.delete("/api/tasks/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
