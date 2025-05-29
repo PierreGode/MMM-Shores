@@ -118,9 +118,13 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json(task);
     });
+    // Uppdaterad DELETE med soft delete (deleted = true)
     app.delete("/api/tasks/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
-      tasks = tasks.filter(t => t.id !== id);
+      const task = tasks.find(t => t.id === id);
+      if (!task) return res.status(404).json({ error: "Task not found" });
+
+      task.deleted = true;
       saveData();
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json({ success: true });
