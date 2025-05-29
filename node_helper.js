@@ -6,7 +6,6 @@ const path       = require("path");
 const fs         = require("fs");
 const https      = require("https");
 
-// OpenAI v5 import och användning!
 const OpenAI = require("openai");
 
 const DATA_FILE = path.join(__dirname, "data.json");
@@ -52,7 +51,7 @@ module.exports = NodeHelper.create({
 
   socketNotificationReceived(notification, payload) {
     if (notification === "INIT_SERVER") {
-      this.config = payload; // Spara konfig inkl openaiApiKey
+      this.config = payload;
       this.initServer(payload.adminPort);
     }
   },
@@ -77,7 +76,7 @@ module.exports = NodeHelper.create({
             content:
               "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. " +
               "Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. " +
-              "Do not include tasks marked as done unless they are recurring."
+              "Do not include tasks marked as done unless they are recurring. try to be logical, do not overly generate tasks if all task already exist or are very recent completed."
           },
           { role: "user", content: prompt }
         ],
@@ -87,16 +86,13 @@ module.exports = NodeHelper.create({
 
       let text = completion.choices[0].message.content;
 
-      // Logga alltid hela svaret!
       Log.log("MMM-Chores: OpenAI RAW response:", text);
 
-      // Ta bort kodblock (``` eller ```json ... ```)
       text = text.trim();
       if (text.startsWith("```")) {
         text = text.replace(/```[a-z]*\s*([\s\S]*?)\s*```/, "$1").trim();
       }
 
-      // Plocka ut första arrayen ur svaret
       const firstBracket = text.indexOf('[');
       const lastBracket = text.lastIndexOf(']');
       if (firstBracket !== -1 && lastBracket !== -1) {
@@ -132,7 +128,6 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    // Skicka alla tasks (inklusive deleted och done) för AI-analys
     const relevantTasks = tasks.map(t => ({
       name: t.name,
       assignedTo: t.assignedTo,
