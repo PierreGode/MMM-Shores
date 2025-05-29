@@ -6,7 +6,7 @@ const path       = require("path");
 const fs         = require("fs");
 const https      = require("https");
 
-const OpenAI = require("openai");
+const { OpenAI } = require("openai");
 
 const DATA_FILE = path.join(__dirname, "data.json");
 const CERT_DIR  = path.join(__dirname, "certs");
@@ -51,7 +51,7 @@ module.exports = NodeHelper.create({
 
   socketNotificationReceived(notification, payload) {
     if (notification === "INIT_SERVER") {
-      this.config = payload;
+      this.config = payload; // Spara konfig inkl openaiApiKey
       this.initServer(payload.adminPort);
     }
   },
@@ -64,9 +64,11 @@ module.exports = NodeHelper.create({
 
       const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
 
+      // Förbättrad prompt!
       const prompt = this.buildPromptFromTasks();
 
       Log.log("MMM-Chores: Sending prompt to OpenAI...");
+      Log.log("Prompt (truncated):", prompt.slice(0, 1000) + "...");
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -76,7 +78,7 @@ module.exports = NodeHelper.create({
             content:
               "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. " +
               "Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. " +
-              "Do not include tasks marked as done unless they are recurring. try to be logical, do not overly generate tasks if all task already exist, not completed or are very recent completed."
+              "Do not include tasks marked as done unless they are recurring. Try to be logical, do not overly generate tasks if all tasks already exist, not completed, or are very recently completed. Never duplicate any unfinished future tasks already scheduled."
           },
           { role: "user", content: prompt }
         ],
@@ -88,11 +90,13 @@ module.exports = NodeHelper.create({
 
       Log.log("MMM-Chores: OpenAI RAW response:", text);
 
+      // Städa bort ev. markdown eller kodblock
       text = text.trim();
       if (text.startsWith("```")) {
         text = text.replace(/```[a-z]*\s*([\s\S]*?)\s*```/, "$1").trim();
       }
 
+      // Klipp ut bara JSON-arrayen om GPT ändå skriver text
       const firstBracket = text.indexOf('[');
       const lastBracket = text.lastIndexOf(']');
       if (firstBracket !== -1 && lastBracket !== -1) {
@@ -108,6 +112,17 @@ module.exports = NodeHelper.create({
         return res.status(500).json({ success: false, error: "Invalid AI response format.", raw: text });
       }
 
+      // Kontroll: Filtrera bort dubletter (name + date + assignedTo) mot alla befintliga (som inte är deleted)
+      newTasks = newTasks.filter(nt =>
+        !tasks.some(t =>
+          t.name === nt.name &&
+          t.date === nt.date &&
+          (String(t.assignedTo) === String(nt.assignedTo)) &&
+          !t.deleted
+        )
+      );
+
+      // Sätt id och created för varje ny task
       const now = new Date();
       newTasks.forEach(task => {
         task.id = Date.now() + Math.floor(Math.random() * 10000);
@@ -128,7 +143,9 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    const relevantTasks = tasks.map(t => ({
+    // Separerar historiska och framtida tasks för att GPT ska förstå!
+    const today = new Date();
+    const promptTasks = tasks.map(t => ({
       name: t.name,
       assignedTo: t.assignedTo,
       date: t.date,
@@ -136,7 +153,27 @@ module.exports = NodeHelper.create({
       deleted: t.deleted || false,
       created: t.created
     }));
-    return JSON.stringify(relevantTasks);
+
+    const futureTasks = promptTasks.filter(
+      t => !t.done && !t.deleted && new Date(t.date) >= today
+    );
+    const pastTasks = promptTasks.filter(
+      t => new Date(t.date) < today
+    );
+
+    return `
+Historical household tasks (array for frequency analysis): 
+${JSON.stringify(pastTasks, null, 2)}
+
+Upcoming unfinished tasks (do NOT duplicate these): 
+${JSON.stringify(futureTasks, null, 2)}
+
+Instructions:
+- Generate tasks for the next 7 days only if they are likely based on the historical frequency/pattern.
+- DO NOT create a new task with same name, date, and person if a similar unfinished task already exists for that day.
+- Output a pure JSON array with only new tasks (no text, no markdown).
+Each task must include: name, date (yyyy-mm-dd), assignedTo (person id or null).
+`;
   },
 
   initServer(port) {
