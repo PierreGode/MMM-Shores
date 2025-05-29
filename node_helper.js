@@ -89,8 +89,8 @@ module.exports = NodeHelper.create({
     });
 
     // Task endpoints
-    // Ändrat: Returnerar endast tasks utan deleted=true
     app.get("/api/tasks", (req, res) => {
+      // Visa endast tasks som INTE har deleted:true
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
     });
@@ -122,7 +122,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json(task);
     });
-    // Soft delete: Sätter deleted=true istället för att ta bort
+    // Soft delete: Sätt deleted=true istället för att ta bort från historiken
     app.delete("/api/tasks/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
@@ -147,7 +147,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
-    // Settings endpoints (exempel: language, dateFormatting, etc)
+    // Settings endpoints
     app.get("/api/settings", (req, res) => {
       res.json(settings);
     });
