@@ -475,11 +475,11 @@ async function fetchPeople() {
   renderPeople();
 }
 
-// NY: Hämtar ALLA tasks inkl deleted för analytics
+// Hämtar ALLA tasks inkl deleted för analytics
 async function fetchAllTasks() {
   const res = await fetch("/api/alltasks");
   tasksCache = await res.json();
-  renderTasks(); // filtrerar i renderTasks bort deleted i UI
+  renderTasks(); // renderTasks filtrerar bort deleted i UI
 }
 
 function renderPeople() {
@@ -925,7 +925,7 @@ function renderChart(canvasId, type) {
   return chart;
 }
 
-// Theme toggle etc. (behåll din befintliga kod)
+// Theme toggle etc.
 
 const root = document.documentElement;
 const themeTgl = document.getElementById("themeToggle");
