@@ -54,62 +54,78 @@ module.exports = NodeHelper.create({
     }
   },
 
-  async aiGenerateTasks(req, res) {
-    try {
-      if (!this.config || !this.config.openaiApiKey) {
-        return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
-      }
-
-      const OpenAI = require("openai");
-      const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
-
-      const prompt = this.buildPromptFromTasks();
-
-      Log.log("MMM-Chores: Sending prompt to OpenAI...");
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. Return a JSON array with tasks including name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. Do not include tasks marked as done unless they are recurring."
-          },
-          { role: "user", content: prompt }
-        ],
-        max_tokens: 700,
-        temperature: 0.7
-      });
-
-      const text = completion.choices[0].message.content;
-
-      Log.log("MMM-Chores: OpenAI response received.");
-
-      let newTasks = [];
-      try {
-        newTasks = JSON.parse(text);
-      } catch (e) {
-        Log.error("Failed parsing AI response:", e);
-        return res.status(500).json({ success: false, error: "Invalid AI response format." });
-      }
-
-      const now = new Date();
-      newTasks.forEach(task => {
-        task.id = Date.now() + Math.floor(Math.random() * 10000);
-        task.created = now.toISOString();
-        task.done = false;
-        if (!task.assignedTo) task.assignedTo = null;
-        tasks.push(task);
-      });
-
-      saveData();
-      this.sendSocketNotification("TASKS_UPDATE", tasks);
-      res.json({ success: true, createdTasks: newTasks, count: newTasks.length });
-
-    } catch (err) {
-      Log.error("AI Generate error:", err);
-      res.status(500).json({ success: false, error: err.message });
+async aiGenerateTasks(req, res) {
+  try {
+    if (!this.config || !this.config.openaiApiKey) {
+      return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
     }
-  },
+
+    const OpenAI = require("openai");
+    const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
+
+    const prompt = this.buildPromptFromTasks();
+
+    Log.log("MMM-Chores: Sending prompt to OpenAI...");
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. Do not include tasks marked as done unless they are recurring."
+        },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 700,
+      temperature: 0.7
+    });
+
+    let text = completion.choices[0].message.content;
+
+    // Logga alltid hela svaret!
+    Log.log("MMM-Chores: OpenAI RAW response:", text);
+
+    // Ta bort kodblock (``` eller ```json ... ```)
+    text = text.trim();
+    if (text.startsWith("```")) {
+      text = text.replace(/```[a-z]*\s*([\s\S]*?)\s*```/, "$1").trim();
+    }
+
+    // Fixa vanliga buggar – t.ex. om det råkar vara kommentarer eller text kvar
+    // Plocka ut det första som liknar en array
+    const firstBracket = text.indexOf('[');
+    const lastBracket = text.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1) {
+      text = text.substring(firstBracket, lastBracket + 1);
+    }
+
+    let newTasks = [];
+    try {
+      newTasks = JSON.parse(text);
+    } catch (e) {
+      Log.error("Failed parsing AI response:", e);
+      Log.error("OpenAI returned:", text);
+      return res.status(500).json({ success: false, error: "Invalid AI response format.", raw: text });
+    }
+
+    const now = new Date();
+    newTasks.forEach(task => {
+      task.id = Date.now() + Math.floor(Math.random() * 10000);
+      task.created = now.toISOString();
+      task.done = false;
+      if (!task.assignedTo) task.assignedTo = null;
+      tasks.push(task);
+    });
+
+    saveData();
+    this.sendSocketNotification("TASKS_UPDATE", tasks);
+    res.json({ success: true, createdTasks: newTasks, count: newTasks.length });
+
+  } catch (err) {
+    Log.error("AI Generate error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
 
   buildPromptFromTasks() {
     // Skicka relevanta tasks (inklusive deleted och done) för AI-analys
