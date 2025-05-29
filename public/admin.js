@@ -790,6 +790,9 @@ function renderChart(canvasId, type) {
   let options = { scales: { y: { beginAtZero: true } } };
   let chartType = "bar";
 
+  // Hjälpfunktion för att filtrera tasks:
+  const filteredTasks = (filterFn) => tasksCache.filter(t => !(t.deleted && !t.done) && filterFn(t));
+
   switch (type) {
     case "weekly": {
       const today = new Date();
@@ -799,7 +802,7 @@ function renderChart(canvasId, type) {
         const d = new Date(today);
         d.setDate(today.getDate() - i * 7);
         labels.push(d.toISOString().split("T")[0]);
-        const c = tasksCache.filter(t => {
+        const c = filteredTasks(t => {
           const td = new Date(t.date);
           return t.done && ((today - td) / 86400000) >= i * 7 && ((today - td) / 86400000) < (i + 1) * 7;
         }).length;
@@ -820,7 +823,7 @@ function renderChart(canvasId, type) {
       chartType = "pie";
       const labels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
       const dataArr = [0,0,0,0,0,0,0];
-      tasksCache.forEach(t => dataArr[new Date(t.date).getDay()]++);
+      filteredTasks(t => true).forEach(t => dataArr[new Date(t.date).getDay()]++);
       data = {
         labels,
         datasets: [{
@@ -837,7 +840,7 @@ function renderChart(canvasId, type) {
     case "perPerson": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        tasksCache.filter(t => t.assignedTo === p.id).length
+        filteredTasks(t => t.assignedTo === p.id).length
       );
       data = {
         labels,
@@ -854,7 +857,7 @@ function renderChart(canvasId, type) {
       const now = new Date();
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        tasksCache.filter(t => {
+        filteredTasks(t => {
           const d = new Date(t.date);
           return t.done && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.assignedTo === p.id;
         }).length
@@ -873,7 +876,7 @@ function renderChart(canvasId, type) {
     case "lazyLegends": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        tasksCache.filter(t => t.assignedTo === p.id && !t.done).length
+        filteredTasks(t => t.assignedTo === p.id && !t.done).length
       );
       data = {
         labels,
@@ -889,8 +892,7 @@ function renderChart(canvasId, type) {
     case "speedDemons": {
       const labels = peopleCache.map(p => p.name);
       const avgDays = peopleCache.map(p => {
-        const times = tasksCache
-          .filter(t => t.assignedTo === p.id && t.done && t.finished && t.assignedDate)
+        const times = filteredTasks(t => t.assignedTo === p.id && t.done && t.finished && t.assignedDate)
           .map(t => {
             const dDone = new Date(t.finished);
             const dAssigned = new Date(t.assignedDate);
@@ -913,7 +915,7 @@ function renderChart(canvasId, type) {
     case "weekendWarriors": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        tasksCache.filter(t => {
+        filteredTasks(t => {
           if (!t.done || t.assignedTo !== p.id) return false;
           const d = new Date(t.date);
           return d.getDay() === 0 || d.getDay() === 6;
@@ -933,7 +935,7 @@ function renderChart(canvasId, type) {
     case "slacker9000": {
       const labels = peopleCache.map(p => p.name);
       const ages = peopleCache.map(p => {
-        const openTasks = tasksCache.filter(t => t.assignedTo === p.id && !t.done && t.assignedDate);
+        const openTasks = filteredTasks(t => t.assignedTo === p.id && !t.done && t.assignedDate);
         if (openTasks.length === 0) return 0;
         const now = new Date();
         return Math.max(...openTasks.map(t => (now - new Date(t.assignedDate)) / (1000*60*60*24)));
