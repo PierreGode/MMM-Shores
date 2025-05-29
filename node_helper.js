@@ -78,7 +78,7 @@ module.exports = NodeHelper.create({
               "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. " +
               "Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. " +
               "Do not include tasks marked as done unless they are recurring. try to be logical, do not overly generate tasks if all task already exist, not completed or are very recent completed. " +
-              "Never schedule more than one 'big' task (like 'clean house', 'wash sheets') per week per person. 'Small' tasks like 'do the dishes' or 'make bed' can be scheduled more often."
+              "Never schedule more than one 'big' task per week per person. 'Small' tasks can be scheduled more often."
           },
           { role: "user", content: prompt }
         ],
