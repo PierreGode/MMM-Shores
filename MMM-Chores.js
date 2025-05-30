@@ -4,7 +4,7 @@ Module.register("MMM-Chores", {
     adminPort: 5003,
     showDays: 1,
     showPast: false,
-    dateFormatting: "yyyy-mm-dd" // standardformat, kan ändras i config
+    dateFormatting: "yyyy-mm-dd" // Standardformat, kan ändras i config
   },
 
   start() {
@@ -74,9 +74,13 @@ Module.register("MMM-Chores", {
   },
 
   formatDate(dateStr) {
-    // Robust datumformatterare
-    if (!dateStr || !dateStr.includes("-")) return dateStr || "";
-    const [yyyy, mm, dd] = dateStr.split("-");
+    // Robust datumformatterare, alltid rätt oavsett format!
+    if (!dateStr) return "";
+    // Fånga yyyy-mm-dd även om det finns tid-delar (t.ex. från AI och admin)
+    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return dateStr; // om det är skräp, visa original
+    const [ , yyyy, mm, dd ] = match;
+
     let result = this.config.dateFormatting || "yyyy-mm-dd";
     result = result.replace(/yyyy/gi, yyyy);
     result = result.replace(/mm/gi, mm);
@@ -92,6 +96,7 @@ Module.register("MMM-Chores", {
     header.innerHTML = "";
     wrapper.appendChild(header);
 
+    // Filtrerar bort raderade tasks
     const visible = this.tasks.filter(t => !t.deleted && this.shouldShowTask(t));
 
     if (visible.length === 0) {
