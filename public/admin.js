@@ -378,6 +378,9 @@ let chartInstances = {};
 let chartIdCounter = 0;
 let boardTitleMap = {};
 
+// ==========================
+// API: Hämta språk från backend
+// ==========================
 async function fetchUserLanguage() {
   try {
     const res = await fetch('/api/settings');
@@ -390,6 +393,9 @@ async function fetchUserLanguage() {
   }
 }
 
+// ==========================
+// API: Spara språk till backend
+// ==========================
 async function saveUserLanguage(lang) {
   try {
     await fetch('/api/settings', {
@@ -402,10 +408,16 @@ async function saveUserLanguage(lang) {
   }
 }
 
+// ==========================
+// Uppdatera boardTitleMap
+// ==========================
 function updateBoardTitleMap() {
   boardTitleMap = { ...LANGUAGES[currentLang].chartOptions };
 }
 
+// ==========================
+// Sätt språk och uppdatera UI
+// ==========================
 function setLanguage(lang) {
   if (!LANGUAGES[lang]) return;
   currentLang = lang;
@@ -469,6 +481,9 @@ function setLanguage(lang) {
   });
 }
 
+// ==========================
+// Fetch People & Tasks
+// ==========================
 async function fetchPeople() {
   const res = await fetch("/api/people");
   peopleCache = await res.json();
@@ -481,6 +496,9 @@ async function fetchTasks() {
   renderTasks();
 }
 
+// ==========================
+// Render People & Tasks
+// ==========================
 function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
@@ -604,6 +622,9 @@ function renderTasks() {
   }
 }
 
+// ==========================
+// CRUD Handlers
+// ==========================
 document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -673,6 +694,9 @@ async function deleteTask(id) {
   await fetchTasks();
 }
 
+// ==========================
+// Analytics Board Persistence
+// ==========================
 async function fetchSavedBoards() {
   try {
     const res = await fetch('/api/analyticsBoards');
@@ -707,6 +731,9 @@ function getCurrentBoardTypes() {
     }).filter(Boolean);
 }
 
+// ==========================
+// Analytics Chart Handling
+// ==========================
 document.getElementById("addChartSelect").addEventListener("change", function () {
   const value = this.value;
   if (!value) return;
@@ -921,6 +948,9 @@ function renderChart(canvasId, type) {
   return chart;
 }
 
+// ==========================
+// Theme, Språk och Init
+// ==========================
 function updateAllCharts() {
   for (const [id, chart] of Object.entries(chartInstances)) {
     const type = chart.boardType || "weekly";
@@ -989,3 +1019,61 @@ document.addEventListener("DOMContentLoaded", async () => {
     savedBoards.forEach(type => addChart(type));
   }
 });
+
+// ==========================
+// ====== AI GENERATE =======
+// ==========================
+
+// Lägg till denna <button> i din HTML, t.ex. under tasklist:
+// <button id="aiGenerateBtn" class="btn btn-outline-primary mb-3" type="button">
+//   <i class="bi bi-stars me-1"></i> AI Generate
+// </button>
+// <div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:10000;"></div>
+
+// Toast/notification utility
+function showToast(msg, type = "danger", duration = 4000) {
+  let container = document.getElementById("toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = `toast align-items-center text-bg-${type} border-0 show`;
+  toast.style.minWidth = "200px";
+  toast.role = "alert";
+  toast.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${msg}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), duration);
+  toast.querySelector("button").onclick = () => toast.remove();
+}
+
+// AI Generate button handler
+const aiBtn = document.getElementById("aiGenerateBtn");
+if (aiBtn) {
+  aiBtn.onclick = async function () {
+    aiBtn.disabled = true;
+    aiBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>AI...`;
+
+    try {
+      const res = await fetch('/api/ai-generate', { method: "POST" });
+      const data = await res.json();
+
+      if (!data.success) {
+        showToast(data.error || "AI generation failed.", "danger", 7000);
+      } else {
+        showToast(`AI generated ${data.count} tasks!`, "success", 4000);
+        await fetchTasks();
+      }
+    } catch (e) {
+      showToast("AI generation failed. Server error.", "danger", 7000);
+    } finally {
+      aiBtn.disabled = false;
+      aiBtn.innerHTML = `<i class="bi bi-stars me-1"></i> AI Generate`;
+    }
+  };
+}
