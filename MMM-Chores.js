@@ -32,7 +32,6 @@ Module.register("MMM-Chores", {
       this.updateDom();
     }
     if (notification === "SETTINGS_UPDATE") {
-      // Om du vill uppdatera config live vid settings-ändring
       Object.assign(this.config, payload);
       this.updateDom();
     }
@@ -75,15 +74,13 @@ Module.register("MMM-Chores", {
   },
 
   formatDate(dateStr) {
+    // Robust datumformatterare
+    if (!dateStr || !dateStr.includes("-")) return dateStr || "";
     const [yyyy, mm, dd] = dateStr.split("-");
-
-    let result = this.config.dateFormatting;
-
-    // Ersätt formatnycklar (case-insensitive)
+    let result = this.config.dateFormatting || "yyyy-mm-dd";
     result = result.replace(/yyyy/gi, yyyy);
     result = result.replace(/mm/gi, mm);
     result = result.replace(/dd/gi, dd);
-
     return result;
   },
 
@@ -95,7 +92,6 @@ Module.register("MMM-Chores", {
     header.innerHTML = "";
     wrapper.appendChild(header);
 
-    // Filtrerar bort raderade tasks
     const visible = this.tasks.filter(t => !t.deleted && this.shouldShowTask(t));
 
     if (visible.length === 0) {
