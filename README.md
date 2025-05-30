@@ -10,7 +10,7 @@ The data is stored in `data.json` to make the data persistent between restarts.
   
 ![frontend](img/screenshot1_frontend.png)
 
-![backend](img/screenshot2_backend.png)
+![backend](img/admin.png)
 
 ## Installation
 
