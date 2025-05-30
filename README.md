@@ -37,7 +37,6 @@ in /MagicMirror/config/config.js
   position: "bottom_right",
   header: "Chores",
   config: {
-    hideYear: true,
     updateInterval: 60 * 1000,
     adminPort: 5003,
     openaiApiKey: "your-openApi-key-here",
