@@ -40,6 +40,7 @@ npm install
     hideYear: true,
     updateInterval: 60 * 1000,
     adminPort: 5003,
+    openaiApiKey: "your-openApi-key-here",
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
     showPast: true,    // also show unfinished tasks from past days
     dateFormatting: "MM-DD"  // Date format pattern to display task dates,You can use tokens like 'yyyy' (year), 'mm' (month), 'dd' (day), or "mm-dd-yyyy" (US style)
