@@ -20,19 +20,20 @@ const CERT_DIR  = path.join(__dirname, "certs");
 let tasks = [];
 let people = [];
 let analyticsBoards = [];
+
 let settings = {
-  language: "en",
-  dateFormatting: "yyyy-mm-dd"
+  language: "en"
 };
 
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     try {
       const j = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-      tasks = j.tasks || [];
-      people = j.people || [];
-      analyticsBoards = j.analyticsBoards || [];
-      settings = j.settings || { language: "en", dateFormatting: "yyyy-mm-dd" };
+      tasks            = j.tasks            || [];
+      people           = j.people           || [];
+      analyticsBoards  = j.analyticsBoards  || [];
+      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd" };
+
       Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
     } catch (e) {
       Log.error("MMM-Chores: Error reading data.json:", e);
@@ -42,7 +43,11 @@ function loadData() {
 
 function saveData() {
   try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2), "utf8");
+    fs.writeFileSync(
+      DATA_FILE,
+      JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2),
+      "utf8"
+    );
     Log.log(`MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
   } catch (e) {
     Log.error("MMM-Chores: Error writing data.json:", e);
@@ -57,13 +62,21 @@ module.exports = NodeHelper.create({
 
   socketNotificationReceived(notification, payload) {
     if (notification === "INIT_SERVER") {
-      this.config = payload; // Save config incl openaiApiKey and useAI
+      this.config = payload;
+
+      settings = {
+        ...settings,
+        language:       payload.language       ?? settings.language,
+        dateFormatting: payload.dateFormatting ?? settings.dateFormatting
+      };
+      saveData();
+      /* ────────────────────────────────────────────── */
+
       this.initServer(payload.adminPort);
     }
   },
 
   async aiGenerateTasks(req, res) {
-    // 1. Kontrollera config och npm package
     if (!this.config || this.config.useAI === false) {
       return res.status(400).json({
         success: false,
@@ -108,15 +121,13 @@ module.exports = NodeHelper.create({
 
       Log.log("MMM-Chores: OpenAI RAW response:", text);
 
-      // Trim code blocks if any
       text = text.trim();
       if (text.startsWith("```")) {
         text = text.replace(/```[a-z]*\s*([\s\S]*?)\s*```/, "$1").trim();
       }
 
-      // Try to extract pure JSON if there is surrounding text
       const firstBracket = text.indexOf('[');
-      const lastBracket = text.lastIndexOf(']');
+      const lastBracket  = text.lastIndexOf(']');
       if (firstBracket !== -1 && lastBracket !== -1) {
         text = text.substring(firstBracket, lastBracket + 1);
       }
@@ -130,12 +141,11 @@ module.exports = NodeHelper.create({
         return res.status(500).json({ success: false, error: "Invalid AI response format.", raw: text });
       }
 
-      // Lägg till tasks
       const now = new Date();
       newTasks.forEach(task => {
-        task.id = Date.now() + Math.floor(Math.random() * 10000);
+        task.id      = Date.now() + Math.floor(Math.random() * 10000);
         task.created = now.toISOString();
-        task.done = false;
+        task.done    = false;
         if (!task.assignedTo) task.assignedTo = null;
         tasks.push(task);
       });
@@ -151,14 +161,13 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    // Skicka relevanta tasks (inklusive deleted och done) för AI-analys
     const relevantTasks = tasks.map(t => ({
-      name: t.name,
-      assignedTo: t.assignedTo,
-      date: t.date,
-      done: t.done,
-      deleted: t.deleted || false,
-      created: t.created
+      name:        t.name,
+      assignedTo:  t.assignedTo,
+      date:        t.date,
+      done:        t.done,
+      deleted:     t.deleted || false,
+      created:     t.created
     }));
     return JSON.stringify(relevantTasks);
   },
@@ -170,12 +179,14 @@ module.exports = NodeHelper.create({
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
 
+    /*─────────────────── REST-API ───────────────────*/
+
     // Admin UI
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
-    // People endpoints
+    /* People endpoints */
     app.get("/api/people", (req, res) => res.json(people));
     app.post("/api/people", (req, res) => {
       const { name } = req.body;
@@ -189,14 +200,14 @@ module.exports = NodeHelper.create({
     app.delete("/api/people/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
-      tasks = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
+      tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
       saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("TASKS_UPDATE", tasks);
       res.json({ success: true });
     });
 
-    // Task endpoints
+    /* Task endpoints */
     app.get("/api/tasks", (req, res) => {
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
@@ -214,7 +225,7 @@ module.exports = NodeHelper.create({
       res.status(201).json(newTask);
     });
     app.put("/api/tasks/:id", (req, res) => {
-      const id = parseInt(req.params.id, 10);
+      const id   = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
 
@@ -240,7 +251,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
-    // Analytics Boards endpoints
+    /* Analytics Boards endpoints */
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
     app.post("/api/analyticsBoards", (req, res) => {
       const newBoards = req.body;
@@ -253,10 +264,8 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
-    // Settings endpoints
-    app.get("/api/settings", (req, res) => {
-      res.json(settings);
-    });
+    /* Settings endpoints */
+    app.get("/api/settings", (req, res) => res.json(settings));
 
     app.put("/api/settings", (req, res) => {
       const newSettings = req.body;
@@ -271,7 +280,6 @@ module.exports = NodeHelper.create({
       res.json({ success: true, settings });
     });
 
-    // AI generate endpoint
     app.post("/api/ai-generate", (req, res) => self.aiGenerateTasks(req, res));
 
     app.listen(port, "0.0.0.0", () => {
@@ -282,10 +290,9 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
     });
 
-    // Optional HTTPS server on port+1
     const httpsPort = port + 1;
-    const keyPath  = path.join(CERT_DIR, "server.key");
-    const certPath = path.join(CERT_DIR, "server.crt");
+    const keyPath   = path.join(CERT_DIR, "server.key");
+    const certPath  = path.join(CERT_DIR, "server.crt");
     if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
       const options = {
         key:  fs.readFileSync(keyPath),
