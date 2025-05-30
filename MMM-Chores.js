@@ -74,17 +74,24 @@ Module.register("MMM-Chores", {
   },
 
   formatDate(dateStr) {
-    // Robust datumformatterare, alltid rätt oavsett format!
     if (!dateStr) return "";
-    // Fånga yyyy-mm-dd även om det finns tid-delar (t.ex. från AI och admin)
     const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-    if (!match) return dateStr; // om det är skräp, visa original
+    if (!match) return dateStr;
     const [ , yyyy, mm, dd ] = match;
 
     let result = this.config.dateFormatting || "yyyy-mm-dd";
+
+    // Ersätt både små och stora bokstäver för yyyy, mm, dd
     result = result.replace(/yyyy/gi, yyyy);
     result = result.replace(/mm/gi, mm);
     result = result.replace(/dd/gi, dd);
+
+    // Extra stöd för stora bokstäver som kan missas pga regex
+    // (Om användaren skriver t.ex "DD" istället för "dd")
+    result = result.replace(/YYYY/g, yyyy);
+    result = result.replace(/MM/g, mm);
+    result = result.replace(/DD/g, dd);
+
     return result;
   },
 
