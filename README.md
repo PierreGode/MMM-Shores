@@ -30,7 +30,7 @@ npm install
 ```
 
 ## Configuration
-
+in /MagicMirror/config/config.js
 ```js
 {
   module: "MMM-Chores",
