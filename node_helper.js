@@ -22,7 +22,9 @@ let people = [];
 let analyticsBoards = [];
 
 let settings = {
-  language: "en"
+  language: "en",
+  dateFormatting: "yyyy-mm-dd",
+  showAI: true  // default is true
 };
 
 function loadData() {
@@ -32,7 +34,7 @@ function loadData() {
       tasks            = j.tasks            || [];
       people           = j.people           || [];
       analyticsBoards  = j.analyticsBoards  || [];
-      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd" };
+      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", showAI: true };
 
       Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
     } catch (e) {
@@ -67,11 +69,10 @@ module.exports = NodeHelper.create({
       settings = {
         ...settings,
         language:       payload.language       ?? settings.language,
-        dateFormatting: payload.dateFormatting ?? settings.dateFormatting
+        dateFormatting: payload.dateFormatting ?? settings.dateFormatting,
+        showAI:         typeof payload.showAI !== "undefined" ? payload.showAI : true,
       };
       saveData();
-      /* ────────────────────────────────────────────── */
-
       this.initServer(payload.adminPort);
     }
   },
@@ -179,14 +180,12 @@ module.exports = NodeHelper.create({
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
 
-    /*─────────────────── REST-API ───────────────────*/
-
     // Admin UI
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
-    /* People endpoints */
+    // People endpoints
     app.get("/api/people", (req, res) => res.json(people));
     app.post("/api/people", (req, res) => {
       const { name } = req.body;
@@ -207,7 +206,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
-    /* Task endpoints */
+    // Task endpoints
     app.get("/api/tasks", (req, res) => {
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
@@ -251,7 +250,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
-    /* Analytics Boards endpoints */
+    // Analytics Boards endpoints
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
     app.post("/api/analyticsBoards", (req, res) => {
       const newBoards = req.body;
@@ -264,7 +263,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
-    /* Settings endpoints */
+    // Settings endpoints
     app.get("/api/settings", (req, res) => res.json(settings));
 
     app.put("/api/settings", (req, res) => {
