@@ -371,13 +371,16 @@ const LANGUAGES = {
   }
 };
 
-let currentLang = 'en'; // fallback
+let currentLang = 'en';
 let peopleCache = [];
 let tasksCache = [];
 let chartInstances = {};
 let chartIdCounter = 0;
 let boardTitleMap = {};
 
+// ==========================
+// API: Hämta språk från backend
+// ==========================
 async function fetchUserLanguage() {
   try {
     const res = await fetch('/api/settings');
@@ -390,6 +393,9 @@ async function fetchUserLanguage() {
   }
 }
 
+// ==========================
+// API: Spara språk till backend
+// ==========================
 async function saveUserLanguage(lang) {
   try {
     await fetch('/api/settings', {
@@ -402,10 +408,16 @@ async function saveUserLanguage(lang) {
   }
 }
 
+// ==========================
+// Uppdatera boardTitleMap
+// ==========================
 function updateBoardTitleMap() {
   boardTitleMap = { ...LANGUAGES[currentLang].chartOptions };
 }
 
+// ==========================
+// Sätt språk och uppdatera UI
+// ==========================
 function setLanguage(lang) {
   if (!LANGUAGES[lang]) return;
   currentLang = lang;
@@ -469,19 +481,24 @@ function setLanguage(lang) {
   });
 }
 
+// ==========================
+// Fetch People & Tasks
+// ==========================
 async function fetchPeople() {
   const res = await fetch("/api/people");
   peopleCache = await res.json();
   renderPeople();
 }
 
-// NY: Hämtar ALLA tasks inkl deleted för analytics
-async function fetchAllTasks() {
-  const res = await fetch("/api/alltasks");
+async function fetchTasks() {
+  const res = await fetch("/api/tasks");
   tasksCache = await res.json();
-  renderTasks(); // filtrerar i renderTasks bort deleted i UI
+  renderTasks();
 }
 
+// ==========================
+// Render People & Tasks
+// ==========================
 function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
@@ -573,6 +590,7 @@ function renderTasks() {
       if (task.assignedTo === p.id) opt.selected = true;
       select.add(opt);
     });
+    
     select.addEventListener("change", () => {
       const val = select.value ? parseInt(select.value) : null;
       const updateObj = { assignedTo: val };
@@ -604,6 +622,9 @@ function renderTasks() {
   }
 }
 
+// ==========================
+// CRUD Handlers
+// ==========================
 document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -615,7 +636,7 @@ document.getElementById("personForm").addEventListener("submit", async e => {
   });
   e.target.reset();
   await fetchPeople();
-  await fetchAllTasks();
+  await fetchTasks();
 });
 
 document.getElementById("taskForm").addEventListener("submit", async e => {
@@ -647,7 +668,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     })
   });
   e.target.reset();
-  await fetchAllTasks();
+  await fetchTasks();
 });
 
 async function updateTask(id, changes) {
@@ -659,20 +680,23 @@ async function updateTask(id, changes) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(changes)
   });
-  await fetchAllTasks();
+  await fetchTasks();
 }
 
 async function deletePerson(id) {
   await fetch(`/api/people/${id}`, { method: "DELETE" });
   await fetchPeople();
-  await fetchAllTasks();
+  await fetchTasks();
 }
 
 async function deleteTask(id) {
   await fetch(`/api/tasks/${id}`, { method: "DELETE" });
-  await fetchAllTasks();
+  await fetchTasks();
 }
 
+// ==========================
+// Analytics Board Persistence
+// ==========================
 async function fetchSavedBoards() {
   try {
     const res = await fetch('/api/analyticsBoards');
@@ -707,6 +731,9 @@ function getCurrentBoardTypes() {
     }).filter(Boolean);
 }
 
+// ==========================
+// Analytics Chart Handling
+// ==========================
 document.getElementById("addChartSelect").addEventListener("change", function () {
   const value = this.value;
   if (!value) return;
@@ -715,7 +742,7 @@ document.getElementById("addChartSelect").addEventListener("change", function ()
 });
 
 function addChart(type) {
-  if (getCurrentBoardTypes().includes(type)) return;
+  if (getCurrentBoardTypes().includes(type)) return; // no duplicates
 
   const container = document.getElementById("analyticsContainer");
   const card = document.createElement("div");
@@ -751,7 +778,7 @@ function renderChart(canvasId, type) {
   let options = { scales: { y: { beginAtZero: true } } };
   let chartType = "bar";
 
-  const filteredTasks = (filterFn) => tasksCache.filter(t => filterFn(t));
+  const filteredTasks = (filterFn) => tasksCache.filter(t => !(t.deleted && !t.done) && filterFn(t));
 
   switch (type) {
     case "weekly": {
@@ -762,7 +789,10 @@ function renderChart(canvasId, type) {
         const d = new Date(today);
         d.setDate(today.getDate() - i * 7);
         labels.push(d.toISOString().split("T")[0]);
-        const c = filteredTasks(t => t.done && ((today - new Date(t.date)) / 86400000) >= i * 7 && ((today - new Date(t.date)) / 86400000) < (i + 1) * 7).length;
+        const c = filteredTasks(t => {
+          const td = new Date(t.date);
+          return t.done && ((today - td) / 86400000) >= i * 7 && ((today - td) / 86400000) < (i + 1) * 7;
+        }).length;
         counts.push(c);
       }
       data = {
@@ -797,7 +827,7 @@ function renderChart(canvasId, type) {
     case "perPerson": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        filteredTasks(t => t.assignedTo === p.id && !t.deleted).length
+        filteredTasks(t => t.assignedTo === p.id).length
       );
       data = {
         labels,
@@ -813,19 +843,12 @@ function renderChart(canvasId, type) {
     case "taskmaster": {
       const now = new Date();
       const labels = peopleCache.map(p => p.name);
-
-      // ALLA slutförda tasks, raderade eller ej
-      const completedTasks = tasksCache.filter(t => t.done);
-
       const counts = peopleCache.map(p =>
-        completedTasks.filter(t => {
+        tasksCache.filter(t => {
           const d = new Date(t.date);
-          return d.getMonth() === now.getMonth() &&
-                 d.getFullYear() === now.getFullYear() &&
-                 t.assignedTo === p.id;
+          return t.done && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.assignedTo === p.id;
         }).length
       );
-
       data = {
         labels,
         datasets: [{
@@ -840,7 +863,7 @@ function renderChart(canvasId, type) {
     case "lazyLegends": {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
-        filteredTasks(t => t.assignedTo === p.id && !t.done && !t.deleted).length
+        filteredTasks(t => t.assignedTo === p.id && !t.done).length
       );
       data = {
         labels,
@@ -880,7 +903,7 @@ function renderChart(canvasId, type) {
       const labels = peopleCache.map(p => p.name);
       const counts = peopleCache.map(p =>
         filteredTasks(t => {
-          if (!t.done || t.assignedTo !== p.id || t.deleted) return false;
+          if (!t.done || t.assignedTo !== p.id) return false;
           const d = new Date(t.date);
           return d.getDay() === 0 || d.getDay() === 6;
         }).length
@@ -899,7 +922,7 @@ function renderChart(canvasId, type) {
     case "slacker9000": {
       const labels = peopleCache.map(p => p.name);
       const ages = peopleCache.map(p => {
-        const openTasks = filteredTasks(t => t.assignedTo === p.id && !t.done && t.assignedDate && !t.deleted);
+        const openTasks = filteredTasks(t => t.assignedTo === p.id && !t.done && t.assignedDate);
         if (openTasks.length === 0) return 0;
         const now = new Date();
         return Math.max(...openTasks.map(t => (now - new Date(t.assignedDate)) / (1000*60*60*24)));
@@ -925,7 +948,14 @@ function renderChart(canvasId, type) {
   return chart;
 }
 
-// Theme toggle etc. (behåll din befintliga kod)
+// ==========================
+// Theme, Språk och Init
+// ==========================
+function updateAllCharts() {
+  for (const [id, chart] of Object.entries(chartInstances)) {
+    const type = chart.boardType || "weekly";
+  }
+}
 
 const root = document.documentElement;
 const themeTgl = document.getElementById("themeToggle");
@@ -981,12 +1011,69 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   setLanguage(currentLang);
-
   await fetchPeople();
-  await fetchAllTasks();
+  await fetchTasks();
 
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
     savedBoards.forEach(type => addChart(type));
   }
 });
+
+// ==========================
+// ====== AI GENERATE =======
+// ==========================
+
+// Lägg till denna <button> i din HTML, t.ex. under tasklist:
+// <button id="aiGenerateBtn" class="btn btn-outline-primary mb-3" type="button">
+//   <i class="bi bi-stars me-1"></i> AI Generate
+// </button>
+// <div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:10000;"></div>
+
+// Toast/notification utility
+function showToast(msg, type = "danger", duration = 4000) {
+  let container = document.getElementById("toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = `toast align-items-center text-bg-${type} border-0 show`;
+  toast.style.minWidth = "200px";
+  toast.role = "alert";
+  toast.innerHTML = `
+    <div class="d-flex">
+      <div class="toast-body">${msg}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), duration);
+  toast.querySelector("button").onclick = () => toast.remove();
+}
+
+// AI Generate button handler
+const aiBtn = document.getElementById("aiGenerateBtn");
+if (aiBtn) {
+  aiBtn.onclick = async function () {
+    aiBtn.disabled = true;
+    aiBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>AI...`;
+
+    try {
+      const res = await fetch('/api/ai-generate', { method: "POST" });
+      const data = await res.json();
+
+      if (!data.success) {
+        showToast(data.error || "AI generation failed.", "danger", 7000);
+      } else {
+        showToast(`AI generated ${data.count} tasks!`, "success", 4000);
+        await fetchTasks();
+      }
+    } catch (e) {
+      showToast("AI generation failed. Server error.", "danger", 7000);
+    } finally {
+      aiBtn.disabled = false;
+      aiBtn.innerHTML = `<i class="bi bi-stars me-1"></i> AI Generate`;
+    }
+  };
+}

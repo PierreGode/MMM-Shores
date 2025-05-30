@@ -4,7 +4,7 @@ Module.register("MMM-Chores", {
     adminPort: 5003,
     showDays: 1,
     showPast: false,
-    dateFormatting: "yyyy-mm-dd" // standardformat, kan ändras i config
+    dateFormatting: "yyyy-mm-dd" // Standardformat, kan ändras i config
   },
 
   start() {
@@ -32,7 +32,6 @@ Module.register("MMM-Chores", {
       this.updateDom();
     }
     if (notification === "SETTINGS_UPDATE") {
-      // Om du vill uppdatera config live vid settings-ändring
       Object.assign(this.config, payload);
       this.updateDom();
     }
@@ -75,14 +74,23 @@ Module.register("MMM-Chores", {
   },
 
   formatDate(dateStr) {
-    const [yyyy, mm, dd] = dateStr.split("-");
+    if (!dateStr) return "";
+    const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return dateStr;
+    const [ , yyyy, mm, dd ] = match;
 
-    let result = this.config.dateFormatting;
+    let result = this.config.dateFormatting || "yyyy-mm-dd";
 
-    // Ersätt formatnycklar (case-insensitive)
+    // Ersätt både små och stora bokstäver för yyyy, mm, dd
     result = result.replace(/yyyy/gi, yyyy);
     result = result.replace(/mm/gi, mm);
     result = result.replace(/dd/gi, dd);
+
+    // Extra stöd för stora bokstäver som kan missas pga regex
+    // (Om användaren skriver t.ex "DD" istället för "dd")
+    result = result.replace(/YYYY/g, yyyy);
+    result = result.replace(/MM/g, mm);
+    result = result.replace(/DD/g, dd);
 
     return result;
   },

@@ -6,11 +6,13 @@ It provides an admin interface where you can add, edit, and delete tasks. You ca
 
 The data is stored in `data.json` to make the data persistent between restarts.
 
+*Update 2025-05-30: Added AI Generate, It is a helper that will create tasks for coming 7 days based on your data.json history. the more history accumulated the better it will get predicting tasks to create and whom to assign them to.
+
 ## Screenshots
   
 ![frontend](img/screenshot1_frontend.png)
 
-![backend](img/screenshot2_backend.png)
+![backend](img/admin.png)
 
 ## Installation
 
@@ -30,16 +32,16 @@ npm install
 ```
 
 ## Configuration
-
+in /MagicMirror/config/config.js
 ```js
 {
   module: "MMM-Chores",
   position: "bottom_right",
   header: "Chores",
   config: {
-    hideYear: true,
     updateInterval: 60 * 1000,
     adminPort: 5003,
+    openaiApiKey: "your-openApi-key-here",
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
     showPast: true,    // also show unfinished tasks from past days
     dateFormatting: "MM-DD"  // Date format pattern to display task dates,You can use tokens like 'yyyy' (year), 'mm' (month), 'dd' (day), or "mm-dd-yyyy" (US style)
