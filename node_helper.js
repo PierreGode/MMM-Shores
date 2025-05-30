@@ -88,7 +88,7 @@ module.exports = NodeHelper.create({
       Log.log("MMM-Chores: Sending prompt to OpenAI...");
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-nano",
         messages: [
           {
             role: "system",
