@@ -5,8 +5,6 @@ const bodyParser = require("body-parser");
 const path       = require("path");
 const fs         = require("fs");
 const https      = require("https");
-
-// openai@5.x
 const { OpenAI } = require("openai");
 
 const DATA_FILE = path.join(__dirname, "data.json");
@@ -44,6 +42,23 @@ function saveData() {
   }
 }
 
+const strictPrompt =
+`You are an assistant that generates household tasks for the next 7 days, ONLY using the real historical task data provided.
+
+Rules:
+- You MUST base all task generation only on the actual history below – DO NOT invent new chores or people.
+- Schedule new tasks ONLY if the pattern in the data suggests they are due (based on frequency, assigned person, and weekday).
+- Do NOT include any task, person, or date not reflected in the history.
+- If a task is normally done every N days (e.g. dishes every 2 days, laundry every Tuesday), keep that pattern for the same person.
+- If a "big" task (like cleaning house, changing sheets, window cleaning) is only done once per week or less, do NOT generate it more often. "Small" tasks (like dishes, making bed) can repeat more often, but ONLY as the history shows.
+- Never schedule more than one 'big' task per week per person.
+- Do NOT duplicate tasks for a date/person/task that is already scheduled or unfinished for the upcoming 7 days.
+- If no historical pattern exists for a specific task/person/date, do NOT generate anything for it.
+- Output ONLY a pure JSON array of new tasks for the next 7 days, nothing else. Each task must have: name, date (yyyy-mm-dd), assignedTo (person id or null).
+
+Data to analyze:
+`;
+
 module.exports = NodeHelper.create({
   start() {
     Log.log("MMM-Chores helper started...");
@@ -57,7 +72,6 @@ module.exports = NodeHelper.create({
     }
   },
 
-  // === AI-generate endpoint för att skapa tasks kommande 7 dagar ===
   async aiGenerateTasks(req, res) {
     try {
       if (!this.config || !this.config.openaiApiKey) {
@@ -65,36 +79,27 @@ module.exports = NodeHelper.create({
       }
 
       const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
-      const prompt = this.buildPromptFromTasks();
 
+      const prompt = this.buildPromptFromTasks();
       Log.log("MMM-Chores: Sending prompt to OpenAI...");
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
-          {
-            role: "system",
-            content:
-              "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. " +
-              "Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. " +
-              "Do not include tasks marked as done unless they are recurring. try to be logical, do not overly generate tasks if all task already exist, not completed or are very recent completed. " +
-              "Never schedule more than one 'big' task per week per person. 'Small' tasks can be scheduled more often."
-          },
-          { role: "user", content: prompt }
+          { role: "system", content: strictPrompt + prompt }
         ],
-        max_tokens: 900,
-        temperature: 0.7
+        max_tokens: 1000,
+        temperature: 0.2
       });
 
       let text = completion.choices[0].message.content;
-
       Log.log("MMM-Chores: OpenAI RAW response:", text);
 
-      // Rensa markdown eller annat
       text = text.trim();
       if (text.startsWith("```")) {
         text = text.replace(/```[a-z]*\s*([\s\S]*?)\s*```/, "$1").trim();
       }
+
       const firstBracket = text.indexOf('[');
       const lastBracket = text.lastIndexOf(']');
       if (firstBracket !== -1 && lastBracket !== -1) {
@@ -110,26 +115,18 @@ module.exports = NodeHelper.create({
         return res.status(500).json({ success: false, error: "Invalid AI response format.", raw: text });
       }
 
-      // Lägg till och märk alla nya tasks (utan dubbletter på namn+datum+assignedTo)
       const now = new Date();
-      let createdTasks = [];
       newTasks.forEach(task => {
-        if (!task.name || !task.date) return; // Sanity check
-        // Undvik dubletter: samma namn, datum och assignedTo
-        if (tasks.some(
-          t => t.name === task.name && t.date === task.date && (t.assignedTo || null) === (task.assignedTo || null)
-        )) return;
         task.id = Date.now() + Math.floor(Math.random() * 10000);
         task.created = now.toISOString();
         task.done = false;
         if (!task.assignedTo) task.assignedTo = null;
         tasks.push(task);
-        createdTasks.push(task);
       });
 
       saveData();
       this.sendSocketNotification("TASKS_UPDATE", tasks);
-      res.json({ success: true, createdTasks, count: createdTasks.length });
+      res.json({ success: true, createdTasks: newTasks, count: newTasks.length });
 
     } catch (err) {
       Log.error("AI Generate error:", err);
@@ -137,18 +134,16 @@ module.exports = NodeHelper.create({
     }
   },
 
-  // === Skicka historik + befintliga tasks i 7-dagarsfönster ===
   buildPromptFromTasks() {
+    // Ta ut alla tasks ur historiken och ALLA som är schemalagda nästa 7 dagar (för att förhindra dubbletter)
     const today = new Date();
     today.setHours(0,0,0,0);
 
-    // 7-dagarsfönster
     const windowDates = Array.from({length: 7}).map((_,i) => {
       const d = new Date(today); d.setDate(today.getDate() + i);
       return d.toISOString().split('T')[0];
     });
 
-    // Redan schemalagda tasks de närmaste 7 dagarna (ej deleted)
     const scheduledTasks = tasks.filter(
       t => !t.deleted && windowDates.includes(t.date)
     ).map(t => ({
@@ -157,7 +152,6 @@ module.exports = NodeHelper.create({
       date: t.date
     }));
 
-    // Historik för frekvensanalys (äldre tasks)
     const pastTasks = tasks.filter(
       t => t.date && new Date(t.date) < today
     ).map(t => ({
@@ -170,21 +164,14 @@ module.exports = NodeHelper.create({
     }));
 
     return `
-You are an AI household chore planner.
-
-**Important rules:**
-- ONLY generate new tasks for the next 7 days from today (${windowDates[0]} to ${windowDates[6]}).
-- Do NOT create tasks for a date+person if it already exists among "already scheduled tasks".
-- Make a clear difference between small/recurring chores ("do the dishes", "make bed", "take out trash") which can happen almost daily, and big chores ("clean the whole house", "window cleaning", "wash bed sheets") which are less frequent.
-- Use the historical pattern to predict which person does what on which day.
-- NEVER over-schedule big tasks, but daily or frequent small chores can repeat as the pattern shows.
-- Output ONLY a JSON array with new tasks, each task must have: name, date (yyyy-mm-dd), assignedTo (person id or null). No markdown or explanation.
-
-**History (for pattern analysis):**
+Historical tasks (for pattern analysis):
 ${JSON.stringify(pastTasks, null, 2)}
 
-**Already scheduled for the next 7 days (do NOT repeat):**
+Already scheduled or pending next 7 days (do NOT repeat):
 ${JSON.stringify(scheduledTasks, null, 2)}
+
+People:
+${JSON.stringify(people, null, 2)}
 `;
   },
 
@@ -296,7 +283,7 @@ ${JSON.stringify(scheduledTasks, null, 2)}
       res.json({ success: true, settings });
     });
 
-    // AI-generate endpoint
+    // AI generate endpoint
     app.post("/api/ai-generate", (req, res) => self.aiGenerateTasks(req, res));
 
     app.listen(port, "0.0.0.0", () => {
