@@ -70,7 +70,6 @@ module.exports = NodeHelper.create({
         dateFormatting: payload.dateFormatting ?? settings.dateFormatting
       };
       saveData();
-
       this.initServer(payload.adminPort);
     }
   },
@@ -106,11 +105,9 @@ module.exports = NodeHelper.create({
             role: "system",
             content:
               "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. " +
-              "Today is explicitly given in the prompt. Analyze which day of the week each task was completed and by whom. " +
-              "Detect patterns, e.g. a person usually performs a task on certain weekdays and if any task has been missed recently. " +
-              "Generate new tasks accordingly for the next 7 days. Return ONLY a pure JSON array with objects containing: name, date (yyyy-mm-dd), and assignedTo (person id). " +
-              "Do not invent tasks or people. Do not schedule more than one big task per week per person, but small tasks can be more frequent. " +
-              "Only schedule tasks within the next 7 days."
+              "Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. " +
+              "Do not include tasks marked as done unless they are recurring. Try to be logical, do not overly generate tasks if all tasks already exist, not completed or are very recent completed. " +
+              "Never schedule more than one 'big' task per week per person. 'Small' tasks can be scheduled more often. Only generate for the next 7 days. Stay strictly within provided data, don't invent people or tasks."
           },
           { role: "user", content: prompt }
         ],
@@ -162,26 +159,29 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    // Skicka bara uppgifter som är done:true och deleted:true
-    const completedAndDeletedTasks = tasks.filter(t => t.done === true && t.deleted === true);
+    // Filtrera bort uppgifter som INTE är både done=true och deleted=true
+    const relevantTasks = tasks.filter(t => t.done === true && t.deleted === true).map(t => ({
+      name:        t.name,
+      assignedTo:  t.assignedTo,
+      date:        t.date,
+      done:        t.done,
+      deleted:     t.deleted || false,
+      created:     t.created
+    }));
 
-    // Formatera dagens datum med veckodag på svenska för tydlighet
-    const todayReadable = new Date().toLocaleDateString("sv-SE", {
-      weekday: "long",
-      year: "numeric",
-      month: "numeric",
-      day: "numeric"
+    const todayString = new Date().toLocaleDateString("sv-SE", {
+      weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
     });
 
     return JSON.stringify({
       instruction:
-        `Idag är ${todayReadable}. ` +
-        `Analysera vilka mönster personer har i att utföra uppgifter på olika veckodagar. ` +
-        `Exempelvis hur ofta en person dammsuger på söndagar kontra andra dagar och om någon uppgift har missats. ` +
-        `Baserat på detta, generera nya uppgifter för nästa 7 dagar med rätt tilldelning och datum. ` +
-        `Returnera endast en JSON-array med objekt som innehåller: name, date (yyyy-mm-dd), assignedTo (personens ID).`,
+        `Idag är ${todayString}. ` +
+        "Analysera historiska uppgifter för att förstå vilken dag i veckan olika personer brukar göra specifika sysslor. " +
+        "Baserat på detta, generera nya uppgifter för de kommande 7 dagarna med korrekt tilldelning av rätt person på rätt dag. " +
+        "Returnera ENDAST en JSON-array med objekt som innehåller: name, date (yyyy-mm-dd), assignedTo (person id).",
+
       today: new Date().toISOString().slice(0, 10),
-      tasks: completedAndDeletedTasks,
+      tasks: relevantTasks,
       people: people
     });
   },
