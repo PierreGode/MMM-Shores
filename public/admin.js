@@ -592,7 +592,7 @@ function renderTasks() {
       if (task.assignedTo === p.id) opt.selected = true;
       select.add(opt);
     });
-    
+
     select.addEventListener("change", () => {
       const val = select.value ? parseInt(select.value) : null;
       const updateObj = { assignedTo: val };
@@ -624,6 +624,9 @@ function renderTasks() {
   }
 }
 
+// ==========================
+// Populate Completed/Deleted Tasks Dropdown
+// ==========================
 function populateCompletedChoresDropdown() {
   const dropdown = document.getElementById("completedChoresSelect");
   if (!dropdown) return;
@@ -631,13 +634,8 @@ function populateCompletedChoresDropdown() {
   dropdown.innerHTML = "";
   dropdown.add(new Option(`-- ${LANGUAGES[currentLang].taskNamePlaceholder} --`, ""));
 
-  // Debug: log tasksCache length and filtered tasks
-  console.log("Total tasksCache:", tasksCache.length);
-
-  // Filter tasks done OR deleted, AND ensure task has a non-empty name
+  // Filter tasks that are done OR deleted, and have a non-empty name
   const filteredTasks = tasksCache.filter(t => (t.done === true || t.deleted === true) && t.name && t.name.trim() !== "");
-
-  console.log("Filtered tasks for dropdown:", filteredTasks);
 
   if (filteredTasks.length === 0) {
     const noTasksOption = new Option(`(${LANGUAGES[currentLang].noTasks})`, "");
@@ -651,7 +649,6 @@ function populateCompletedChoresDropdown() {
     dropdown.add(option);
   });
 }
-
 
 // ==========================
 // CRUD Handlers
@@ -673,11 +670,11 @@ document.getElementById("personForm").addEventListener("submit", async e => {
 document.getElementById("taskForm").addEventListener("submit", async e => {
   e.preventDefault();
 
-  // Get free text input and dropdown value
+  // Free-text input and dropdown value
   const freeTextInput = document.getElementById("taskName").value.trim();
   const dropdownSelect = document.getElementById("completedChoresSelect").value.trim();
 
-  // Decide task name: free text takes priority
+  // Use free-text if provided, otherwise dropdown selection
   const name = freeTextInput || dropdownSelect;
   if (!name) return;
 
@@ -708,7 +705,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
 
   e.target.reset();
 
-  // Reset dropdown manually since it's not a form input
+  // Reset dropdown manually (it's not part of the form)
   const dropdown = document.getElementById("completedChoresSelect");
   if (dropdown) dropdown.value = "";
 
@@ -835,7 +832,8 @@ function renderChart(canvasId, type) {
         labels.push(d.toISOString().split("T")[0]);
         const c = filteredTasks(t => {
           const td = new Date(t.date);
-          return t.done && ((today - td) / 86400000) >= i * 7 && ((today - td) / 86400000) < (i + 1) * 7;
+          const daysAgo = (today - td) / 86400000;
+          return t.done && daysAgo >= i * 7 && daysAgo < (i + 1) * 7;
         }).length;
         counts.push(c);
       }
@@ -854,7 +852,10 @@ function renderChart(canvasId, type) {
       chartType = "pie";
       const labels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
       const dataArr = [0,0,0,0,0,0,0];
-      filteredTasks(t => true).forEach(t => dataArr[new Date(t.date).getDay()]++);
+      filteredTasks(t => true).forEach(t => {
+        const day = new Date(t.date).getDay();
+        dataArr[day]++;
+      });
       data = {
         labels,
         datasets: [{
@@ -890,7 +891,10 @@ function renderChart(canvasId, type) {
       const counts = peopleCache.map(p =>
         tasksCache.filter(t => {
           const d = new Date(t.date);
-          return t.done && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.assignedTo === p.id;
+          return t.done &&
+                 d.getMonth() === now.getMonth() &&
+                 d.getFullYear() === now.getFullYear() &&
+                 t.assignedTo === p.id;
         }).length
       );
       data = {
@@ -998,6 +1002,7 @@ function renderChart(canvasId, type) {
 function updateAllCharts() {
   for (const [id, chart] of Object.entries(chartInstances)) {
     const type = chart.boardType || "weekly";
+    // Optionally update data if needed here
   }
 }
 
@@ -1032,6 +1037,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
 
+  // Insert language selector dropdown
   const selector = document.createElement("select");
   selector.className = "language-select";
   Object.keys(LANGUAGES).forEach(lang => {
@@ -1068,7 +1074,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ====== AI GENERATE =======
 // ==========================
 
-// Lägg till denna <button> i din HTML, t.ex. under tasklist:
+// Add this <button> in your HTML under the tasklist, for example:
 // <button id="aiGenerateBtn" class="btn btn-outline-primary mb-3" type="button">
 //   <i class="bi bi-stars me-1"></i> AI Generate
 // </button>
