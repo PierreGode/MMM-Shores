@@ -214,14 +214,17 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    const relevantTasks = tasks.filter(t => t.done === true && t.deleted === true).map(t => ({
-      name:        t.name,
-      assignedTo:  t.assignedTo,
-      date:        t.date,
-      done:        t.done,
-      deleted:     t.deleted || false,
-      created:     t.created
-    }));
+    // Include tasks that are either done OR deleted
+    const relevantTasks = tasks
+      .filter(t => t.done === true || t.deleted === true)
+      .map(t => ({
+        name:        t.name,
+        assignedTo:  t.assignedTo,
+        date:        t.date,
+        done:        t.done,
+        deleted:     t.deleted || false,
+        created:     t.created
+      }));
 
     const todayString = new Date().toLocaleDateString("sv-SE", {
       weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
@@ -229,10 +232,11 @@ module.exports = NodeHelper.create({
 
     return JSON.stringify({
       instruction:
-        `Idag är ${todayString}. ` +
-        "Analysera historiska uppgifter för att förstå vilken dag i veckan olika personer brukar göra specifika sysslor. " +
-        "Baserat på detta, generera nya uppgifter för de kommande 7 dagarna med korrekt tilldelning av rätt person på rätt dag. " +
-        "Returnera ENDAST en JSON-array med objekt som innehåller: name, date (yyyy-mm-dd), assignedTo (person id).",
+        `Today is ${todayString}. ` +
+        "Analyze the historical task data to determine which day of the week each person typically performs specific chores. " +
+        "Using that insight, generate new tasks for the next 7 days, assigning each task to the appropriate person on the correct day. " +
+        "Return ONLY a JSON array where each object includes: name, date (YYYY-MM-DD), and assignedTo (person ID)."
+
 
       today: new Date().toISOString().slice(0, 10),
       tasks: relevantTasks,
@@ -251,6 +255,7 @@ module.exports = NodeHelper.create({
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
+    // People endpoints
     app.get("/api/people", (req, res) => res.json(people));
     app.post("/api/people", (req, res) => {
       const { name } = req.body;
@@ -264,6 +269,7 @@ module.exports = NodeHelper.create({
     app.delete("/api/people/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
+      // Unassign tasks if person deleted
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
       saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
@@ -271,12 +277,15 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
+    // New menu endpoint: returns all completed or deleted tasks
     app.get("/api/menu", (req, res) => {
-      const completedTasks = tasks.filter(t => t.done === true || t.deleted === true);
-      res.json(completedTasks);
+      const completedOrDeleted = tasks.filter(t => t.done === true || t.deleted === true);
+      res.json(completedOrDeleted);
     });
 
+    // Task endpoints
     app.get("/api/tasks", (req, res) => {
+      // Only return tasks not marked deleted
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
     });
@@ -285,7 +294,7 @@ module.exports = NodeHelper.create({
         id: Date.now(),
         ...req.body,
         done: false,
-        assignedTo: null,
+        assignedTo: null
       };
       tasks.push(newTask);
       saveData();
@@ -319,6 +328,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
+    // Analytics boards endpoints
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
     app.post("/api/analyticsBoards", (req, res) => {
       const newBoards = req.body;
@@ -331,6 +341,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
+    // Settings endpoints
     app.get("/api/settings", (req, res) => res.json(settings));
     app.put("/api/settings", (req, res) => {
       const newSettings = req.body;
@@ -345,8 +356,10 @@ module.exports = NodeHelper.create({
       res.json({ success: true, settings });
     });
 
+    // AI generate endpoint
     app.post("/api/ai-generate", (req, res) => self.aiGenerateTasks(req, res));
 
+    // Start HTTP server
     app.listen(port, "0.0.0.0", () => {
       Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);
       self.sendSocketNotification("TASKS_UPDATE", tasks);
@@ -355,6 +368,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
     });
 
+    // Start HTTPS server if certificates exist
     const httpsPort = port + 1;
     const keyPath   = path.join(CERT_DIR, "server.key");
     const certPath  = path.join(CERT_DIR, "server.crt");
