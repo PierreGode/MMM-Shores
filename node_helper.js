@@ -235,9 +235,7 @@ module.exports = NodeHelper.create({
         `Today is ${todayString}. ` +
         "Analyze the historical task data to determine which day of the week each person typically performs specific chores. " +
         "Using that insight, generate new tasks for the next 7 days, assigning each task to the appropriate person on the correct day. " +
-        "Return ONLY a JSON array where each object includes: name, date (YYYY-MM-DD), and assignedTo (person ID)."
-
-
+        "Return ONLY a JSON array where each object includes: name, date (YYYY-MM-DD), and assignedTo (person ID).",
       today: new Date().toISOString().slice(0, 10),
       tasks: relevantTasks,
       people: people
