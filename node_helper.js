@@ -148,7 +148,14 @@ module.exports = NodeHelper.create({
               "Vacuum entire house, Mow lawn, Deep clean bathroom, Organize garage, " +
               "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges."
 
-
+              // ── REASONABLENESS GUIDELINES ───────────────────────────────────────
+              "9. Be reasonable with scheduling: avoid assigning overly exhausting tasks " +
+              "   like cleaning the entire house or doing all big chores in one day. " +
+              "   Balance workload fairly over the week per person.\n" +
+              "10. Prioritize routines and habits over forcing new tasks every day.\n" +
+              "11. If a task is big or time-consuming, spread it out or assign it only once " +
+              "    per week per person.\n" +
+              "12. Consider recent completions and do not repeat tasks too soon."
           },
           { role: "user", content: prompt }
         ],
