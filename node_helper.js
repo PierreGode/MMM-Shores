@@ -137,7 +137,17 @@ module.exports = NodeHelper.create({
               "6. Only generate dates within the next 7 days.\n" +
               "7. Do not invent new people or tasks that aren’t present in the " +
               "   input data.\n" +
-              "8. Do not add unnecessary data."
+              "8. Do not add unnecessary data.\n\n" +
+            
+              // ── EXAMPLES TO DISTINGUISH SMALL VS BIG TASKS ──────────────────────
+              "Examples of **small chores** include:\n" +
+              "Wash dishes, Water plants, Take out trash, Sweep floor, Dust shelves, " +
+              "Wipe counters, Fold laundry, Clean mirrors, Make bed, Replace hand towels.\n\n" +
+            
+              "Examples of **big chores** include:\n" +
+              "Vacuum entire house, Mow lawn, Deep clean bathroom, Organize garage, " +
+              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges."
+
 
           },
           { role: "user", content: prompt }
