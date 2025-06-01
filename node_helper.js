@@ -76,89 +76,114 @@ module.exports = NodeHelper.create({
     }
   },
 
-  async aiGenerateTasks(req, res) {
-    if (!this.config || this.config.useAI === false) {
-      return res.status(400).json({
-        success: false,
-        error: "AI is disabled. Please install the 'openai' npm package and set useAI: true in your config."
-      });
-    }
-    if (!openaiLoaded) {
-      return res.status(400).json({
-        success: false,
-        error: "The 'openai' npm package is not installed. Run 'npm install openai' in the module folder."
-      });
-    }
-    if (!this.config.openaiApiKey) {
-      return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
+async aiGenerateTasks(req, res) {
+  if (!this.config || this.config.useAI === false) {
+    return res.status(400).json({
+      success: false,
+      error: "AI is disabled. Please install the 'openai' npm package and set useAI: true in your config."
+    });
+  }
+  if (!openaiLoaded) {
+    return res.status(400).json({
+      success: false,
+      error: "The 'openai' npm package is not installed. Run 'npm install openai' in the module folder."
+    });
+  }
+  if (!this.config.openaiApiKey) {
+    return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
+  }
+
+  try {
+    const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
+
+    // Anropa den nya prompt-funktionen
+    const prompt = this.buildPromptFromTasks();
+
+    Log.log("MMM-Chores: Sending prompt to OpenAI...");
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-nano",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. " +
+            "Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. " +
+            "Do not include tasks marked as done unless they are recurring. Try to be logical, do not overly generate tasks if all tasks already exist, not completed or are very recent completed. " +
+            "Never schedule more than one 'big' task per week per person. 'Small' tasks can be scheduled more often. Only generate for the next 7 days. Stay strictly within provided data, don't invent people or tasks."
+        },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 700,
+      temperature: 0.7
+    });
+
+    let text = completion.choices[0].message.content;
+
+    Log.log("MMM-Chores: OpenAI RAW response:", text);
+
+    text = text.trim();
+    if (text.startsWith("```")) {
+      text = text.replace(/```[a-z]*\s*([\s\S]*?)\s*```/, "$1").trim();
     }
 
+    const firstBracket = text.indexOf('[');
+    const lastBracket  = text.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1) {
+      text = text.substring(firstBracket, lastBracket + 1);
+    }
+
+    let newTasks = [];
     try {
-      const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
-
-      const prompt = this.buildPromptFromTasks();
-
-      Log.log("MMM-Chores: Sending prompt to OpenAI...");
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4.1-nano",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. " +
-              "Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. " +
-              "Do not include tasks marked as done unless they are recurring. Try to be logical, do not overly generate tasks if all tasks already exist, not completed or are very recent completed. " +
-              "Never schedule more than one 'big' task per week per person. 'Small' tasks can be scheduled more often. Only generate for the next 7 days. Stay strictly within provided data, don't invent people or tasks."
-          },
-          { role: "user", content: prompt }
-        ],
-        max_tokens: 700,
-        temperature: 0.7
-      });
-
-      let text = completion.choices[0].message.content;
-
-      Log.log("MMM-Chores: OpenAI RAW response:", text);
-
-      text = text.trim();
-      if (text.startsWith("```")) {
-        text = text.replace(/```[a-z]*\s*([\s\S]*?)\s*```/, "$1").trim();
-      }
-
-      const firstBracket = text.indexOf('[');
-      const lastBracket  = text.lastIndexOf(']');
-      if (firstBracket !== -1 && lastBracket !== -1) {
-        text = text.substring(firstBracket, lastBracket + 1);
-      }
-
-      let newTasks = [];
-      try {
-        newTasks = JSON.parse(text);
-      } catch (e) {
-        Log.error("Failed parsing AI response:", e);
-        Log.error("OpenAI returned:", text);
-        return res.status(500).json({ success: false, error: "Invalid AI response format.", raw: text });
-      }
-
-      const now = new Date();
-      newTasks.forEach(task => {
-        task.id      = Date.now() + Math.floor(Math.random() * 10000);
-        task.created = now.toISOString();
-        task.done    = false;
-        if (!task.assignedTo) task.assignedTo = null;
-        tasks.push(task);
-      });
-
-      saveData();
-      this.sendSocketNotification("TASKS_UPDATE", tasks);
-      res.json({ success: true, createdTasks: newTasks, count: newTasks.length });
-
-    } catch (err) {
-      Log.error("AI Generate error:", err);
-      res.status(500).json({ success: false, error: err.message });
+      newTasks = JSON.parse(text);
+    } catch (e) {
+      Log.error("Failed parsing AI response:", e);
+      Log.error("OpenAI returned:", text);
+      return res.status(500).json({ success: false, error: "Invalid AI response format.", raw: text });
     }
-  },
+
+    const now = new Date();
+    newTasks.forEach(task => {
+      task.id      = Date.now() + Math.floor(Math.random() * 10000);
+      task.created = now.toISOString();
+      task.done    = false;
+      if (!task.assignedTo) task.assignedTo = null;
+      tasks.push(task);
+    });
+
+    saveData();
+    this.sendSocketNotification("TASKS_UPDATE", tasks);
+    res.json({ success: true, createdTasks: newTasks, count: newTasks.length });
+
+  } catch (err) {
+    Log.error("AI Generate error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+},
+
+buildPromptFromTasks() {
+  const completedAndDeletedTasks = tasks.filter(t => t.done === true && t.deleted === true);
+
+  const todayDateStr = new Date().toLocaleDateString("sv-SE", {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric'
+  });
+
+  return JSON.stringify({
+    instruction:
+      `Idag är ${todayDateStr}. ` +
+      `Analysera följande uppgifter och se vilka mönster varje person har för uppgiftstilldelning över veckodagar. ` +
+      `Till exempel hur ofta Pierre dammsuger på söndagar kontra lördagar, när senaste dammsugningen var och om någon uppgift missats. ` +
+      `Baserat på detta, generera nya uppgifter för de kommande 7 dagarna med rätt tilldelning och datum. ` +
+      `Returnera ENDAST en JSON-array med objekt som innehåller: name, date (yyyy-mm-dd), assignedTo (personens ID).`,
+
+    today: new Date().toISOString().slice(0, 10),
+    tasks: completedAndDeletedTasks,
+    people: people
+  });
+},
 
   buildPromptFromTasks() {
     const relevantTasks = tasks.map(t => ({
