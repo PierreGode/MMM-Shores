@@ -1,4 +1,4 @@
-import { LANGUAGES } from "./lang.js";
+import { LANGUAGES } from "./public/lang.js";
 
 let currentLang = 'en';
 let peopleCache = [];
