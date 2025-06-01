@@ -214,9 +214,8 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    // Include tasks that are either done OR deleted
     const relevantTasks = tasks
-      .filter(t => t.done === true || t.deleted === true)
+      .filter(t => t.done === true)
       .map(t => ({
         name:        t.name,
         assignedTo:  t.assignedTo,
@@ -267,7 +266,6 @@ module.exports = NodeHelper.create({
     app.delete("/api/people/:id", (req, res) => {
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
-      // Unassign tasks if person deleted
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
       saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
@@ -275,15 +273,14 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
-    // New menu endpoint: returns all completed or deleted tasks
+    // Menu endpoint: only done tasks, whether deleted or not
     app.get("/api/menu", (req, res) => {
-      const completedOrDeleted = tasks.filter(t => t.done === true || t.deleted === true);
-      res.json(completedOrDeleted);
+      const menuTasks = tasks.filter(t => t.done === true);
+      res.json(menuTasks);
     });
 
     // Task endpoints
     app.get("/api/tasks", (req, res) => {
-      // Only return tasks not marked deleted
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
     });
