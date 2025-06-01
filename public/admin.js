@@ -624,9 +624,6 @@ function renderTasks() {
   }
 }
 
-// ==========================
-// Populate completed chores dropdown for task creation form
-// ==========================
 function populateCompletedChoresDropdown() {
   const dropdown = document.getElementById("completedChoresSelect");
   if (!dropdown) return;
