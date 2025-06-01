@@ -271,6 +271,11 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
+    app.get("/api/menu", (req, res) => {
+      const completedTasks = tasks.filter(t => t.done === true || t.deleted === true);
+      res.json(completedTasks);
+    });
+
     app.get("/api/tasks", (req, res) => {
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
