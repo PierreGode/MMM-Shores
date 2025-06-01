@@ -64,7 +64,12 @@
               <div class="card-body">
                 <form id="taskForm" class="row gy-2 gx-2 align-items-center mb-3" novalidate>
                   <div class="col-sm">
-                    <input type="text" id="taskName" class="form-control" placeholder="Task name…" required />
+                    <input type="text" id="taskName" class="form-control" placeholder="Task name…" />
+                  </div>
+                  <div class="col-sm">
+                    <select id="completedChoresSelect" class="form-select" aria-label="Select completed chore">
+                      <option value="">-- Select completed chore --</option>
+                    </select>
                   </div>
                   <div class="col-sm-auto">
                     <input type="date" id="taskDate" class="form-control" />
