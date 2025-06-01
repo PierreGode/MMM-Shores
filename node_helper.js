@@ -91,6 +91,17 @@ module.exports = NodeHelper.create({
       return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
     }
 
+    // Kontrollera antal genomförda uppgifter (done === true), oavsett deleted
+    const completedCount = tasks.filter(t => t.done === true).length;
+    const requiredCount = 30;
+    if (completedCount < requiredCount) {
+      const amountLeft = requiredCount - completedCount;
+      return res.status(400).json({
+        success: false,
+        error: `Too little data. Please complete ${amountLeft} more task${amountLeft > 1 ? "s" : ""} to unlock AI generation.`
+      });
+    }
+
     try {
       const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
 
@@ -159,7 +170,7 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    // Filtrera bort uppgifter som INTE är både done=true och deleted=true
+    // Ta med alla uppgifter som är done=true och deleted=true (de historiska)
     const relevantTasks = tasks.filter(t => t.done === true && t.deleted === true).map(t => ({
       name:        t.name,
       assignedTo:  t.assignedTo,
