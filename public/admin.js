@@ -631,24 +631,19 @@ function populateCompletedChoresDropdown() {
   const dropdown = document.getElementById("completedChoresSelect");
   if (!dropdown) return;
 
-  // Clear existing options
   dropdown.innerHTML = "";
+  dropdown.add(new Option(`-- ${LANGUAGES[currentLang].taskNamePlaceholder} --`, ""));
 
-  // Add default empty option
-  const defaultOption = new Option(`-- ${LANGUAGES[currentLang].taskNamePlaceholder} --`, "");
-  dropdown.add(defaultOption);
+  const filteredTasks = tasksCache.filter(t => (t.done || t.deleted));
 
-  // Filter completed chores from tasksCache
-  const completedChores = tasksCache.filter(t => t.done && !t.deleted);
-
-  if (completedChores.length === 0) {
+  if (filteredTasks.length === 0) {
     const noTasksOption = new Option(`(${LANGUAGES[currentLang].noTasks})`, "");
     noTasksOption.disabled = true;
     dropdown.add(noTasksOption);
     return;
   }
 
-  completedChores.forEach(task => {
+  filteredTasks.forEach(task => {
     const option = new Option(task.name, task.name);
     dropdown.add(option);
   });
