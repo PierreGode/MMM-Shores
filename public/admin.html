@@ -5,46 +5,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MMM-Chores Admin</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
   <link href="admin.css" rel="stylesheet" />
 </head>
 <body>
   <div class="container py-4 flex-grow-1 position-relative">
-
+    <!-- Theme toggle switch -->
     <div class="form-check form-switch theme-switch">
-      <input class="form-check-input" type="checkbox" id="themeToggle" />
+      <input
+        class="form-check-input"
+        type="checkbox"
+        id="themeToggle"
+      />
       <label class="form-check-label small" for="themeToggle">
         <i class="bi" id="themeIcon"></i>
       </label>
     </div>
 
+    <!-- Header -->
     <div class="hero mb-4">
       <h1 class="mb-0" id="titleHeader">MMM-Chores Admin</h1>
-      <small class="opacity-75" id="subtitleHeader">Manage tasks, people & analytics</small>
+      <small class="opacity-75" id="subtitleHeader"
+        >Manage tasks, people & analytics</small
+      >
     </div>
 
+    <!-- Tabs -->
     <ul class="nav nav-tabs mb-3" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" id="tabDashboard">Dashboard</button>
+        <button
+          class="nav-link active"
+          data-bs-toggle="tab"
+          data-bs-target="#dashboard"
+          type="button"
+          id="tabDashboard"
+        >
+          Dashboard
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#analytics" type="button" id="tabAnalytics">Analytics</button>
+        <button
+          class="nav-link"
+          data-bs-toggle="tab"
+          data-bs-target="#analytics"
+          type="button"
+          id="tabAnalytics"
+        >
+          Analytics
+        </button>
       </li>
     </ul>
 
     <div class="tab-content">
       <!-- Dashboard Tab -->
-      <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+      <div
+        class="tab-pane fade show active"
+        id="dashboard"
+        role="tabpanel"
+      >
         <div class="row g-4">
+          <!-- People Column -->
           <div class="col-lg-4">
             <div class="card card-shadow h-100">
               <div class="card-header" id="peopleHeader">People</div>
               <div class="card-body">
                 <form id="personForm" class="input-group mb-3">
-                  <input type="text" id="personName" class="form-control" placeholder="New person…" required />
-                  <button class="btn btn-outline-secondary btn-icon" type="submit" title="Add" id="btnAddPerson">
+                  <input
+                    type="text"
+                    id="personName"
+                    class="form-control"
+                    placeholder="New person…"
+                    required
+                  />
+                  <button
+                    class="btn btn-outline-secondary btn-icon"
+                    type="submit"
+                    title="Add"
+                    id="btnAddPerson"
+                  >
                     <i class="bi bi-person-plus-fill"></i>
                   </button>
                 </form>
@@ -52,33 +98,69 @@
               </div>
             </div>
           </div>
+
+          <!-- Tasks Column -->
           <div class="col-lg-8">
             <div class="card card-shadow h-100">
-              <div class="card-header d-flex justify-content-between align-items-center">
+              <div
+                class="card-header d-flex justify-content-between align-items-center"
+              >
                 <span id="tasksHeader">Tasks</span>
                 <span class="badge bg-light text-dark fw-normal">
-                  <i class="bi bi-check2-square text-success me-1"></i><span id="doneLabel"> done</span>&nbsp;&nbsp;
-                  <i class="bi bi-square text-muted me-1"></i><span id="pendingLabel"> pending</span>
+                  <i class="bi bi-check2-square text-success me-1"></i
+                  ><span id="doneLabel"> done</span>&nbsp;&nbsp;
+                  <i class="bi bi-square text-muted me-1"></i
+                  ><span id="pendingLabel"> pending</span>
                 </span>
               </div>
               <div class="card-body">
-                <form id="taskForm" class="row gy-2 gx-2 align-items-center mb-3" novalidate>
+                <form
+                  id="taskForm"
+                  class="row gy-2 gx-2 align-items-center mb-3"
+                  novalidate
+                >
+                  <!-- Free-text input -->
                   <div class="col-sm">
-                    <input type="text" id="taskName" class="form-control" placeholder="Task name…" />
+                    <input
+                      type="text"
+                      id="taskName"
+                      class="form-control"
+                      placeholder="Task name…"
+                    />
                   </div>
+                  <!-- Dropdown of completed/deleted tasks -->
                   <div class="col-sm">
-                    <select id="completedChoresSelect" class="form-select" aria-label="Select completed chore">
+                    <select
+                      id="completedChoresSelect"
+                      class="form-select"
+                      aria-label="Select completed chore"
+                    >
                       <option value="">-- Select completed chore --</option>
                     </select>
                   </div>
+                  <!-- Date picker -->
                   <div class="col-sm-auto">
-                    <input type="date" id="taskDate" class="form-control" />
+                    <input
+                      type="date"
+                      id="taskDate"
+                      class="form-control"
+                    />
                   </div>
+                  <!-- Submit and AI buttons -->
                   <div class="col-sm-auto d-flex gap-2">
-                    <button class="btn btn-primary" type="submit" id="btnAddTask">
+                    <button
+                      class="btn btn-primary"
+                      type="submit"
+                      id="btnAddTask"
+                    >
                       <i class="bi bi-plus-lg me-1"></i>Add
                     </button>
-                    <button class="btn btn-success" type="button" id="btnAiGenerate" title="Generate tasks with AI">
+                    <button
+                      class="btn btn-success"
+                      type="button"
+                      id="aiGenerateBtn"
+                      title="Generate tasks with AI"
+                    >
                       <i class="bi bi-robot"></i> AI Generate
                     </button>
                   </div>
@@ -91,7 +173,11 @@
       </div>
 
       <!-- Analytics Tab -->
-      <div class="tab-pane fade" id="analytics" role="tabpanel">
+      <div
+        class="tab-pane fade"
+        id="analytics"
+        role="tabpanel"
+      >
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="mb-0" id="analyticsHeader">Analytics</h5>
           <select id="addChartSelect" class="form-select w-auto">
@@ -111,52 +197,76 @@
     </div>
   </div>
 
+  <!-- Footer -->
   <footer class="text-center py-3 small text-muted" id="footerText">
     MMM-Chores Built by Pierre Gode
   </footer>
 
-  <!-- Toast container -->
-  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
-    <div id="aiToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+  <!-- Toast container (for AI‐generated feedback) -->
+  <div
+    class="position-fixed bottom-0 end-0 p-3"
+    style="z-index: 1080"
+  >
+    <div
+      id="aiToast"
+      class="toast align-items-center text-bg-success border-0"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+    >
       <div class="d-flex">
-        <div class="toast-body" id="aiToastBody">Tasks generated successfully!</div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        <div class="toast-body" id="aiToastBody">
+          Tasks generated successfully!
+        </div>
+        <button
+          type="button"
+          class="btn-close btn-close-white me-2 m-auto"
+          data-bs-dismiss="toast"
+          aria-label="Close"
+        ></button>
       </div>
     </div>
   </div>
 
   <script src="admin.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  ></script>
   <script>
     // AI Generate button click handler
-    document.getElementById("btnAiGenerate").addEventListener("click", async () => {
-      const btn = document.getElementById("btnAiGenerate");
-      btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Generating...';
+    document
+      .getElementById("aiGenerateBtn")
+      .addEventListener("click", async () => {
+        const btn = document.getElementById("aiGenerateBtn");
+        btn.disabled = true;
+        btn.innerHTML =
+          '<i class="bi bi-hourglass-split"></i> Generating...';
 
-      try {
-        const res = await fetch("/api/ai-generate", { method: "POST" });
-        const data = await res.json();
+        try {
+          const res = await fetch("/api/ai-generate", {
+            method: "POST",
+          });
+          const data = await res.json();
 
-        if (data.success) {
-          // Update tasks list via existing fetchTasks function
-          if (typeof fetchTasks === "function") fetchTasks();
+          if (data.success) {
+            // Use the existing fetchTasks() from admin.js to refresh the list
+            if (typeof fetchTasks === "function") fetchTasks();
 
-          const toastEl = document.getElementById("aiToast");
-          const toastBody = document.getElementById("aiToastBody");
-          toastBody.textContent = `Created ${data.count} new tasks.`;
-          const toast = new bootstrap.Toast(toastEl);
-          toast.show();
-        } else {
-          alert("AI generation failed: " + (data.error || "Unknown error"));
+            const toastEl = document.getElementById("aiToast");
+            const toastBody = document.getElementById("aiToastBody");
+            toastBody.textContent = `Created ${data.count} new tasks.`;
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+          } else {
+            alert("AI generation failed: " + (data.error || "Unknown error"));
+          }
+        } catch (err) {
+          alert("Error: " + err.message);
         }
-      } catch (err) {
-        alert("Error: " + err.message);
-      }
 
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-robot"></i> AI Generate';
-    });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-robot"></i> AI Generate';
+      });
   </script>
 </body>
 </html>
