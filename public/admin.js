@@ -631,7 +631,13 @@ function populateCompletedChoresDropdown() {
   dropdown.innerHTML = "";
   dropdown.add(new Option(`-- ${LANGUAGES[currentLang].taskNamePlaceholder} --`, ""));
 
-  const filteredTasks = tasksCache.filter(t => (t.done || t.deleted));
+  // Debug: log tasksCache length and filtered tasks
+  console.log("Total tasksCache:", tasksCache.length);
+
+  // Filter tasks done OR deleted, AND ensure task has a non-empty name
+  const filteredTasks = tasksCache.filter(t => (t.done === true || t.deleted === true) && t.name && t.name.trim() !== "");
+
+  console.log("Filtered tasks for dropdown:", filteredTasks);
 
   if (filteredTasks.length === 0) {
     const noTasksOption = new Option(`(${LANGUAGES[currentLang].noTasks})`, "");
@@ -645,6 +651,7 @@ function populateCompletedChoresDropdown() {
     dropdown.add(option);
   });
 }
+
 
 // ==========================
 // CRUD Handlers
