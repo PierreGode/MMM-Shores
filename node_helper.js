@@ -113,15 +113,36 @@ module.exports = NodeHelper.create({
           {
             role: "system",
             content:
-              "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. " +
-              "Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. " +
-              "Do not include tasks marked as done unless they are recurring. Try to be logical, do not overly generate tasks if all tasks already exist, not completed or are very recent completed. " +
-              "Never schedule more than one 'big' task per week per person. 'Small' tasks can be scheduled more often. you don't have to assing task avery day it's morr important öypu follow routines. find weekly taks and try to assign them to the same days. Only generate for the next 7 days. Stay strictly within provided data, don't invent people or tasks."
+              // ── ROLE ────────────────────────────────────────────────────────────
+              "You are an assistant that, given historical household-task data, " +
+              "creates a schedule for the **next 7 days**.\n\n" +
+        
+              // ── OUTPUT FORMAT ───────────────────────────────────────────────────
+              "Return **only** a raw JSON array (no surrounding text). Each item " +
+              "must include:\n" +
+              "  • name         – string\n" +
+              "  • date         – string in YYYY-MM-DD format\n" +
+              "  • assignedTo   – person-ID (omit or null if unassigned)\n\n" +
+        
+              // ── SCHEDULING RULES ────────────────────────────────────────────────
+              "1. Skip tasks marked as *done* unless they are recurring.\n" +
+              "2. Don’t duplicate an unfinished or very recently completed task on " +
+              "   the same day.\n" +
+              "3. Never assign more than **one** *big* task per person per week; " +
+              "   *small* tasks can appear more often.\n" +
+              "4. It’s okay if some days end up without new tasks – keeping " +
+              "   routines is more important than filling every date.\n" +
+              "5. Try to keep weekly tasks on the same weekday they historically " +
+              "   occur.\n" +
+              "6. Only generate dates within the next 7 days.\n" +
+              "7. Do not invent new people or tasks that aren’t present in the " +
+              "   input data."
+              "8. Do not add unnecessary data"
           },
           { role: "user", content: prompt }
         ],
-        max_tokens: 700,
-        temperature: 0.7
+        max_tokens: 5000,
+        temperature: 0.1
       });
 
       let text = completion.choices[0].message.content;
