@@ -116,14 +116,14 @@ module.exports = NodeHelper.create({
               // ── ROLE ────────────────────────────────────────────────────────────
               "You are an assistant that, given historical household-task data, " +
               "creates a schedule for the **next 7 days**.\n\n" +
-        
+            
               // ── OUTPUT FORMAT ───────────────────────────────────────────────────
               "Return **only** a raw JSON array (no surrounding text). Each item " +
               "must include:\n" +
               "  • name         – string\n" +
               "  • date         – string in YYYY-MM-DD format\n" +
               "  • assignedTo   – person-ID (omit or null if unassigned)\n\n" +
-        
+            
               // ── SCHEDULING RULES ────────────────────────────────────────────────
               "1. Skip tasks marked as *done* unless they are recurring.\n" +
               "2. Don’t duplicate an unfinished or very recently completed task on " +
@@ -136,8 +136,9 @@ module.exports = NodeHelper.create({
               "   occur.\n" +
               "6. Only generate dates within the next 7 days.\n" +
               "7. Do not invent new people or tasks that aren’t present in the " +
-              "   input data."
-              "8. Do not add unnecessary data"
+              "   input data.\n" +
+              "8. Do not add unnecessary data."
+
           },
           { role: "user", content: prompt }
         ],
