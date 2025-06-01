@@ -70,8 +70,6 @@ module.exports = NodeHelper.create({
         dateFormatting: payload.dateFormatting ?? settings.dateFormatting
       };
       saveData();
-      /* ────────────────────────────────────────────── */
-
       this.initServer(payload.adminPort);
     }
   },
@@ -93,9 +91,18 @@ module.exports = NodeHelper.create({
       return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
     }
 
+    const completedCount = tasks.filter(t => t.done === true).length;
+    const requiredCount = 30;
+    if (completedCount < requiredCount) {
+      const amountLeft = requiredCount - completedCount;
+      return res.status(400).json({
+        success: false,
+        error: `Too little data. Please complete ${amountLeft} more task${amountLeft > 1 ? "s" : ""} to unlock AI generation.`
+      });
+    }
+
     try {
       const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
-
       const prompt = this.buildPromptFromTasks();
 
       Log.log("MMM-Chores: Sending prompt to OpenAI...");
@@ -106,15 +113,55 @@ module.exports = NodeHelper.create({
           {
             role: "system",
             content:
-              "You are an assistant that generates household tasks for the next 7 days based on historical tasks data. " +
-              "Return ONLY a pure JSON array, with no text before or after. Each item must include: name, date (yyyy-mm-dd), and assignedTo (person id) if applicable. " +
-              "Do not include tasks marked as done unless they are recurring. Try to be logical, do not overly generate tasks if all tasks already exist, not completed or are very recent completed. " +
-              "Never schedule more than one 'big' task per week per person. 'Small' tasks can be scheduled more often. Only generate for the next 7 days. Stay strictly within provided data, don't invent people or tasks."
+              // ── ROLE ────────────────────────────────────────────────────────────
+              "You are an assistant that, given historical household-task data, " +
+              "creates a schedule for the **next 7 days**.\n\n" +
+        
+              // ── OUTPUT FORMAT ───────────────────────────────────────────────────
+              "Return **only** a raw JSON array (no surrounding text). Each item " +
+              "must include:\n" +
+              "  • name         – string\n" +
+              "  • date         – string in YYYY-MM-DD format\n" +
+              "  • assignedTo   – person-ID (omit or null if unassigned)\n\n" +
+        
+              // ── SCHEDULING RULES ────────────────────────────────────────────────
+              "1. Skip tasks marked as *done* unless they are recurring.\n" +
+              "2. Don’t duplicate an unfinished or very recently completed task on " +
+              "   the same day.\n" +
+              "3. Never assign more than **one** *big* task per person per week; " +
+              "   *small* tasks can appear more often.\n" +
+              "4. It’s okay if some days end up without new tasks – keeping " +
+              "   routines is more important than filling every date.\n" +
+              "5. Try to keep weekly tasks on the same weekday they historically " +
+              "   occur.\n" +
+              "6. Only generate dates within the next 7 days.\n" +
+              "7. Do not invent new people or tasks that aren’t present in the " +
+              "   input data.\n" +
+              "8. Do not add unnecessary data.\n\n" +
+        
+              // ── EXAMPLES TO DISTINGUISH SMALL VS BIG TASKS ──────────────────────
+              "Examples of **small chores** include:\n" +
+              "Wash dishes, Water plants, Take out trash, Sweep floor, Dust shelves, " +
+              "Wipe counters, Fold laundry, Clean mirrors, Make bed, Replace hand towels.\n\n" +
+        
+              "Examples of **big chores** include:\n" +
+              "Vacuum entire house, Mow lawn, Deep clean bathroom, Organize garage, " +
+              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges.\n" +
+        
+              // ── REASONABLENESS GUIDELINES ───────────────────────────────────────
+              "9. Be reasonable with scheduling: avoid assigning overly exhausting tasks " +
+              "   like cleaning the entire house or doing all big chores in one day. " +
+              "   Balance workload fairly over the week per person.\n" +
+              "10. Prioritize routines and habits over forcing new tasks every day.\n" +
+              "11. If a task is big or time-consuming, spread it out or assign it only once " +
+              "    per week per person.\n" +
+              "12. Consider recent completions and do not repeat tasks too soon."
           },
           { role: "user", content: prompt }
         ],
-        max_tokens: 700,
-        temperature: 0.7
+
+        max_tokens: 5000,
+        temperature: 0.1
       });
 
       let text = completion.choices[0].message.content;
@@ -142,17 +189,23 @@ module.exports = NodeHelper.create({
       }
 
       const now = new Date();
+      let createdCount = 0;
+
       newTasks.forEach(task => {
-        task.id      = Date.now() + Math.floor(Math.random() * 10000);
-        task.created = now.toISOString();
-        task.done    = false;
-        if (!task.assignedTo) task.assignedTo = null;
-        tasks.push(task);
+        const alreadyExists = tasks.some(t => t.name === task.name && t.date === task.date && !t.deleted);
+        if (!alreadyExists) {
+          task.id      = Date.now() + Math.floor(Math.random() * 10000);
+          task.created = now.toISOString();
+          task.done    = false;
+          if (!task.assignedTo) task.assignedTo = null;
+          tasks.push(task);
+          createdCount++;
+        }
       });
 
       saveData();
       this.sendSocketNotification("TASKS_UPDATE", tasks);
-      res.json({ success: true, createdTasks: newTasks, count: newTasks.length });
+      res.json({ success: true, createdTasks: newTasks, count: createdCount });
 
     } catch (err) {
       Log.error("AI Generate error:", err);
@@ -161,7 +214,7 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    const relevantTasks = tasks.map(t => ({
+    const relevantTasks = tasks.filter(t => t.done === true && t.deleted === true).map(t => ({
       name:        t.name,
       assignedTo:  t.assignedTo,
       date:        t.date,
@@ -169,7 +222,22 @@ module.exports = NodeHelper.create({
       deleted:     t.deleted || false,
       created:     t.created
     }));
-    return JSON.stringify(relevantTasks);
+
+    const todayString = new Date().toLocaleDateString("sv-SE", {
+      weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
+    });
+
+    return JSON.stringify({
+      instruction:
+        `Idag är ${todayString}. ` +
+        "Analysera historiska uppgifter för att förstå vilken dag i veckan olika personer brukar göra specifika sysslor. " +
+        "Baserat på detta, generera nya uppgifter för de kommande 7 dagarna med korrekt tilldelning av rätt person på rätt dag. " +
+        "Returnera ENDAST en JSON-array med objekt som innehåller: name, date (yyyy-mm-dd), assignedTo (person id).",
+
+      today: new Date().toISOString().slice(0, 10),
+      tasks: relevantTasks,
+      people: people
+    });
   },
 
   initServer(port) {
@@ -179,14 +247,10 @@ module.exports = NodeHelper.create({
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
 
-    /*─────────────────── REST-API ───────────────────*/
-
-    // Admin UI
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
-    /* People endpoints */
     app.get("/api/people", (req, res) => res.json(people));
     app.post("/api/people", (req, res) => {
       const { name } = req.body;
@@ -207,7 +271,6 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
-    /* Task endpoints */
     app.get("/api/tasks", (req, res) => {
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
@@ -251,7 +314,6 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
-    /* Analytics Boards endpoints */
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
     app.post("/api/analyticsBoards", (req, res) => {
       const newBoards = req.body;
@@ -264,9 +326,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
-    /* Settings endpoints */
     app.get("/api/settings", (req, res) => res.json(settings));
-
     app.put("/api/settings", (req, res) => {
       const newSettings = req.body;
       if (typeof newSettings !== "object") {
