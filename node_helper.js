@@ -91,7 +91,6 @@ module.exports = NodeHelper.create({
       return res.status(400).json({ success: false, error: "OpenAI token missing in config." });
     }
 
-    // Kontrollera antal genomförda uppgifter (done === true), oavsett deleted
     const completedCount = tasks.filter(t => t.done === true).length;
     const requiredCount = 30;
     if (completedCount < requiredCount) {
@@ -104,7 +103,6 @@ module.exports = NodeHelper.create({
 
     try {
       const openai = new OpenAI({ apiKey: this.config.openaiApiKey });
-
       const prompt = this.buildPromptFromTasks();
 
       Log.log("MMM-Chores: Sending prompt to OpenAI...");
@@ -151,17 +149,23 @@ module.exports = NodeHelper.create({
       }
 
       const now = new Date();
+      let createdCount = 0;
+
       newTasks.forEach(task => {
-        task.id      = Date.now() + Math.floor(Math.random() * 10000);
-        task.created = now.toISOString();
-        task.done    = false;
-        if (!task.assignedTo) task.assignedTo = null;
-        tasks.push(task);
+        const alreadyExists = tasks.some(t => t.name === task.name && t.date === task.date && !t.deleted);
+        if (!alreadyExists) {
+          task.id      = Date.now() + Math.floor(Math.random() * 10000);
+          task.created = now.toISOString();
+          task.done    = false;
+          if (!task.assignedTo) task.assignedTo = null;
+          tasks.push(task);
+          createdCount++;
+        }
       });
 
       saveData();
       this.sendSocketNotification("TASKS_UPDATE", tasks);
-      res.json({ success: true, createdTasks: newTasks, count: newTasks.length });
+      res.json({ success: true, createdTasks: newTasks, count: createdCount });
 
     } catch (err) {
       Log.error("AI Generate error:", err);
@@ -170,7 +174,6 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    // Ta med alla uppgifter som är done=true och deleted=true (de historiska)
     const relevantTasks = tasks.filter(t => t.done === true && t.deleted === true).map(t => ({
       name:        t.name,
       assignedTo:  t.assignedTo,
@@ -204,14 +207,10 @@ module.exports = NodeHelper.create({
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
 
-    /*─────────────────── REST-API ───────────────────*/
-
-    // Admin UI
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
-    /* People endpoints */
     app.get("/api/people", (req, res) => res.json(people));
     app.post("/api/people", (req, res) => {
       const { name } = req.body;
@@ -232,7 +231,6 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
-    /* Task endpoints */
     app.get("/api/tasks", (req, res) => {
       const visibleTasks = tasks.filter(t => !t.deleted);
       res.json(visibleTasks);
@@ -276,7 +274,6 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
-    /* Analytics Boards endpoints */
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
     app.post("/api/analyticsBoards", (req, res) => {
       const newBoards = req.body;
@@ -289,9 +286,7 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
-    /* Settings endpoints */
     app.get("/api/settings", (req, res) => res.json(settings));
-
     app.put("/api/settings", (req, res) => {
       const newSettings = req.body;
       if (typeof newSettings !== "object") {
