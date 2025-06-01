@@ -494,6 +494,8 @@ async function fetchTasks() {
   const res = await fetch("/api/tasks");
   tasksCache = await res.json();
   renderTasks();
+  // Also update the completed chores dropdown every time tasks load
+  populateCompletedChoresDropdown();
 }
 
 // ==========================
@@ -623,6 +625,36 @@ function renderTasks() {
 }
 
 // ==========================
+// Populate completed chores dropdown for task creation form
+// ==========================
+function populateCompletedChoresDropdown() {
+  const dropdown = document.getElementById("completedChoresSelect");
+  if (!dropdown) return;
+
+  // Clear existing options
+  dropdown.innerHTML = "";
+
+  // Add default empty option
+  const defaultOption = new Option(`-- ${LANGUAGES[currentLang].taskNamePlaceholder} --`, "");
+  dropdown.add(defaultOption);
+
+  // Filter completed chores from tasksCache
+  const completedChores = tasksCache.filter(t => t.done && !t.deleted);
+
+  if (completedChores.length === 0) {
+    const noTasksOption = new Option(`(${LANGUAGES[currentLang].noTasks})`, "");
+    noTasksOption.disabled = true;
+    dropdown.add(noTasksOption);
+    return;
+  }
+
+  completedChores.forEach(task => {
+    const option = new Option(task.name, task.name);
+    dropdown.add(option);
+  });
+}
+
+// ==========================
 // CRUD Handlers
 // ==========================
 document.getElementById("personForm").addEventListener("submit", async e => {
@@ -641,9 +673,16 @@ document.getElementById("personForm").addEventListener("submit", async e => {
 
 document.getElementById("taskForm").addEventListener("submit", async e => {
   e.preventDefault();
-  const name = document.getElementById("taskName").value.trim();
-  let date = document.getElementById("taskDate").value;
+
+  // Get free text input and dropdown value
+  const freeTextInput = document.getElementById("taskName").value.trim();
+  const dropdownSelect = document.getElementById("completedChoresSelect").value.trim();
+
+  // Decide task name: free text takes priority
+  const name = freeTextInput || dropdownSelect;
   if (!name) return;
+
+  let date = document.getElementById("taskDate").value;
   if (!date) date = new Date().toISOString().split("T")[0];
 
   const now = new Date();
@@ -667,7 +706,13 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
       createdShort: stamp("C")
     })
   });
+
   e.target.reset();
+
+  // Reset dropdown manually since it's not a form input
+  const dropdown = document.getElementById("completedChoresSelect");
+  if (dropdown) dropdown.value = "";
+
   await fetchTasks();
 });
 
