@@ -116,14 +116,14 @@ module.exports = NodeHelper.create({
               // ── ROLE ────────────────────────────────────────────────────────────
               "You are an assistant that, given historical household-task data, " +
               "creates a schedule for the **next 7 days**.\n\n" +
-            
+        
               // ── OUTPUT FORMAT ───────────────────────────────────────────────────
               "Return **only** a raw JSON array (no surrounding text). Each item " +
               "must include:\n" +
               "  • name         – string\n" +
               "  • date         – string in YYYY-MM-DD format\n" +
               "  • assignedTo   – person-ID (omit or null if unassigned)\n\n" +
-            
+        
               // ── SCHEDULING RULES ────────────────────────────────────────────────
               "1. Skip tasks marked as *done* unless they are recurring.\n" +
               "2. Don’t duplicate an unfinished or very recently completed task on " +
@@ -138,16 +138,16 @@ module.exports = NodeHelper.create({
               "7. Do not invent new people or tasks that aren’t present in the " +
               "   input data.\n" +
               "8. Do not add unnecessary data.\n\n" +
-            
+        
               // ── EXAMPLES TO DISTINGUISH SMALL VS BIG TASKS ──────────────────────
               "Examples of **small chores** include:\n" +
               "Wash dishes, Water plants, Take out trash, Sweep floor, Dust shelves, " +
               "Wipe counters, Fold laundry, Clean mirrors, Make bed, Replace hand towels.\n\n" +
-            
+        
               "Examples of **big chores** include:\n" +
               "Vacuum entire house, Mow lawn, Deep clean bathroom, Organize garage, " +
-              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges."
-
+              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges.\n" +
+        
               // ── REASONABLENESS GUIDELINES ───────────────────────────────────────
               "9. Be reasonable with scheduling: avoid assigning overly exhausting tasks " +
               "   like cleaning the entire house or doing all big chores in one day. " +
@@ -159,6 +159,7 @@ module.exports = NodeHelper.create({
           },
           { role: "user", content: prompt }
         ],
+
         max_tokens: 5000,
         temperature: 0.1
       });
