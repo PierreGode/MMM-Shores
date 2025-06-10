@@ -214,7 +214,8 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    const relevantTasks = tasks.filter(t => t.done === true && t.deleted === true).map(t => ({
+    // Collect completed tasks that haven't been deleted
+    const relevantTasks = tasks.filter(t => t.done === true && !t.deleted).map(t => ({
       name:        t.name,
       assignedTo:  t.assignedTo,
       date:        t.date,
