@@ -142,11 +142,11 @@ module.exports = NodeHelper.create({
               // ── EXAMPLES TO DISTINGUISH SMALL VS BIG TASKS ──────────────────────
               "Examples of **small chores** include:\n" +
               "Wash dishes, Water plants, Take out trash, Sweep floor, Dust shelves, " +
-              "Wipe counters, Fold laundry, Clean mirrors, Make bed, Replace hand towels.\n\n" +
+              "Wipe counters, Fold laundry, Clean mirrors, Make bed, Replace hand towels. create the tasks in the same language as the data \n\n" +
         
               "Examples of **big chores** include:\n" +
               "Vacuum entire house, Mow lawn, Deep clean bathroom, Organize garage, " +
-              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges.\n" +
+              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges. but remember create the tasks in the same language as the data\n" +
         
               // ── REASONABLENESS GUIDELINES ───────────────────────────────────────
               "9. Be reasonable with scheduling: avoid assigning overly exhausting tasks " +
