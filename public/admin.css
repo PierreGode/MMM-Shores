@@ -160,3 +160,13 @@ h1, h2 {
     top: 25px;
   }
 }
+
+/* Calendar */
+#taskCalendar table {
+  table-layout: fixed;
+}
+#taskCalendar td {
+  height: 100px;
+  vertical-align: top;
+  font-size: 0.8rem;
+}
