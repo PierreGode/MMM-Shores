@@ -494,6 +494,7 @@ async function fetchTasks() {
   const res = await fetch("/api/tasks");
   tasksCache = await res.json();
   renderTasks();
+  renderCalendar();
 }
 
 // ==========================
@@ -620,6 +621,56 @@ function renderTasks() {
     li.append(left, select, del);
     list.appendChild(li);
   }
+}
+
+function renderCalendar() {
+  const container = document.getElementById("taskCalendar");
+  if (!container) return;
+
+  const undone = tasksCache.filter(t => !t.deleted && !t.done);
+  if (undone.length === 0) {
+    container.innerHTML = `<p class="text-center text-muted">${LANGUAGES[currentLang].noTasks}</p>`;
+    return;
+  }
+
+  const tasksByDate = {};
+  undone.forEach(t => {
+    if (!tasksByDate[t.date]) tasksByDate[t.date] = [];
+    tasksByDate[t.date].push(t);
+  });
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const first = new Date(year, month, 1);
+  const startDay = first.getDay();
+  const last = new Date(year, month + 1, 0);
+  const totalDays = last.getDate();
+
+  const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  let html = '<table class="table table-bordered table-sm">';
+  html += '<thead><tr>' + weekdays.map(d => `<th class="text-center">${d}</th>`).join('') + '</tr></thead><tbody>';
+
+  let day = 1;
+  for (let w = 0; w < 6 && day <= totalDays; w++) {
+    html += '<tr>';
+    for (let d = 0; d < 7; d++) {
+      if (w === 0 && d < startDay || day > totalDays) {
+        html += '<td></td>';
+      } else {
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const arr = tasksByDate[dateStr] || [];
+        html += '<td class="align-top"><div><strong>' + day + '</strong></div>';
+        arr.forEach(t => { html += `<div class="small">${t.name}</div>`; });
+        html += '</td>';
+        day++;
+      }
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+
+  container.innerHTML = html;
 }
 
 // ==========================
