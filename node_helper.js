@@ -6,6 +6,13 @@ const path       = require("path");
 const fs         = require("fs");
 const https      = require("https");
 
+// Use built-in fetch if available (Node 18+) otherwise fall back to node-fetch
+let fetchFn = global.fetch;
+if (!fetchFn) {
+  fetchFn = (...args) =>
+    import("node-fetch").then(({ default: fetch }) => fetch(...args));
+}
+
 let openaiLoaded = true;
 let OpenAI;
 try {
@@ -54,6 +61,12 @@ function saveData() {
   }
 }
 
+function broadcastTasks(helper) {
+  const visible = tasks.filter(t => !t.deleted);
+  helper.sendSocketNotification("TASKS_UPDATE", tasks);
+  helper.sendSocketNotification("CHORES_DATA", visible);
+}
+
 module.exports = NodeHelper.create({
   start() {
     Log.log("MMM-Chores helper started...");
@@ -71,6 +84,9 @@ module.exports = NodeHelper.create({
       };
       saveData();
       this.initServer(payload.adminPort);
+    }
+    if (notification === "USER_TOGGLE_CHORE") {
+      this.handleUserToggle(payload);
     }
   },
 
@@ -204,7 +220,7 @@ module.exports = NodeHelper.create({
       });
 
       saveData();
-      this.sendSocketNotification("TASKS_UPDATE", tasks);
+      broadcastTasks(this);
       res.json({ success: true, createdTasks: newTasks, count: createdCount });
 
     } catch (err) {
@@ -241,6 +257,38 @@ module.exports = NodeHelper.create({
     });
   },
 
+  async handleUserToggle({ id, done }) {
+    try {
+      const now = new Date();
+      const iso = now.toISOString();
+      const pad = n => n.toString().padStart(2, "0");
+      const stamp = prefix =>
+        prefix + pad(now.getMonth() + 1) + pad(now.getDate()) + pad(now.getHours()) + pad(now.getMinutes());
+
+      const body = { done };
+      if (done) {
+        body.finished = iso;
+        body.finishedShort = stamp("F");
+      } else {
+        body.finished = null;
+        body.finishedShort = null;
+      }
+
+      const port = this.config.adminPort;
+      await fetchFn(`http://localhost:${port}/api/tasks/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const res = await fetchFn(`http://localhost:${port}/api/tasks`);
+      const latest = await res.json();
+      this.sendSocketNotification("CHORES_DATA", latest);
+    } catch (e) {
+      Log.error("MMM-Chores: failed updating task", e);
+    }
+  },
+
   initServer(port) {
     const self = this;
     const app  = express();
@@ -268,7 +316,7 @@ module.exports = NodeHelper.create({
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
       saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
-      self.sendSocketNotification("TASKS_UPDATE", tasks);
+      broadcastTasks(self);
       res.json({ success: true });
     });
 
@@ -285,7 +333,7 @@ module.exports = NodeHelper.create({
       };
       tasks.push(newTask);
       saveData();
-      self.sendSocketNotification("TASKS_UPDATE", tasks);
+      broadcastTasks(self);
       res.status(201).json(newTask);
     });
     app.put("/api/tasks/:id", (req, res) => {
@@ -301,7 +349,7 @@ module.exports = NodeHelper.create({
         }
       });
       saveData();
-      self.sendSocketNotification("TASKS_UPDATE", tasks);
+      broadcastTasks(self);
       res.json(task);
     });
     app.delete("/api/tasks/:id", (req, res) => {
@@ -311,7 +359,7 @@ module.exports = NodeHelper.create({
 
       task.deleted = true;
       saveData();
-      self.sendSocketNotification("TASKS_UPDATE", tasks);
+      broadcastTasks(self);
       res.json({ success: true });
     });
 
@@ -345,7 +393,7 @@ module.exports = NodeHelper.create({
 
     app.listen(port, "0.0.0.0", () => {
       Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);
-      self.sendSocketNotification("TASKS_UPDATE", tasks);
+      broadcastTasks(self);
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("ANALYTICS_UPDATE", analyticsBoards);
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
