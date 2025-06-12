@@ -136,6 +136,14 @@ h1, h2 {
   opacity: .6;
 }
 
+/* Task date color adjustment */
+.task-date {
+  color: #6c757d;
+}
+[data-theme="dark"] .task-date {
+  color: var(--text);
+}
+
 /* Oversized checkboxes */
 .form-check-input {
   appearance: auto;

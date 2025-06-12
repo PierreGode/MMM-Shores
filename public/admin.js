@@ -27,6 +27,7 @@ const LANGUAGES = {
     noTasks: "No tasks added",
     unassigned: "Unassigned",
     remove: "Remove",
+    edit: "Edit",
     chartLabels: {
       unfinishedTasks: "Unfinished Tasks",
       completedTasks: "Completed Tasks",
@@ -64,6 +65,7 @@ const LANGUAGES = {
     noTasks: "Inga uppgifter tillagda",
     unassigned: "Ej tilldelad",
     remove: "Ta bort",
+    edit: "Redigera",
     chartLabels: {
       unfinishedTasks: "Ej färdiga uppgifter",
       completedTasks: "Färdiga uppgifter",
@@ -101,6 +103,7 @@ const LANGUAGES = {
     noTasks: "Aucune tâche ajoutée",
     unassigned: "Non assigné",
     remove: "Supprimer",
+    edit: "Modifier",
     chartLabels: {
       unfinishedTasks: "Tâches non terminées",
       completedTasks: "Tâches terminées",
@@ -138,6 +141,7 @@ const LANGUAGES = {
     noTasks: "No hay tareas agregadas",
     unassigned: "Sin asignar",
     remove: "Eliminar",
+    edit: "Editar",
     chartLabels: {
       unfinishedTasks: "Tareas sin terminar",
       completedTasks: "Tareas completadas",
@@ -175,6 +179,7 @@ const LANGUAGES = {
     noTasks: "Keine Aufgaben hinzugefügt",
     unassigned: "Nicht zugeordnet",
     remove: "Entfernen",
+    edit: "Bearbeiten",
     chartLabels: {
       unfinishedTasks: "Unfertige Aufgaben",
       completedTasks: "Abgeschlossene Aufgaben",
@@ -212,6 +217,7 @@ const LANGUAGES = {
     noTasks: "Nessun compito aggiunto",
     unassigned: "Non assegnato",
     remove: "Rimuovi",
+    edit: "Modifica",
     chartLabels: {
       unfinishedTasks: "Compiti non completati",
       completedTasks: "Compiti completati",
@@ -249,6 +255,7 @@ const LANGUAGES = {
     noTasks: "Geen taken toegevoegd",
     unassigned: "Niet toegewezen",
     remove: "Verwijderen",
+    edit: "Bewerken",
     chartLabels: {
       unfinishedTasks: "Onvoltooide taken",
       completedTasks: "Voltooide taken",
@@ -286,6 +293,7 @@ const LANGUAGES = {
     noTasks: "Brak dodanych zadań",
     unassigned: "Nieprzypisane",
     remove: "Usuń",
+    edit: "Edytuj",
     chartLabels: {
       unfinishedTasks: "Niewykonane zadania",
       completedTasks: "Wykonane zadania",
@@ -323,6 +331,7 @@ const LANGUAGES = {
     noTasks: "未添加任务",
     unassigned: "未分配",
     remove: "删除",
+    edit: "编辑",
     chartLabels: {
       unfinishedTasks: "未完成的任务",
       completedTasks: "已完成的任务",
@@ -360,6 +369,7 @@ const LANGUAGES = {
     noTasks: "لم يتم إضافة أي مهام",
     unassigned: "غير معين",
     remove: "إزالة",
+    edit: "تحرير",
     chartLabels: {
       unfinishedTasks: "المهام غير المكتملة",
       completedTasks: "المهام المكتملة",
@@ -377,6 +387,8 @@ let tasksCache = [];
 let chartInstances = {};
 let chartIdCounter = 0;
 let boardTitleMap = {};
+let calendarView = 'week';
+let calendarDate = new Date();
 
 // ==========================
 // API: Hämta språk från backend
@@ -577,7 +589,7 @@ function renderTasks() {
     });
 
     const span = document.createElement("span");
-    span.innerHTML = `<strong>${task.name}</strong> <small class="text-muted">(${task.date})</small>`;
+    span.innerHTML = `<strong>${task.name}</strong> <small class="task-date">(${task.date})</small>`;
     if (task.done) span.classList.add("task-done");
 
     left.appendChild(chk);
@@ -618,9 +630,32 @@ function renderTasks() {
     del.innerHTML = '<i class="bi bi-trash"></i>';
     del.addEventListener("click", () => deleteTask(task.id));
 
-    li.append(left, select, del);
+    if (!task.done) {
+      const edit = document.createElement("button");
+      edit.className = "btn btn-sm btn-outline-secondary me-1";
+      edit.title = LANGUAGES[currentLang].edit;
+      edit.innerHTML = '<i class="bi bi-pencil"></i>';
+      edit.addEventListener("click", async () => {
+        const newName = prompt(LANGUAGES[currentLang].taskNamePlaceholder, task.name);
+        if (newName === null) return;
+        const newDate = prompt("YYYY-MM-DD", task.date);
+        if (newDate === null) return;
+        await updateTask(task.id, { name: newName.trim(), date: newDate.trim() });
+      });
+      li.append(left, select, edit, del);
+    } else {
+      li.append(left, select, del);
+    }
+
     list.appendChild(li);
   }
+}
+
+function getWeekNumber(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
 }
 
 function renderCalendar() {
@@ -639,38 +674,93 @@ function renderCalendar() {
     tasksByDate[t.date].push(t);
   });
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const first = new Date(year, month, 1);
-  const startDay = first.getDay();
-  const last = new Date(year, month + 1, 0);
-  const totalDays = last.getDate();
+  const weekdays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const pad = n => String(n).padStart(2, '0');
 
-  const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  let html = '<table class="table table-bordered table-sm">';
+  let html = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <button class="btn btn-sm btn-outline-secondary" id="calPrev">&lt;</button>
+      <span id="calTitle" class="fw-bold"></span>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary" id="calToggle">${calendarView === 'week' ? 'Month' : 'Week'}</button>
+        <button class="btn btn-sm btn-outline-secondary" id="calNext">&gt;</button>
+      </div>
+    </div>`;
+
+  html += '<table class="table table-bordered table-sm">';
   html += '<thead><tr>' + weekdays.map(d => `<th class="text-center">${d}</th>`).join('') + '</tr></thead><tbody>';
 
-  let day = 1;
-  for (let w = 0; w < 6 && day <= totalDays; w++) {
-    html += '<tr>';
-    for (let d = 0; d < 7; d++) {
-      if (w === 0 && d < startDay || day > totalDays) {
-        html += '<td></td>';
-      } else {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const arr = tasksByDate[dateStr] || [];
-        html += '<td class="align-top"><div><strong>' + day + '</strong></div>';
-        arr.forEach(t => { html += `<div class="small">${t.name}</div>`; });
-        html += '</td>';
-        day++;
+  if (calendarView === 'month') {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    const first = new Date(year, month, 1);
+    const startDay = (first.getDay() + 6) % 7;
+    const last = new Date(year, month + 1, 0);
+    const totalDays = last.getDate();
+    let day = 1;
+    for (let w = 0; w < 6 && day <= totalDays; w++) {
+      html += '<tr>';
+      for (let d = 0; d < 7; d++) {
+        if ((w === 0 && d < startDay) || day > totalDays) {
+          html += '<td></td>';
+        } else {
+          const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
+          const arr = tasksByDate[dateStr] || [];
+          html += `<td class="align-top"><div><strong>${day}</strong></div>`;
+          arr.forEach(t => { html += `<div class="small">${t.name}</div>`; });
+          html += '</td>';
+          day++;
+        }
       }
+      html += '</tr>';
+    }
+  } else {
+    const start = new Date(calendarDate);
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    html += '<tr>';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const dateStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const arr = tasksByDate[dateStr] || [];
+      html += `<td class="align-top"><div><strong>${d.getDate()}</strong></div>`;
+      arr.forEach(t => { html += `<div class="small">${t.name}</div>`; });
+      html += '</td>';
     }
     html += '</tr>';
   }
-  html += '</tbody></table>';
 
+  html += '</tbody></table>';
   container.innerHTML = html;
+
+  const titleEl = document.getElementById('calTitle');
+  if (calendarView === 'month') {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    titleEl.textContent = `${months[calendarDate.getMonth()]} ${calendarDate.getFullYear()}`;
+  } else {
+    titleEl.textContent = `Week ${getWeekNumber(calendarDate)} ${calendarDate.getFullYear()}`;
+  }
+
+  document.getElementById('calPrev').onclick = () => {
+    if (calendarView === 'month') {
+      calendarDate.setMonth(calendarDate.getMonth() - 1);
+    } else {
+      calendarDate.setDate(calendarDate.getDate() - 7);
+    }
+    renderCalendar();
+  };
+  document.getElementById('calNext').onclick = () => {
+    if (calendarView === 'month') {
+      calendarDate.setMonth(calendarDate.getMonth() + 1);
+    } else {
+      calendarDate.setDate(calendarDate.getDate() + 7);
+    }
+    renderCalendar();
+  };
+  document.getElementById('calToggle').onclick = () => {
+    calendarView = calendarView === 'week' ? 'month' : 'week';
+    renderCalendar();
+  };
 }
 
 // ==========================
