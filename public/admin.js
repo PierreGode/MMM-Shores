@@ -27,6 +27,7 @@ const LANGUAGES = {
     noTasks: "No tasks added",
     unassigned: "Unassigned",
     remove: "Remove",
+    edit: "Edit",
     chartLabels: {
       unfinishedTasks: "Unfinished Tasks",
       completedTasks: "Completed Tasks",
@@ -64,6 +65,7 @@ const LANGUAGES = {
     noTasks: "Inga uppgifter tillagda",
     unassigned: "Ej tilldelad",
     remove: "Ta bort",
+    edit: "Redigera",
     chartLabels: {
       unfinishedTasks: "Ej färdiga uppgifter",
       completedTasks: "Färdiga uppgifter",
@@ -101,6 +103,7 @@ const LANGUAGES = {
     noTasks: "Aucune tâche ajoutée",
     unassigned: "Non assigné",
     remove: "Supprimer",
+    edit: "Modifier",
     chartLabels: {
       unfinishedTasks: "Tâches non terminées",
       completedTasks: "Tâches terminées",
@@ -138,6 +141,7 @@ const LANGUAGES = {
     noTasks: "No hay tareas agregadas",
     unassigned: "Sin asignar",
     remove: "Eliminar",
+    edit: "Editar",
     chartLabels: {
       unfinishedTasks: "Tareas sin terminar",
       completedTasks: "Tareas completadas",
@@ -175,6 +179,7 @@ const LANGUAGES = {
     noTasks: "Keine Aufgaben hinzugefügt",
     unassigned: "Nicht zugeordnet",
     remove: "Entfernen",
+    edit: "Bearbeiten",
     chartLabels: {
       unfinishedTasks: "Unfertige Aufgaben",
       completedTasks: "Abgeschlossene Aufgaben",
@@ -212,6 +217,7 @@ const LANGUAGES = {
     noTasks: "Nessun compito aggiunto",
     unassigned: "Non assegnato",
     remove: "Rimuovi",
+    edit: "Modifica",
     chartLabels: {
       unfinishedTasks: "Compiti non completati",
       completedTasks: "Compiti completati",
@@ -249,6 +255,7 @@ const LANGUAGES = {
     noTasks: "Geen taken toegevoegd",
     unassigned: "Niet toegewezen",
     remove: "Verwijderen",
+    edit: "Bewerken",
     chartLabels: {
       unfinishedTasks: "Onvoltooide taken",
       completedTasks: "Voltooide taken",
@@ -286,6 +293,7 @@ const LANGUAGES = {
     noTasks: "Brak dodanych zadań",
     unassigned: "Nieprzypisane",
     remove: "Usuń",
+    edit: "Edytuj",
     chartLabels: {
       unfinishedTasks: "Niewykonane zadania",
       completedTasks: "Wykonane zadania",
@@ -323,6 +331,7 @@ const LANGUAGES = {
     noTasks: "未添加任务",
     unassigned: "未分配",
     remove: "删除",
+    edit: "编辑",
     chartLabels: {
       unfinishedTasks: "未完成的任务",
       completedTasks: "已完成的任务",
@@ -360,6 +369,7 @@ const LANGUAGES = {
     noTasks: "لم يتم إضافة أي مهام",
     unassigned: "غير معين",
     remove: "إزالة",
+    edit: "تحرير",
     chartLabels: {
       unfinishedTasks: "المهام غير المكتملة",
       completedTasks: "المهام المكتملة",
@@ -620,7 +630,23 @@ function renderTasks() {
     del.innerHTML = '<i class="bi bi-trash"></i>';
     del.addEventListener("click", () => deleteTask(task.id));
 
-    li.append(left, select, del);
+    if (!task.done) {
+      const edit = document.createElement("button");
+      edit.className = "btn btn-sm btn-outline-secondary me-1";
+      edit.title = LANGUAGES[currentLang].edit;
+      edit.innerHTML = '<i class="bi bi-pencil"></i>';
+      edit.addEventListener("click", async () => {
+        const newName = prompt(LANGUAGES[currentLang].taskNamePlaceholder, task.name);
+        if (newName === null) return;
+        const newDate = prompt("YYYY-MM-DD", task.date);
+        if (newDate === null) return;
+        await updateTask(task.id, { name: newName.trim(), date: newDate.trim() });
+      });
+      li.append(left, select, edit, del);
+    } else {
+      li.append(left, select, del);
+    }
+
     list.appendChild(li);
   }
 }
