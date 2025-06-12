@@ -694,7 +694,7 @@ function renderCalendar() {
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
     const first = new Date(year, month, 1);
-    const startDay = first.getDay();
+    const startDay = (first.getDay() + 6) % 7; // adjust so Monday=0
     const last = new Date(year, month + 1, 0);
     const totalDays = last.getDate();
     let day = 1;
@@ -716,7 +716,7 @@ function renderCalendar() {
     }
   } else {
     const start = new Date(calendarDate);
-    start.setDate(start.getDate() - start.getDay());
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // start Monday
     html += '<tr>';
     for (let i = 0; i < 7; i++) {
       const d = new Date(start);
@@ -949,9 +949,12 @@ function renderChart(canvasId, type) {
 
     case "weekdays": {
       chartType = "pie";
-      const labels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const labels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
       const dataArr = [0,0,0,0,0,0,0];
-      filteredTasks(t => true).forEach(t => dataArr[new Date(t.date).getDay()]++);
+      filteredTasks(t => true).forEach(t => {
+        const idx = (new Date(t.date).getDay() + 6) % 7;
+        dataArr[idx]++;
+      });
       data = {
         labels,
         datasets: [{
