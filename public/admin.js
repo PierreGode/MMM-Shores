@@ -638,9 +638,14 @@ function renderTasks() {
       edit.addEventListener("click", async () => {
         const newName = prompt(LANGUAGES[currentLang].taskNamePlaceholder, task.name);
         if (newName === null) return;
-        const newDate = prompt("YYYY-MM-DD", task.date);
+        let newDate = prompt("YYYY-MM-DD", task.date);
         if (newDate === null) return;
-        await updateTask(task.id, { name: newName.trim(), date: newDate.trim() });
+        newDate = newDate.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+          alert("Invalid date format. Use YYYY-MM-DD.");
+          return;
+        }
+        await updateTask(task.id, { name: newName.trim(), date: newDate });
       });
       li.append(left, select, edit, del);
     } else {
@@ -694,7 +699,7 @@ function renderCalendar() {
     const year = calendarDate.getFullYear();
     const month = calendarDate.getMonth();
     const first = new Date(year, month, 1);
-    const startDay = first.getDay();
+    const startDay = (first.getDay() + 6) % 7; // Monday as first day
     const last = new Date(year, month + 1, 0);
     const totalDays = last.getDate();
     let day = 1;
@@ -716,7 +721,7 @@ function renderCalendar() {
     }
   } else {
     const start = new Date(calendarDate);
-    start.setDate(start.getDate() - start.getDay());
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
     html += '<tr>';
     for (let i = 0; i < 7; i++) {
       const d = new Date(start);
@@ -949,9 +954,12 @@ function renderChart(canvasId, type) {
 
     case "weekdays": {
       chartType = "pie";
-      const labels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      const labels = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
       const dataArr = [0,0,0,0,0,0,0];
-      filteredTasks(t => true).forEach(t => dataArr[new Date(t.date).getDay()]++);
+      filteredTasks(t => true).forEach(t => {
+        const idx = (new Date(t.date).getDay() + 6) % 7;
+        dataArr[idx]++;
+      });
       data = {
         labels,
         datasets: [{
