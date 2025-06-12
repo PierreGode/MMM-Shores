@@ -51,7 +51,15 @@ Module.register("MMM-Chores", {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-      return showPast && task.done === false;
+      if (task.done) {
+        if (task.finished) {
+          const fin = new Date(task.finished);
+          fin.setHours(0, 0, 0, 0);
+          if (fin.getTime() === today.getTime()) return true;
+        }
+        return false;
+      }
+      return showPast;
     }
     return diffDays < showDays;
   },
@@ -63,10 +71,26 @@ Module.register("MMM-Chores", {
 
   async toggleDone(task) {
     try {
+      const now = new Date();
+      const iso = now.toISOString();
+      const pad = n => n.toString().padStart(2, "0");
+      const stamp = prefix => (
+        prefix + pad(now.getMonth() + 1) + pad(now.getDate()) + pad(now.getHours()) + pad(now.getMinutes())
+      );
+
+      const body = { done: !task.done };
+      if (!task.done) {
+        body.finished = iso;
+        body.finishedShort = stamp("F");
+      } else {
+        body.finished = null;
+        body.finishedShort = null;
+      }
+
       await fetch(`/api/tasks/${task.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !task.done })
+        body: JSON.stringify(body)
       });
     } catch (e) {
       Log && Log.error ? Log.error(e) : console.error(e);
