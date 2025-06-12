@@ -674,7 +674,7 @@ function renderCalendar() {
     tasksByDate[t.date].push(t);
   });
 
-  const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const weekdays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   const pad = n => String(n).padStart(2, '0');
 
   let html = `
