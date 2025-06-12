@@ -377,6 +377,8 @@ let tasksCache = [];
 let chartInstances = {};
 let chartIdCounter = 0;
 let boardTitleMap = {};
+let calendarView = 'week';
+let calendarDate = new Date();
 
 // ==========================
 // API: Hämta språk från backend
@@ -577,7 +579,7 @@ function renderTasks() {
     });
 
     const span = document.createElement("span");
-    span.innerHTML = `<strong>${task.name}</strong> <small class="text-muted">(${task.date})</small>`;
+    span.innerHTML = `<strong>${task.name}</strong> <small class="task-date">(${task.date})</small>`;
     if (task.done) span.classList.add("task-done");
 
     left.appendChild(chk);
@@ -623,6 +625,13 @@ function renderTasks() {
   }
 }
 
+function getWeekNumber(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+}
+
 function renderCalendar() {
   const container = document.getElementById("taskCalendar");
   if (!container) return;
@@ -639,38 +648,93 @@ function renderCalendar() {
     tasksByDate[t.date].push(t);
   });
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const first = new Date(year, month, 1);
-  const startDay = first.getDay();
-  const last = new Date(year, month + 1, 0);
-  const totalDays = last.getDate();
-
   const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  let html = '<table class="table table-bordered table-sm">';
+  const pad = n => String(n).padStart(2, '0');
+
+  let html = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <button class="btn btn-sm btn-outline-secondary" id="calPrev">&lt;</button>
+      <span id="calTitle" class="fw-bold"></span>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary" id="calToggle">${calendarView === 'week' ? 'Month' : 'Week'}</button>
+        <button class="btn btn-sm btn-outline-secondary" id="calNext">&gt;</button>
+      </div>
+    </div>`;
+
+  html += '<table class="table table-bordered table-sm">';
   html += '<thead><tr>' + weekdays.map(d => `<th class="text-center">${d}</th>`).join('') + '</tr></thead><tbody>';
 
-  let day = 1;
-  for (let w = 0; w < 6 && day <= totalDays; w++) {
-    html += '<tr>';
-    for (let d = 0; d < 7; d++) {
-      if (w === 0 && d < startDay || day > totalDays) {
-        html += '<td></td>';
-      } else {
-        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        const arr = tasksByDate[dateStr] || [];
-        html += '<td class="align-top"><div><strong>' + day + '</strong></div>';
-        arr.forEach(t => { html += `<div class="small">${t.name}</div>`; });
-        html += '</td>';
-        day++;
+  if (calendarView === 'month') {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    const first = new Date(year, month, 1);
+    const startDay = first.getDay();
+    const last = new Date(year, month + 1, 0);
+    const totalDays = last.getDate();
+    let day = 1;
+    for (let w = 0; w < 6 && day <= totalDays; w++) {
+      html += '<tr>';
+      for (let d = 0; d < 7; d++) {
+        if ((w === 0 && d < startDay) || day > totalDays) {
+          html += '<td></td>';
+        } else {
+          const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
+          const arr = tasksByDate[dateStr] || [];
+          html += `<td class="align-top"><div><strong>${day}</strong></div>`;
+          arr.forEach(t => { html += `<div class="small">${t.name}</div>`; });
+          html += '</td>';
+          day++;
+        }
       }
+      html += '</tr>';
+    }
+  } else {
+    const start = new Date(calendarDate);
+    start.setDate(start.getDate() - start.getDay());
+    html += '<tr>';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const dateStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const arr = tasksByDate[dateStr] || [];
+      html += `<td class="align-top"><div><strong>${d.getDate()}</strong></div>`;
+      arr.forEach(t => { html += `<div class="small">${t.name}</div>`; });
+      html += '</td>';
     }
     html += '</tr>';
   }
-  html += '</tbody></table>';
 
+  html += '</tbody></table>';
   container.innerHTML = html;
+
+  const titleEl = document.getElementById('calTitle');
+  if (calendarView === 'month') {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    titleEl.textContent = `${months[calendarDate.getMonth()]} ${calendarDate.getFullYear()}`;
+  } else {
+    titleEl.textContent = `Week ${getWeekNumber(calendarDate)} ${calendarDate.getFullYear()}`;
+  }
+
+  document.getElementById('calPrev').onclick = () => {
+    if (calendarView === 'month') {
+      calendarDate.setMonth(calendarDate.getMonth() - 1);
+    } else {
+      calendarDate.setDate(calendarDate.getDate() - 7);
+    }
+    renderCalendar();
+  };
+  document.getElementById('calNext').onclick = () => {
+    if (calendarView === 'month') {
+      calendarDate.setMonth(calendarDate.getMonth() + 1);
+    } else {
+      calendarDate.setDate(calendarDate.getDate() + 7);
+    }
+    renderCalendar();
+  };
+  document.getElementById('calToggle').onclick = () => {
+    calendarView = calendarView === 'week' ? 'month' : 'week';
+    renderCalendar();
+  };
 }
 
 // ==========================
