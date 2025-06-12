@@ -2,7 +2,7 @@
 
 **MMM-Chores** is a module for [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror) that allows you to manage your household chores.
 
-It provides an admin interface where you can add, edit, and delete tasks. You can also set due dates and assign tasks to different persons. The module displays the tasks on your MagicMirror, allowing you to keep track of your household chores at a glance.
+It provides an admin interface where you can add, edit, and delete tasks. You can also set due dates and assign tasks to different persons. The module displays the tasks on your MagicMirror, allowing you to keep track of your household chores at a glance. You can mark tasks as done directly on the mirror by clicking the checkbox next to each chore.
 
 The data is stored in `data.json` to make the data persistent between restarts.
 
@@ -44,7 +44,9 @@ in /MagicMirror/config/config.js
     openaiApiKey: "your-openApi-key-here",
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
     showPast: true,    // also show unfinished tasks from past days
-    dateFormatting: "MM-DD"  // Date format pattern to display task dates,You can use tokens like 'yyyy' (year), 'mm' (month), 'dd' (day), or "mm-dd-yyyy" (US style)
+    dateFormatting: "MM-DD"  // Date format pattern to display task dates.
+                             // Use tokens like 'yyyy', 'mm', 'dd'.
+                             // Set to "" to hide the date completely.
   }
 },
 ```

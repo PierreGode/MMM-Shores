@@ -214,7 +214,8 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    const relevantTasks = tasks.filter(t => t.done === true && t.deleted === true).map(t => ({
+    // Include all completed tasks, even if they were later deleted
+    const relevantTasks = tasks.filter(t => t.done === true).map(t => ({
       name:        t.name,
       assignedTo:  t.assignedTo,
       date:        t.date,
@@ -243,6 +244,18 @@ module.exports = NodeHelper.create({
   initServer(port) {
     const self = this;
     const app  = express();
+
+    // Allow MagicMirror client on a different port to access the admin API
+    app.use((req, res, next) => {
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, PUT, POST, DELETE, OPTIONS"
+      );
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+      if (req.method === "OPTIONS") return res.sendStatus(200);
+      next();
+    });
 
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
