@@ -14,7 +14,8 @@
   },
   "main": "MMM-Chores.js",
   "scripts": {
-    "postinstall": "node -e \"if (!require('fs').existsSync('data.json')) { require('fs').writeFileSync('data.json', JSON.stringify({ tasks: [] }, null, 2)); }\""
+    "postinstall": "node -e \"if (!require('fs').existsSync('data.json')) { require('fs').writeFileSync('data.json', JSON.stringify({ tasks: [] }, null, 2)); }\"",
+    "start-admin": "node dev-server.js"
   },
   "author": "Pierre Gode",
   "license": "Apache-2.0",

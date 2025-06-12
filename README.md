@@ -57,6 +57,17 @@ Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
 > [!CAUTION]
 > DO NOT expose application with portforward
 
+### Standalone development
+
+You can start just the admin portal without a MagicMirror installation:
+
+```bash
+npm run start-admin
+```
+
+The interface will be available at <http://localhost:5003> and uses the
+same `data.json` file as the module.
+
 ## Push Notifications
 
 If you wish to use push notifications follow guide below. 
