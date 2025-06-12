@@ -103,7 +103,15 @@ Module.register("MMM-Chores", {
     if (!match) return dateStr;
     const [ , yyyy, mm, dd ] = match;
 
-    let result = this.config.dateFormatting || "yyyy-mm-dd";
+    // Use module config for formatting. If set to empty string, hide the date
+    // entirely. Only fall back to the default when no value is specified.
+    let result =
+      this.config.dateFormatting !== undefined &&
+      this.config.dateFormatting !== null
+        ? this.config.dateFormatting
+        : "yyyy-mm-dd";
+
+    if (result === "") return "";
 
     // Ersätt både små och stora bokstäver för yyyy, mm, dd
     result = result.replace(/yyyy/gi, yyyy);
