@@ -87,7 +87,13 @@ Module.register("MMM-Chores", {
         body.finishedShort = null;
       }
 
-      await fetch(`/api/tasks/${task.id}`, {
+      // Build URL to the admin API based on the configured adminPort.
+      // If you run MagicMirror over HTTPS, set `adminPort` to the HTTPS port
+      // (5004 by default) in your module config.
+      const proto = window.location.protocol;
+      const base  = `${proto}//${window.location.hostname}:${this.config.adminPort}`;
+
+      await fetch(`${base}/api/tasks/${task.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
@@ -103,7 +109,15 @@ Module.register("MMM-Chores", {
     if (!match) return dateStr;
     const [ , yyyy, mm, dd ] = match;
 
-    let result = this.config.dateFormatting || "yyyy-mm-dd";
+    // Use module config for formatting. If set to empty string, hide the date
+    // entirely. Only fall back to the default when no value is specified.
+    let result =
+      this.config.dateFormatting !== undefined &&
+      this.config.dateFormatting !== null
+        ? this.config.dateFormatting
+        : "yyyy-mm-dd";
+
+    if (result === "") return "";
 
     // Ersätt både små och stora bokstäver för yyyy, mm, dd
     result = result.replace(/yyyy/gi, yyyy);
