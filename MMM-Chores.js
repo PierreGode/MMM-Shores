@@ -27,6 +27,10 @@ Module.register("MMM-Chores", {
       this.tasks = payload;
       this.updateDom();
     }
+    if (notification === "CHORES_DATA") {
+      this.tasks = payload;
+      this.updateDom();
+    }
     if (notification === "PEOPLE_UPDATE") {
       this.people = payload;
       this.updateDom();
@@ -69,32 +73,8 @@ Module.register("MMM-Chores", {
     return p ? p.name : "";
   },
 
-  async toggleDone(task) {
-    try {
-      const now = new Date();
-      const iso = now.toISOString();
-      const pad = n => n.toString().padStart(2, "0");
-      const stamp = prefix => (
-        prefix + pad(now.getMonth() + 1) + pad(now.getDate()) + pad(now.getHours()) + pad(now.getMinutes())
-      );
-
-      const body = { done: !task.done };
-      if (!task.done) {
-        body.finished = iso;
-        body.finishedShort = stamp("F");
-      } else {
-        body.finished = null;
-        body.finishedShort = null;
-      }
-
-      await fetch(`/api/tasks/${task.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-    } catch (e) {
-      Log && Log.error ? Log.error(e) : console.error(e);
-    }
+  toggleDone(task, done) {
+    this.sendSocketNotification("USER_TOGGLE_CHORE", { id: task.id, done });
   },
 
   formatDate(dateStr) {
@@ -153,12 +133,11 @@ Module.register("MMM-Chores", {
       const li = document.createElement("li");
       li.className = "small";
 
-      const cb = document.createElement("span");
-      cb.innerHTML = task.done ? "✅" : "⬜";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = task.done;
       cb.style.marginRight = "8px";
-      cb.style.cursor = "pointer";
-      cb.title = "Klicka för att markera som klar/inte klar";
-      cb.addEventListener("click", () => this.toggleDone(task));
+      cb.addEventListener("change", () => this.toggleDone(task, cb.checked));
       li.appendChild(cb);
 
       const dateText = this.formatDate(task.date);
