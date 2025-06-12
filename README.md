@@ -44,7 +44,9 @@ in /MagicMirror/config/config.js
     openaiApiKey: "your-openApi-key-here",
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
     showPast: true,    // also show unfinished tasks from past days
-    dateFormatting: "MM-DD"  // Date format pattern to display task dates,You can use tokens like 'yyyy' (year), 'mm' (month), 'dd' (day), or "mm-dd-yyyy" (US style)
+    dateFormatting: "MM-DD"  // Date format pattern to display task dates.
+                             // Use tokens like 'yyyy', 'mm', 'dd'.
+                             // Set to "" to hide the date completely.
   }
 },
 ```

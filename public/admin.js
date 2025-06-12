@@ -638,9 +638,14 @@ function renderTasks() {
       edit.addEventListener("click", async () => {
         const newName = prompt(LANGUAGES[currentLang].taskNamePlaceholder, task.name);
         if (newName === null) return;
-        const newDate = prompt("YYYY-MM-DD", task.date);
+        let newDate = prompt("YYYY-MM-DD", task.date);
         if (newDate === null) return;
-        await updateTask(task.id, { name: newName.trim(), date: newDate.trim() });
+        newDate = newDate.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+          alert("Invalid date format. Use YYYY-MM-DD.");
+          return;
+        }
+        await updateTask(task.id, { name: newName.trim(), date: newDate });
       });
       li.append(left, select, edit, del);
     } else {
@@ -1169,7 +1174,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ==========================
 
 // Lägg till denna <button> i din HTML, t.ex. under tasklist:
-// <button id="aiGenerateBtn" class="btn btn-outline-primary mb-3" type="button">
+// <button id="btnAiGenerate" class="btn btn-outline-primary mb-3" type="button">
 //   <i class="bi bi-stars me-1"></i> AI Generate
 // </button>
 // <div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:10000;"></div>
@@ -1197,7 +1202,7 @@ function showToast(msg, type = "danger", duration = 4000) {
 }
 
 // AI Generate button handler
-const aiBtn = document.getElementById("aiGenerateBtn");
+const aiBtn = document.getElementById("btnAiGenerate");
 if (aiBtn) {
   aiBtn.onclick = async function () {
     aiBtn.disabled = true;
