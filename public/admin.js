@@ -638,9 +638,14 @@ function renderTasks() {
       edit.addEventListener("click", async () => {
         const newName = prompt(LANGUAGES[currentLang].taskNamePlaceholder, task.name);
         if (newName === null) return;
-        const newDate = prompt("YYYY-MM-DD", task.date);
+        let newDate = prompt("YYYY-MM-DD", task.date);
         if (newDate === null) return;
-        await updateTask(task.id, { name: newName.trim(), date: newDate.trim() });
+        newDate = newDate.trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+          alert("Invalid date format. Use YYYY-MM-DD.");
+          return;
+        }
+        await updateTask(task.id, { name: newName.trim(), date: newDate });
       });
       li.append(left, select, edit, del);
     } else {
