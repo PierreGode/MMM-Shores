@@ -246,10 +246,10 @@ module.exports = NodeHelper.create({
 
     return JSON.stringify({
       instruction:
-        `Idag är ${todayString}. ` +
-        "Analysera historiska uppgifter för att förstå vilken dag i veckan olika personer brukar göra specifika sysslor. " +
-        "Baserat på detta, generera nya uppgifter för de kommande 7 dagarna med korrekt tilldelning av rätt person på rätt dag. " +
-        "Returnera ENDAST en JSON-array med objekt som innehåller: name, date (yyyy-mm-dd), assignedTo (person id).",
+        `Today is ${todayString}. ` +
+        "Analyze historical data to determine which day of the week different people usually perform specific chores. " +
+        "Based on this, generate new tasks for the next 7 days with the correct assignment of the right person on the right day in the same language as the tasks. " +
+        "Return ONLY a JSON array of objects containing: name, date (yyyy-mm-dd), assignedTo (person id).",
 
       today: new Date().toISOString().slice(0, 10),
       tasks: relevantTasks,
