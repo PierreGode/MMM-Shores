@@ -130,8 +130,8 @@ module.exports = NodeHelper.create({
             role: "system",
             content:
               // ── ROLE ────────────────────────────────────────────────────────────
-              "You are an assistant that, given historical household-task data, " +
-              "creates a schedule for the **next 7 days**.\n\n" +
+              `You are an assistant that, given historical household-task data, ` +
+              `creates a schedule for the **next 7 days**. All tasks and responses must be written in the ${settings.language} language.\n\n` +
         
               // ── OUTPUT FORMAT ───────────────────────────────────────────────────
               "Return **only** a raw JSON array (no surrounding text). Each item " +
@@ -158,11 +158,12 @@ module.exports = NodeHelper.create({
               // ── EXAMPLES TO DISTINGUISH SMALL VS BIG TASKS ──────────────────────
               "Examples of **small chores** include:\n" +
               "Wash dishes, Water plants, Take out trash, Sweep floor, Dust shelves, " +
-              "Wipe counters, Fold laundry, Clean mirrors, Make bed, Replace hand towels. create the tasks in the same language as the data \n\n" +
+              `Wipe counters, Fold laundry, Clean mirrors, Make bed, Replace hand towels. Use the same language (${settings.language}) for all tasks.\n\n` +
         
               "Examples of **big chores** include:\n" +
               "Vacuum entire house, Mow lawn, Deep clean bathroom, Organize garage, " +
-              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges. but remember create the tasks in the same language as the data\n" +
+              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges. " +
+              `Always write tasks in ${settings.language}.\n` +
         
               // ── REASONABLENESS GUIDELINES ───────────────────────────────────────
               "9. Be reasonable with scheduling: avoid assigning overly exhausting tasks " +
@@ -171,7 +172,8 @@ module.exports = NodeHelper.create({
               "10. Prioritize routines and habits over forcing new tasks every day.\n" +
               "11. If a task is big or time-consuming, spread it out or assign it only once " +
               "    per week per person.\n" +
-              "12. Consider recent completions and do not repeat tasks too soon."
+              "12. Consider recent completions and do not repeat tasks too soon.\n" +
+              "13. Big chores like painting a house occur only every several years; if one was recently finished, do not schedule it again within the next weeks."
           },
           { role: "user", content: prompt }
         ],
@@ -240,7 +242,20 @@ module.exports = NodeHelper.create({
       created:     t.created
     }));
 
-    const todayString = new Date().toLocaleDateString("sv-SE", {
+    const localeMap = {
+      en: 'en-US',
+      sv: 'sv-SE',
+      fr: 'fr-FR',
+      es: 'es-ES',
+      de: 'de-DE',
+      it: 'it-IT',
+      nl: 'nl-NL',
+      pl: 'pl-PL',
+      zh: 'zh-CN',
+      ar: 'ar-EG'
+    };
+    const locale = localeMap[settings.language] || 'en-US';
+    const todayString = new Date().toLocaleDateString(locale, {
       weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
     });
 
@@ -252,6 +267,7 @@ module.exports = NodeHelper.create({
         "Return ONLY a JSON array of objects containing: name, date (yyyy-mm-dd), assignedTo (person id).",
 
       today: new Date().toISOString().slice(0, 10),
+      language: settings.language,
       tasks: relevantTasks,
       people: people
     });
