@@ -196,6 +196,7 @@ h1, h2 {
 #taskCalendar th,
 #taskCalendar td {
   border-color: var(--border);
+
   background: var(--field-bg);
   color: #000;
 }
