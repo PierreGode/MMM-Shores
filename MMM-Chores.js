@@ -4,7 +4,9 @@ Module.register("MMM-Chores", {
     adminPort: 5003,
     showDays: 1,
     showPast: false,
-    dateFormatting: "yyyy-mm-dd" // Standardformat, kan ändras i config
+    dateFormatting: "yyyy-mm-dd", // Standardformat, kan ändras i config
+    textMirrorSize: "small",     // small, medium or large
+    useAI: true                   // hide AI features when false
   },
 
   start() {
@@ -120,7 +122,7 @@ Module.register("MMM-Chores", {
 
     if (visible.length === 0) {
       const emptyEl = document.createElement("div");
-      emptyEl.className = "small dimmed";
+      emptyEl.className = `${this.config.textMirrorSize} dimmed`;
       emptyEl.innerHTML = "No tasks to show 🎉";
       wrapper.appendChild(emptyEl);
       return wrapper;
@@ -131,7 +133,7 @@ Module.register("MMM-Chores", {
 
     visible.forEach(task => {
       const li = document.createElement("li");
-      li.className = "small";
+      li.className = this.config.textMirrorSize;
 
       const cb = document.createElement("input");
       cb.type = "checkbox";

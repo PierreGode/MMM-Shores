@@ -433,17 +433,17 @@ let localizedMonths = [];
 let localizedWeekdays = [];
 
 // ==========================
-// API: Hämta språk från backend
+// API: Hämta inställningar från backend
 // ==========================
-async function fetchUserLanguage() {
+async function fetchUserSettings() {
   try {
     const res = await fetch('/api/settings');
     if (!res.ok) throw new Error('Failed fetching user settings');
     const data = await res.json();
-    return data.language && LANGUAGES[data.language] ? data.language : null;
+    return data;
   } catch (e) {
-    console.warn('Could not fetch user language:', e);
-    return null;
+    console.warn('Could not fetch user settings:', e);
+    return {};
   }
 }
 
@@ -1185,9 +1185,9 @@ function setIcon(theme) {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  const savedLang = await fetchUserLanguage();
-  if (savedLang) {
-    currentLang = savedLang;
+  const userSettings = await fetchUserSettings();
+  if (userSettings.language && LANGUAGES[userSettings.language]) {
+    currentLang = userSettings.language;
   } else {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
@@ -1212,6 +1212,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     controls.appendChild(selector);
   } else {
     document.body.appendChild(selector);
+  }
+
+  const aiButton = document.getElementById("btnAiGenerate");
+  if (aiButton && userSettings.useAI === false) {
+    aiButton.style.display = "none";
   }
 
   setLanguage(currentLang);
