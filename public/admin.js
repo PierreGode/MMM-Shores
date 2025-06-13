@@ -11,6 +11,8 @@ const LANGUAGES = {
     taskPendingLabel: "pending",
     taskNamePlaceholder: "Task name…",
     taskAddButton: "Add",
+    aiGenerateButton: "AI Generate",
+    aiGenerateTitle: "Generate tasks with AI",
     analyticsTitle: "Analytics",
     addChartOption: "Add Chart...",
     chartOptions: {
@@ -51,6 +53,8 @@ const LANGUAGES = {
     taskPendingLabel: "pågående",
     taskNamePlaceholder: "Uppgiftsnamn…",
     taskAddButton: "Lägg till",
+    aiGenerateButton: "AI-generera",
+    aiGenerateTitle: "Generera uppgifter med AI",
     analyticsTitle: "Analys",
     addChartOption: "Lägg till diagram...",
     chartOptions: {
@@ -91,6 +95,8 @@ const LANGUAGES = {
     taskPendingLabel: "en attente",
     taskNamePlaceholder: "Nom de la tâche…",
     taskAddButton: "Ajouter",
+    aiGenerateButton: "Génération IA",
+    aiGenerateTitle: "Générer des tâches avec l'IA",
     analyticsTitle: "Analytique",
     addChartOption: "Ajouter un graphique...",
     chartOptions: {
@@ -131,6 +137,8 @@ const LANGUAGES = {
     taskPendingLabel: "pendientes",
     taskNamePlaceholder: "Nombre de tarea…",
     taskAddButton: "Agregar",
+    aiGenerateButton: "Generar con IA",
+    aiGenerateTitle: "Generar tareas con IA",
     analyticsTitle: "Analítica",
     addChartOption: "Agregar gráfico...",
     chartOptions: {
@@ -171,6 +179,8 @@ const LANGUAGES = {
     taskPendingLabel: "offen",
     taskNamePlaceholder: "Aufgabenname…",
     taskAddButton: "Hinzufügen",
+    aiGenerateButton: "Mit KI generieren",
+    aiGenerateTitle: "Aufgaben mit KI generieren",
     analyticsTitle: "Analytik",
     addChartOption: "Diagramm hinzufügen...",
     chartOptions: {
@@ -211,6 +221,8 @@ const LANGUAGES = {
     taskPendingLabel: "in sospeso",
     taskNamePlaceholder: "Nome del compito…",
     taskAddButton: "Aggiungi",
+    aiGenerateButton: "Genera con IA",
+    aiGenerateTitle: "Genera compiti con IA",
     analyticsTitle: "Analisi",
     addChartOption: "Aggiungi grafico...",
     chartOptions: {
@@ -251,6 +263,8 @@ const LANGUAGES = {
     taskPendingLabel: "in behandeling",
     taskNamePlaceholder: "Taaknaam…",
     taskAddButton: "Toevoegen",
+    aiGenerateButton: "AI genereren",
+    aiGenerateTitle: "Genereer taken met AI",
     analyticsTitle: "Analyse",
     addChartOption: "Grafiek toevoegen...",
     chartOptions: {
@@ -291,6 +305,8 @@ const LANGUAGES = {
     taskPendingLabel: "oczekujące",
     taskNamePlaceholder: "Nazwa zadania…",
     taskAddButton: "Dodaj",
+    aiGenerateButton: "Generuj AI",
+    aiGenerateTitle: "Generuj zadania za pomocą AI",
     analyticsTitle: "Analityka",
     addChartOption: "Dodaj wykres...",
     chartOptions: {
@@ -331,6 +347,8 @@ const LANGUAGES = {
     taskPendingLabel: "待处理",
     taskNamePlaceholder: "任务名称…",
     taskAddButton: "添加",
+    aiGenerateButton: "AI生成",
+    aiGenerateTitle: "使用AI生成任务",
     analyticsTitle: "分析",
     addChartOption: "添加图表...",
     chartOptions: {
@@ -371,6 +389,8 @@ const LANGUAGES = {
     taskPendingLabel: "قيد الانتظار",
     taskNamePlaceholder: "اسم المهمة…",
     taskAddButton: "إضافة",
+    aiGenerateButton: "إنشاء بالذكاء الاصطناعي",
+    aiGenerateTitle: "إنشاء مهام بالذكاء الاصطناعي",
     analyticsTitle: "تحليلات",
     addChartOption: "إضافة مخطط...",
     chartOptions: {
@@ -489,8 +509,12 @@ function setLanguage(lang) {
   if (pendingLabel) pendingLabel.textContent = ` ${t.taskPendingLabel}`;
   const taskInput = document.getElementById("taskName");
   if (taskInput) taskInput.placeholder = t.taskNamePlaceholder;
-  const taskAddBtn = document.querySelector("#taskForm button");
+  const taskAddBtn = document.getElementById("btnAddTask");
   if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
+  if (aiBtn) {
+    aiBtn.innerHTML = `<i class='bi bi-stars me-1'></i>${t.aiGenerateButton}`;
+    aiBtn.title = t.aiGenerateTitle;
+  }
 
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
@@ -1253,7 +1277,7 @@ if (aiBtn) {
       showToast("AI generation failed. Server error.", "danger", 7000);
     } finally {
       aiBtn.disabled = false;
-      aiBtn.innerHTML = `<i class="bi bi-stars me-1"></i> AI Generate`;
+      aiBtn.innerHTML = `<i class="bi bi-stars me-1"></i> ${LANGUAGES[currentLang].aiGenerateButton}`;
     }
   };
 }
