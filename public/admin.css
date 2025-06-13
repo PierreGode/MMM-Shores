@@ -4,6 +4,7 @@
   --hero-start: #4e74ff;
   --hero-end: #6f99ff;
   --card-bg: #fff;
+  --field-bg: #fff;
   --shadow: 0 6px 18px rgba(0,0,0,.05);
   --list-hover: rgba(0,0,0,.03);
   --border: #dee2e6;
@@ -15,6 +16,7 @@
   --hero-start: #343a40;
   --hero-end: #495057;
   --card-bg: #1e1e1e;
+  --field-bg: #c4c4c4;
   --shadow: 0 6px 18px rgba(0,0,0,.4);
   --list-hover: rgba(255,255,255,.03);
   --border: #444;
@@ -127,6 +129,18 @@ h1, h2 {
   background: var(--list-hover);
 }
 
+/* Input fields */
+.form-control,
+.form-select {
+  background: var(--field-bg);
+  color: #000;
+  border-color: var(--border);
+}
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  color: #000;
+}
+
 /* Buttons with icon */
 .btn-icon {
   width: 34px;
@@ -182,6 +196,9 @@ h1, h2 {
 #taskCalendar th,
 #taskCalendar td {
   border-color: var(--border);
+
+  background: var(--field-bg);
+  color: #000;
 }
 #taskCalendar td {
   height: 100px;
