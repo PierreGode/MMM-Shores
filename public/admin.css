@@ -188,3 +188,8 @@ h1, h2 {
   vertical-align: top;
   font-size: 0.8rem;
 }
+
+/* Ensure calendar header text is white in dark mode */
+[data-theme="dark"] #calTitle {
+  color: #fff;
+}
