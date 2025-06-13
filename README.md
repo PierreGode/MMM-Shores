@@ -42,8 +42,10 @@ in /MagicMirror/config/config.js
     updateInterval: 60 * 1000,
     adminPort: 5003,
     openaiApiKey: "your-openApi-key-here",
+    useAI: true,        // hide AI features when false
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
     showPast: true,    // also show unfinished tasks from past days
+    textMirrorSize: "small", // small, medium or large
     dateFormatting: "MM-DD"  // Date format pattern to display task dates.
                              // Use tokens like 'yyyy', 'mm', 'dd'.
                              // Set to "" to hide the date completely.

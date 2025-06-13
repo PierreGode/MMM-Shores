@@ -29,7 +29,9 @@ let people = [];
 let analyticsBoards = [];
 
 let settings = {
-  language: "en"
+  language: "en",
+  dateFormatting: "yyyy-mm-dd",
+  useAI: true
 };
 
 function loadData() {
@@ -39,7 +41,7 @@ function loadData() {
       tasks            = j.tasks            || [];
       people           = j.people           || [];
       analyticsBoards  = j.analyticsBoards  || [];
-      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd" };
+      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true };
 
       Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
     } catch (e) {
@@ -80,7 +82,8 @@ module.exports = NodeHelper.create({
       settings = {
         ...settings,
         language:       payload.language       ?? settings.language,
-        dateFormatting: payload.dateFormatting ?? settings.dateFormatting
+        dateFormatting: payload.dateFormatting ?? settings.dateFormatting,
+        useAI:          payload.useAI          ?? settings.useAI
       };
       saveData();
       this.initServer(payload.adminPort);
