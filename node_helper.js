@@ -132,6 +132,7 @@ module.exports = NodeHelper.create({
             role: "system",
             content:
               // ── ROLE ────────────────────────────────────────────────────────────
+
               `You are an assistant that, given household-task history from "completedTasks" and open chores from "openTasks", ` +
               `creates a schedule for the **next 7 days**. Use openTasks to avoid duplicating existing chores. All tasks and responses must be written in the ${settings.language} language.\n\n` +
         
@@ -175,7 +176,10 @@ module.exports = NodeHelper.create({
               "11. If a task is big or time-consuming, spread it out or assign it only once " +
               "    per week per person.\n" +
               "12. Consider recent completions and do not repeat tasks too soon.\n" +
+
               "13. Big chores like painting a house occur only every 10 years; if one was recently finished, do not schedule it again within the next years."
+
+
           },
           { role: "user", content: prompt }
         ],
@@ -279,6 +283,7 @@ module.exports = NodeHelper.create({
       language: settings.language,
       completedTasks: completedTasks,
       openTasks: openTasks,
+
       people: people
     });
   },
