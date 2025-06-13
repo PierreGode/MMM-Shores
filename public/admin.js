@@ -11,6 +11,8 @@ const LANGUAGES = {
     taskPendingLabel: "pending",
     taskNamePlaceholder: "Task name…",
     taskAddButton: "Add",
+    aiGenerateButton: "AI Generate",
+    aiGenerateTitle: "Generate tasks with AI",
     analyticsTitle: "Analytics",
     addChartOption: "Add Chart...",
     chartOptions: {
@@ -35,6 +37,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "Weekend Tasks Completed",
       oldestOpenTaskAge: "Oldest Open Task Age (days)"
     },
+    weekLabel: "Week",
+    monthLabel: "Month",
     footer: "Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode"
   },
   sv: {
@@ -49,6 +53,8 @@ const LANGUAGES = {
     taskPendingLabel: "pågående",
     taskNamePlaceholder: "Uppgiftsnamn…",
     taskAddButton: "Lägg till",
+    aiGenerateButton: "AI-generera",
+    aiGenerateTitle: "Generera uppgifter med AI",
     analyticsTitle: "Analys",
     addChartOption: "Lägg till diagram...",
     chartOptions: {
@@ -73,6 +79,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "Helguppgifter slutförda",
       oldestOpenTaskAge: "Äldsta öppna uppgiftens ålder (dagar)"
     },
+    weekLabel: "Vecka",
+    monthLabel: "Månad",
     footer: "Byggt med Bootstrap & Chart.js • MMM-Chores av Pierre Gode"
   },
   fr: {
@@ -87,6 +95,8 @@ const LANGUAGES = {
     taskPendingLabel: "en attente",
     taskNamePlaceholder: "Nom de la tâche…",
     taskAddButton: "Ajouter",
+    aiGenerateButton: "Génération IA",
+    aiGenerateTitle: "Générer des tâches avec l'IA",
     analyticsTitle: "Analytique",
     addChartOption: "Ajouter un graphique...",
     chartOptions: {
@@ -111,6 +121,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "Tâches du week-end terminées",
       oldestOpenTaskAge: "Âge de la plus vieille tâche ouverte (jours)"
     },
+    weekLabel: "Semaine",
+    monthLabel: "Mois",
     footer: "Construit avec Bootstrap & Chart.js • MMM-Chores par Pierre Gode"
   },
   es: {
@@ -125,6 +137,8 @@ const LANGUAGES = {
     taskPendingLabel: "pendientes",
     taskNamePlaceholder: "Nombre de tarea…",
     taskAddButton: "Agregar",
+    aiGenerateButton: "Generar con IA",
+    aiGenerateTitle: "Generar tareas con IA",
     analyticsTitle: "Analítica",
     addChartOption: "Agregar gráfico...",
     chartOptions: {
@@ -149,6 +163,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "Tareas completadas el fin de semana",
       oldestOpenTaskAge: "Edad de la tarea abierta más antigua (días)"
     },
+    weekLabel: "Semana",
+    monthLabel: "Mes",
     footer: "Construido con Bootstrap y Chart.js • MMM-Chores por Pierre Gode"
   },
   de: {
@@ -163,6 +179,8 @@ const LANGUAGES = {
     taskPendingLabel: "offen",
     taskNamePlaceholder: "Aufgabenname…",
     taskAddButton: "Hinzufügen",
+    aiGenerateButton: "Mit KI generieren",
+    aiGenerateTitle: "Aufgaben mit KI generieren",
     analyticsTitle: "Analytik",
     addChartOption: "Diagramm hinzufügen...",
     chartOptions: {
@@ -187,6 +205,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "Wochenendaufgaben abgeschlossen",
       oldestOpenTaskAge: "Alter der ältesten offenen Aufgabe (Tage)"
     },
+    weekLabel: "Woche",
+    monthLabel: "Monat",
     footer: "Erstellt mit Bootstrap & Chart.js • MMM-Chores von Pierre Gode"
   },
   it: {
@@ -201,6 +221,8 @@ const LANGUAGES = {
     taskPendingLabel: "in sospeso",
     taskNamePlaceholder: "Nome del compito…",
     taskAddButton: "Aggiungi",
+    aiGenerateButton: "Genera con IA",
+    aiGenerateTitle: "Genera compiti con IA",
     analyticsTitle: "Analisi",
     addChartOption: "Aggiungi grafico...",
     chartOptions: {
@@ -225,6 +247,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "Compiti completati nel weekend",
       oldestOpenTaskAge: "Età del compito aperto più vecchio (giorni)"
     },
+    weekLabel: "Settimana",
+    monthLabel: "Mese",
     footer: "Realizzato con Bootstrap & Chart.js • MMM-Chores di Pierre Gode"
   },
   nl: {
@@ -239,6 +263,8 @@ const LANGUAGES = {
     taskPendingLabel: "in behandeling",
     taskNamePlaceholder: "Taaknaam…",
     taskAddButton: "Toevoegen",
+    aiGenerateButton: "AI genereren",
+    aiGenerateTitle: "Genereer taken met AI",
     analyticsTitle: "Analyse",
     addChartOption: "Grafiek toevoegen...",
     chartOptions: {
@@ -263,6 +289,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "Weekendtaken voltooid",
       oldestOpenTaskAge: "Leeftijd van oudste open taak (dagen)"
     },
+    weekLabel: "Week",
+    monthLabel: "Maand",
     footer: "Gemaakt met Bootstrap & Chart.js • MMM-Chores door Pierre Gode"
   },
   pl: {
@@ -277,6 +305,8 @@ const LANGUAGES = {
     taskPendingLabel: "oczekujące",
     taskNamePlaceholder: "Nazwa zadania…",
     taskAddButton: "Dodaj",
+    aiGenerateButton: "Generuj AI",
+    aiGenerateTitle: "Generuj zadania za pomocą AI",
     analyticsTitle: "Analityka",
     addChartOption: "Dodaj wykres...",
     chartOptions: {
@@ -301,6 +331,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "Wykonane zadania weekendowe",
       oldestOpenTaskAge: "Wiek najstarszego otwartego zadania (dni)"
     },
+    weekLabel: "Tydzień",
+    monthLabel: "Miesiąc",
     footer: "Zbudowane z Bootstrap i Chart.js • MMM-Chores przez Pierre Gode"
   },
   zh: {
@@ -315,6 +347,8 @@ const LANGUAGES = {
     taskPendingLabel: "待处理",
     taskNamePlaceholder: "任务名称…",
     taskAddButton: "添加",
+    aiGenerateButton: "AI生成",
+    aiGenerateTitle: "使用AI生成任务",
     analyticsTitle: "分析",
     addChartOption: "添加图表...",
     chartOptions: {
@@ -339,6 +373,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "周末完成的任务",
       oldestOpenTaskAge: "最旧未完成任务时间 (天)"
     },
+    weekLabel: "周",
+    monthLabel: "月",
     footer: "由 Bootstrap 和 Chart.js 构建 • MMM-Chores 由 Pierre Gode 创建"
   },
   ar: {
@@ -353,6 +389,8 @@ const LANGUAGES = {
     taskPendingLabel: "قيد الانتظار",
     taskNamePlaceholder: "اسم المهمة…",
     taskAddButton: "إضافة",
+    aiGenerateButton: "إنشاء بالذكاء الاصطناعي",
+    aiGenerateTitle: "إنشاء مهام بالذكاء الاصطناعي",
     analyticsTitle: "تحليلات",
     addChartOption: "إضافة مخطط...",
     chartOptions: {
@@ -377,6 +415,8 @@ const LANGUAGES = {
       weekendTasksCompleted: "المهام المكتملة في عطلة نهاية الأسبوع",
       oldestOpenTaskAge: "عمر أقدم مهمة مفتوحة (أيام)"
     },
+    weekLabel: "أسبوع",
+    monthLabel: "شهر",
     footer: "تم الإنشاء باستخدام Bootstrap و Chart.js • MMM-Chores بواسطة Pierre Gode"
   }
 };
@@ -389,6 +429,8 @@ let chartIdCounter = 0;
 let boardTitleMap = {};
 let calendarView = 'week';
 let calendarDate = new Date();
+let localizedMonths = [];
+let localizedWeekdays = [];
 
 // ==========================
 // API: Hämta språk från backend
@@ -437,6 +479,14 @@ function setLanguage(lang) {
 
   const t = LANGUAGES[lang];
 
+  localizedMonths = Array.from({ length: 12 }, (_, i) =>
+    new Date(2000, i).toLocaleDateString(lang, { month: "short" })
+  );
+  localizedWeekdays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(2021, 5, 7 + i); // Monday based
+    return d.toLocaleDateString(lang, { weekday: "short" });
+  });
+
   document.querySelector(".hero h1").textContent = t.title;
   document.querySelector(".hero small").textContent = t.subtitle;
 
@@ -459,8 +509,12 @@ function setLanguage(lang) {
   if (pendingLabel) pendingLabel.textContent = ` ${t.taskPendingLabel}`;
   const taskInput = document.getElementById("taskName");
   if (taskInput) taskInput.placeholder = t.taskNamePlaceholder;
-  const taskAddBtn = document.querySelector("#taskForm button");
+  const taskAddBtn = document.getElementById("btnAddTask");
   if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
+  if (aiBtn) {
+    aiBtn.innerHTML = `<i class='bi bi-stars me-1'></i>${t.aiGenerateButton}`;
+    aiBtn.title = t.aiGenerateTitle;
+  }
 
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
@@ -484,6 +538,7 @@ function setLanguage(lang) {
   updateBoardTitleMap();
   renderPeople();
   renderTasks();
+  renderCalendar();
 
   Object.entries(chartInstances).forEach(([id, chart]) => {
     const cardHeaderSpan = document.querySelector(`#${id}`).closest(".card").querySelector(".card-header span");
@@ -679,7 +734,7 @@ function renderCalendar() {
     tasksByDate[t.date].push(t);
   });
 
-  const weekdays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const weekdays = localizedWeekdays.length ? localizedWeekdays : ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   const pad = n => String(n).padStart(2, '0');
 
   let html = `
@@ -687,7 +742,7 @@ function renderCalendar() {
       <button class="btn btn-sm btn-outline-secondary" id="calPrev">&lt;</button>
       <span id="calTitle" class="fw-bold"></span>
       <div class="d-flex gap-2">
-        <button class="btn btn-sm btn-outline-secondary" id="calToggle">${calendarView === 'week' ? 'Month' : 'Week'}</button>
+        <button class="btn btn-sm btn-outline-secondary" id="calToggle">${calendarView === 'week' ? LANGUAGES[currentLang].monthLabel : LANGUAGES[currentLang].weekLabel}</button>
         <button class="btn btn-sm btn-outline-secondary" id="calNext">&gt;</button>
       </div>
     </div>`;
@@ -740,10 +795,10 @@ function renderCalendar() {
 
   const titleEl = document.getElementById('calTitle');
   if (calendarView === 'month') {
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = localizedMonths.length ? localizedMonths : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     titleEl.textContent = `${months[calendarDate.getMonth()]} ${calendarDate.getFullYear()}`;
   } else {
-    titleEl.textContent = `Week ${getWeekNumber(calendarDate)} ${calendarDate.getFullYear()}`;
+    titleEl.textContent = `${LANGUAGES[currentLang].weekLabel} ${getWeekNumber(calendarDate)} ${calendarDate.getFullYear()}`;
   }
 
   document.getElementById('calPrev').onclick = () => {
@@ -1152,9 +1207,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     await saveUserLanguage(newLang);
   });
 
-  const themeSwitch = document.querySelector(".theme-switch");
-  if (themeSwitch) {
-    themeSwitch.parentNode.insertBefore(selector, themeSwitch.nextSibling);
+  const controls = document.querySelector(".top-controls");
+  if (controls) {
+    controls.appendChild(selector);
   } else {
     document.body.appendChild(selector);
   }
@@ -1222,7 +1277,7 @@ if (aiBtn) {
       showToast("AI generation failed. Server error.", "danger", 7000);
     } finally {
       aiBtn.disabled = false;
-      aiBtn.innerHTML = `<i class="bi bi-stars me-1"></i> AI Generate`;
+      aiBtn.innerHTML = `<i class="bi bi-stars me-1"></i> ${LANGUAGES[currentLang].aiGenerateButton}`;
     }
   };
 }

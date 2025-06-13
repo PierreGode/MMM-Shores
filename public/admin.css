@@ -4,8 +4,10 @@
   --hero-start: #4e74ff;
   --hero-end: #6f99ff;
   --card-bg: #fff;
+  --field-bg: #fff;
   --shadow: 0 6px 18px rgba(0,0,0,.05);
   --list-hover: rgba(0,0,0,.03);
+  --border: #dee2e6;
 }
 
 [data-theme="dark"] {
@@ -14,8 +16,10 @@
   --hero-start: #343a40;
   --hero-end: #495057;
   --card-bg: #1e1e1e;
+  --field-bg: #c4c4c4;
   --shadow: 0 6px 18px rgba(0,0,0,.4);
   --list-hover: rgba(255,255,255,.03);
+  --border: #444;
 }
 
 /* Global */
@@ -42,23 +46,28 @@ h1, h2 {
 }
 
 /* Theme toggle */
-.theme-switch {
+
+/* Container for theme toggle and language select */
+.top-controls {
   position: absolute;
   top: 30px;
   right: 22px;
   z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-switch {
+  position: static;
 }
 
 /* Språkval dropdown placerad under theme-switch */
 .language-select {
-  position: absolute;
-  top: 65px;
-  right: 22px;
-  width: 30px;
+  width: 60px;
   max-width: 80px;
-  z-index: 1100;
   font-weight: 600;
-  font-size: 0.5rem;
+  font-size: 0.8rem;
   padding: 2px 6px;
   border: 1px solid var(--text);
   border-radius: 4px;
@@ -120,6 +129,18 @@ h1, h2 {
   background: var(--list-hover);
 }
 
+/* Input fields */
+.form-control,
+.form-select {
+  background: var(--field-bg);
+  color: #000;
+  border-color: var(--border);
+}
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  color: #000;
+}
+
 /* Buttons with icon */
 .btn-icon {
   width: 34px;
@@ -157,24 +178,34 @@ h1, h2 {
 
 /* Responsive adjustments */
 @media (max-width: 576px) {
-  .language-select {
-    width: 70px;
-    font-size: 0.8rem;
-    top: 55px;
+  .top-controls {
+    top: 25px;
     right: 15px;
   }
-  .theme-switch {
-    right: 50px;
-    top: 25px;
+  .language-select {
+    width: 70px;
   }
 }
 
 /* Calendar */
 #taskCalendar table {
   table-layout: fixed;
+  background: var(--card-bg);
+  color: var(--text);
+}
+#taskCalendar th,
+#taskCalendar td {
+  border-color: var(--border);
+  background: var(--field-bg);
+  color: #000;
 }
 #taskCalendar td {
   height: 100px;
   vertical-align: top;
   font-size: 0.8rem;
+}
+
+/* Ensure calendar header text is white in dark mode */
+[data-theme="dark"] #calTitle {
+  color: #fff;
 }
