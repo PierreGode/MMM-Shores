@@ -91,6 +91,8 @@ module.exports = NodeHelper.create({
   },
 
   async aiGenerateTasks(req, res) {
+    // Reload data from disk to ensure the AI sees the latest tasks
+    loadData();
     if (!this.config || this.config.useAI === false) {
       return res.status(400).json({
         success: false,
@@ -130,8 +132,8 @@ module.exports = NodeHelper.create({
             role: "system",
             content:
               // ── ROLE ────────────────────────────────────────────────────────────
-              "You are an assistant that, given historical household-task data, " +
-              "creates a schedule for the **next 7 days**.\n\n" +
+              `You are an assistant that, given household-task history from "completedTasks" and open chores from "openTasks", ` +
+              `creates a schedule for the **next 7 days**. Use openTasks to avoid duplicating existing chores. All tasks and responses must be written in the ${settings.language} language.\n\n` +
         
               // ── OUTPUT FORMAT ───────────────────────────────────────────────────
               "Return **only** a raw JSON array (no surrounding text). Each item " +
@@ -158,11 +160,12 @@ module.exports = NodeHelper.create({
               // ── EXAMPLES TO DISTINGUISH SMALL VS BIG TASKS ──────────────────────
               "Examples of **small chores** include:\n" +
               "Wash dishes, Water plants, Take out trash, Sweep floor, Dust shelves, " +
-              "Wipe counters, Fold laundry, Clean mirrors, Make bed, Replace hand towels. create the tasks in the same language as the data \n\n" +
+              `Wipe counters, Fold laundry, Clean mirrors, Make bed, Replace hand towels. Use the same language (${settings.language}) for all tasks.\n\n` +
         
               "Examples of **big chores** include:\n" +
               "Vacuum entire house, Mow lawn, Deep clean bathroom, Organize garage, " +
-              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges. but remember create the tasks in the same language as the data\n" +
+              "Paint room, Shampoo carpets, Clean gutters, Declutter closets, Wash windows (outside), Repair door hinges. " +
+              `Always write tasks in ${settings.language}.\n` +
         
               // ── REASONABLENESS GUIDELINES ───────────────────────────────────────
               "9. Be reasonable with scheduling: avoid assigning overly exhausting tasks " +
@@ -171,7 +174,8 @@ module.exports = NodeHelper.create({
               "10. Prioritize routines and habits over forcing new tasks every day.\n" +
               "11. If a task is big or time-consuming, spread it out or assign it only once " +
               "    per week per person.\n" +
-              "12. Consider recent completions and do not repeat tasks too soon."
+              "12. Consider recent completions and do not repeat tasks too soon.\n" +
+              "13. Big chores like painting a house occur only every 10 years; if one was recently finished, do not schedule it again within the next years."
           },
           { role: "user", content: prompt }
         ],
@@ -230,17 +234,37 @@ module.exports = NodeHelper.create({
   },
 
   buildPromptFromTasks() {
-    // Include all completed tasks, even if they were later deleted
-    const relevantTasks = tasks.filter(t => t.done === true).map(t => ({
-      name:        t.name,
-      assignedTo:  t.assignedTo,
-      date:        t.date,
-      done:        t.done,
-      deleted:     t.deleted || false,
-      created:     t.created
+    // Completed tasks provide history for scheduling patterns
+    const completedTasks = tasks.filter(t => t.done === true).map(t => ({
+      name:       t.name,
+      assignedTo: t.assignedTo,
+      date:       t.date,
+      deleted:    t.deleted || false,
+      created:    t.created
     }));
 
-    const todayString = new Date().toLocaleDateString("sv-SE", {
+    // Open tasks help avoid scheduling duplicates in the same time period
+    const openTasks = tasks.filter(t => !t.done && !t.deleted).map(t => ({
+      name:       t.name,
+      assignedTo: t.assignedTo,
+      date:       t.date,
+      created:    t.created
+    }));
+
+    const localeMap = {
+      en: 'en-US',
+      sv: 'sv-SE',
+      fr: 'fr-FR',
+      es: 'es-ES',
+      de: 'de-DE',
+      it: 'it-IT',
+      nl: 'nl-NL',
+      pl: 'pl-PL',
+      zh: 'zh-CN',
+      ar: 'ar-EG'
+    };
+    const locale = localeMap[settings.language] || 'en-US';
+    const todayString = new Date().toLocaleDateString(locale, {
       weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
     });
 
@@ -252,7 +276,9 @@ module.exports = NodeHelper.create({
         "Return ONLY a JSON array of objects containing: name, date (yyyy-mm-dd), assignedTo (person id).",
 
       today: new Date().toISOString().slice(0, 10),
-      tasks: relevantTasks,
+      language: settings.language,
+      completedTasks: completedTasks,
+      openTasks: openTasks,
       people: people
     });
   },
